@@ -25,6 +25,21 @@ public class BOSSVSModel extends BOSSModel {
   public BOSSVSModel(int maxF, int maxS, int windowLength, boolean normMean) {
     super(maxF, maxS, windowLength, normMean);
   }
+
+  public ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> createTfIdf(
+      final BagOfPattern[] bagOfPatterns,
+      final HashSet<String> uniqueLabels) {
+    int[] sampleIndices = createIndices(bagOfPatterns.length);
+    return createTfIdf(bagOfPatterns, sampleIndices, uniqueLabels);        
+  }
+  
+  protected static int[] createIndices(int length) {
+    int[] indices = new int[length];
+    for (int i = 0; i < length; i++) {
+      indices[i] = i;
+    }
+    return indices;
+  }
   
   public ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,

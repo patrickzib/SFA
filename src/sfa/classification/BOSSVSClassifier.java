@@ -153,7 +153,6 @@ public class BOSSVSClassifier extends Classifier {
       ExecutorService exec) {
     final List<BossVSScore<IntFloatOpenHashMap>> results = new ArrayList<BossVSScore<IntFloatOpenHashMap>>(allWindows.length);
     ParallelFor.withIndex(exec, BLOCKS, new ParallelFor.Each() {
-      int[] allIndices = createIndices(samples.length);
       HashSet<String> uniqueLabels = uniqueClassLabels(samples);
       BossVSScore<IntFloatOpenHashMap> bestScore = new BossVSScore<IntFloatOpenHashMap>(normMean, 0);
       @Override
@@ -192,7 +191,7 @@ public class BOSSVSClassifier extends Classifier {
               BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, score.features);
 
               // calculate the tf-idf for each class
-              score.idf = model.createTfIdf(bag, allIndices, uniqueLabels);
+              score.idf = model.createTfIdf(bag, uniqueLabels);
               score.model = model;      
 
             } catch (Exception e) {
