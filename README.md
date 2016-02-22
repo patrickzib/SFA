@@ -147,6 +147,15 @@ ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag
 "The Bag-of-SFA-Symbols in Vector Space classifier as published in Schäfer, P.: Scalable time series classification. DMKD (Preprint)"
 http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
 
+# Use Cases / Tests
+
+There are 5 implemented use cases:
+
+1. Classification accuracy of BOSS VS and BOSS ensemble on the UCR datasets: UCRClassification.java
+2. SFA lower bounding distance to the Euclidean distance: SFAMinDistance.java
+3. Generate SFA words from a set of samples: SFAWords.java
+4. SFA makes use of variable word lengths: SFAWordsVariableLength.java
+5. Extract sliding windows from a time series and transform each sliding window to its SFA word: SFAWordsWindowing.java
 
 # Acknowledgements
 
