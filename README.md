@@ -1,15 +1,25 @@
-Scalable Time Series Data Analytics
+# Time Series Data Analytics
 
 Working with time series is difficult due to the high dimensionality of the data, erroneous or extraneous data, 
 and large datasets. At the core of time series data analytics there are (a) a time series representation and (b) 
 a similarity measure to compare two time series. There are many desirable properties of similarity measures1. 
 Common similarity measures in the context of time series are Dynamic Time Warping (DTW) or the Euclidean Distance (ED). 
 However, these are decades old and do not meet today’s requirements. We believe that the over-dependance of research on 
-the UCR time series classification benchmark has led to two pitfalls, namely: (a) they focus mostly on accuracy2 and (b) 
-they assume pre-processed datasets3. We identified three (additional) desirable properties: (a) alignment-free structural 
+the UCR time series classification benchmark has led to two pitfalls, namely: (a) they focus mostly on accuracy and (b) 
+they assume pre-processed datasets. We identified three (additional) desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
-We introduce a symbolic time series representation and two time series similarity measures for alignment-free, noise-robust
+
+We introduce a symbolic time series representation (SFA) and two time series models (BOSS and BOSSVS) for alignment-free, noise-robust
 and scalable time series data analytics. 
+
+We presented algorithms and use cases in the context of:
+
+1. Dimensionality Reduction: We have introduced the symbolic representation SFA. SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques.
+
+2. Classification and Accuracy: Our 1-NN BOSS ensemble classifier offers state of art classification accuracy [[1]](http://arxiv.org/abs/1602.01711), [[2]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7).
+
+3. Classification and Scalability: The 1-NN BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., we can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the 1-NN BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[3]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
+
 
 # SFA: Symbolic Fourier Approximation
 
@@ -42,7 +52,7 @@ and clustering accuracy in time series literature to date.
 
 BOSS was published in 
 
-"Schäfer, P.: The boss is concerned with time series classification in the presence of noise. DMKD 29(6) (2015) 1505–1530"
+"Schäfer, P.: The BOSS is concerned with time series classification in the presence of noise. DMKD 29(6) (2015) 1505–1530"
 http://link.springer.com/article/10.1007%2Fs10618-014-0377-7
 
 
@@ -64,6 +74,8 @@ http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
 # Acknowledgements
 
 This work is supported by the [ZIB (Zuse Institute Berlin)](http://www.zib.de/en/home.html).
+
+Read more about Scalable Time Series Data Analytics in my [Dissertation](http://edoc.hu-berlin.de/docviews/abstract.php?id=42117).
 
 The UCR Time Series Classification Archive can be downloaded from:
 http://www.cs.ucr.edu/~eamonn/time_series_data/
