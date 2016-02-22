@@ -21,6 +21,11 @@ The implemented algorithms are in the context of:
 
 ![SFA](images/classifiers.png)
 
+Figure (center) shows the BOSS model as a histogram over SFA words. It first extracts subsequences (patterns) from a time series. Next, it applies low-pass filtering and quantization to the subsequences using SFA which reduces noise and allows for string matching algorithms to be applied. Two time series are then compared based on the differences in the histogram of SFA words.
+ 
+Figure (right) illustrates the BOSS VS model. The BOSS VS model extends the BOSS model by a compact representation of classes instead of time series by using the term frequency - inverse document frequency (tf-idf) for each class. It significantly reduces the computational complexity and highlights characteristic SFA words by the use of the tf-idf weight matrix which provides an additional noise reducing effect.
+
+
 # SFA: Symbolic Fourier Approximation
 
 The symbolic time series representation Symbolic Fourier Approximation (SFA) represents each real-valued time series by a 
@@ -32,6 +37,9 @@ Fourier coefficients to adapt the degree of approximation is at the core of the 
 
 
 ![SFA](images/sfa_representation.png)
+
+The figure illustrates the SFA transformation. The time series is first Fourier transformed, low-pass filtered, and then quantized to its SFA word CBBCCDCBBCBCBEBED. Higher frequency components of a signal represent rapid changes, which are often associated with noise or dropouts. By keeping the first Fourier values, the signal is smoothened, equal to a low-pass filter. Quantization builds an envelope around the Fourier transform of the time series. Since symbolic representations are essentially a character string, they can be used with string algorithms and data structures such prefix tries, bag-of-words, Markov models, or string-matching.
+
 
 **Usage:**
 
