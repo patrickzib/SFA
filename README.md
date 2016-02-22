@@ -38,7 +38,9 @@ Fourier coefficients to adapt the degree of approximation is at the core of the 
 
 ![SFA](images/sfa_representation.png)
 
- 
+The figure illustrates the SFA transformation. The time series is first Fourier transformed, low-pass filtered, and then quantized to its SFA word CBBCCDCBBCBCBEBED. Higher frequency components of a signal represent rapid changes, which are often associated with noise or dropouts. Most of the energy of a signal in concentrated in the first Fourier values. By keeping the first Fourier values, the signal is smoothened, equal to a low-pass filter. Quantization builds an envelope around the Fourier transform of the time series. Since symbolic representations are essentially a character string, they can be used with string algorithms and data structures such prefix tries, bag-of-words, Markov models, or string-matching.
+
+
 **Usage:**
 
 First, train the SFA quantization using a set of samples.
