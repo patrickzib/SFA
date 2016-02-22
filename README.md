@@ -139,7 +139,7 @@ BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
 Finally, we build obtain the tf-idf model from the bag-of-patterns for each class label (uniqueLabels):
 
 ```java
-ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag, trainIndices[s], uniqueLabels);
+ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag, uniqueLabels);
 ```
 
 **References**
