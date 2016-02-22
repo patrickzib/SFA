@@ -113,9 +113,7 @@ public class BOSSVSClassifier extends Classifier {
 
   }
 
-  public List<BossVSScore<IntFloatOpenHashMap>> fitEnsemble(
-      ExecutorService exec,
-      final boolean normMean) throws FileNotFoundException {
+  public List<BossVSScore<IntFloatOpenHashMap>> fitEnsemble(ExecutorService exec, final boolean normMean) throws FileNotFoundException {
     int minWindowLength = 10;
     int maxWindowLength = this.trainSamples[0].getLength();
     for (TimeSeries ts : this.trainSamples) {

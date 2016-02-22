@@ -25,6 +25,7 @@ public class SFAMinDistance {
     SFA sfa = new SFA(HistogramType.EQUI_DEPTH, normMean);    
     SFADistance sfaDistance = new SFADistance(sfa);
 
+    // Load the train/test splits
     TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TRAIN"));
     TimeSeries[] test = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
     
@@ -69,7 +70,8 @@ public class SFAMinDistance {
     
     System.out.println("Accuracy: "+ (Math.round(100.0*(accuracy / test.length))/100.0));
   }
-    
+  
+  
   public static double getEuclideanDistance (TimeSeries t1, TimeSeries t2, double minValue) {
     double distance = 0;
     double[] t1Values = t1.getData();

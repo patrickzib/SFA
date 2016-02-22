@@ -17,7 +17,7 @@ public class SFADistance {
   }
   
   /**
-   * SFA-distance
+   * The SFA-distance lower bounds the Euclidean Distance
    */
   public double getDistance(short[] wordsTs, short[] wordsQuery, double[] dftQuery, boolean normed, double minValue) {
     double distance = 0.0;

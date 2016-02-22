@@ -41,6 +41,14 @@ public class BOSSVSModel extends BOSSModel {
     return indices;
   }
   
+  /**
+   * Obtains the TF-IDF representation based on the BOSS represenation. Only those elements
+   * in sampleIndices are used (usefull for cross-validation). 
+   * @param bagOfPatterns The BOSS (bag-of-patterns) representation of the time series
+   * @param sampleIndices The indices to use
+   * @param uniqueLabels The unique class labels in the dataset
+   * @return
+   */
   public ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
       final int[] sampleIndices,
@@ -89,6 +97,7 @@ public class BOSSVSModel extends BOSSModel {
       }
     }
     
+    // norm the tf-idf-matrix
     normalizeTfIdf(matrix);
     
     return matrix;
@@ -110,6 +119,10 @@ public class BOSSVSModel extends BOSSModel {
     }
   }
   
+  /**
+   * Norm the vector to length 1
+   * @param classStatistics
+   */
   public void normalizeTfIdf(final ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> classStatistics) {
     for (ObjectCursor<IntFloatOpenHashMap> classStat : classStatistics.values()) {
       double squareSum = 0.0;

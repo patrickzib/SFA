@@ -17,7 +17,8 @@ import sfa.timeseries.TimeSeries;
  *    In: EDBT, ACM (2012)
  */
 public class SFA {
-  // distribution of values
+  
+  // distribution of Fourier values
   public ArrayList<ValueLabel>[] orderLine;
 
   public HistogramType histogramType = HistogramType.EQUI_DEPTH;
@@ -26,6 +27,7 @@ public class SFA {
   public int wordLength = 0;
   public boolean initialized = false;
 
+  // The Momentary Fourier Transform
   public MFT transformation;
   
   // use binning / bucketing
@@ -80,10 +82,21 @@ public class SFA {
     }
   }
 
+  /**
+   * Transforms a single time series to its SFA word
+   * @param timeSeries
+   * @return
+   */
   public short[] transform(TimeSeries timeSeries) {
     return transform(timeSeries, null);
   }
 
+  /**
+   * Transforms a single time series to its SFA word
+   * @param timeSeries
+   * @param approximation the DFT approximation, if available, else pass 'null'
+   * @return
+   */
   public short[] transform(TimeSeries timeSeries, double[] approximation) {
     if (!initialized) {
       throw new RuntimeException("Plase call fitTransform() first.");
@@ -97,6 +110,11 @@ public class SFA {
     return quantization(approximation);
   }
 
+  /**
+   * Transforms a set of samples to SFA words
+   * @param samples
+   * @return
+   */
   public short[][] transform(TimeSeries[] samples) {
     if (!initialized) {
       throw new RuntimeException("Plase call fitTransform() first.");
@@ -109,6 +127,12 @@ public class SFA {
     return transform;
   }
   
+  /**
+   * Transforms a set of time series to SFA words.
+   * @param samples
+   * @param approximation the DFT approximations, if available, else pass 'null'
+   * @return
+   */
   public short[][] transform(TimeSeries[] samples, double[][] approximation) {
     if (!initialized) {
       throw new RuntimeException("Plase call fitTransform() first.");
@@ -121,6 +145,11 @@ public class SFA {
     return transform;
   }
 
+  /**
+   * Quantization of a DFT approximation to its SFA word
+   * @param approximation the DFT approximation of a time series
+   * @return
+   */
   public short[] quantization(double[] approximation) {
     int i = 0;
     short[] word = new short[approximation.length];
@@ -152,18 +181,34 @@ public class SFA {
     }
   }
 
-  public void fitWindowing(TimeSeries[] timeSeries, int windowLength, int l, int symbols, boolean normMean) {
+  /**
+   * Extracts sliding windows from the time series and trains SFA based on the sliding windows. 
+   * At the end of this call, the quantization bins are set.
+   * @param timeSeries
+   * @param windowLength The length of each sliding window
+   * @param wordLength the SFA word-length
+   * @param symbols the SFA alphabet size
+   * @param normMean if set, the mean is subtracted from each sliding window
+   */
+  public void fitWindowing(TimeSeries[] timeSeries, int windowLength, int wordLength, int symbols, boolean normMean) {
     this.transformation = new MFT(normMean);
 
     ArrayList<TimeSeries> sa = new ArrayList<TimeSeries>(timeSeries.length * timeSeries[0].getLength() / windowLength);
     for (TimeSeries t : timeSeries) {
       sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
     }
-    fitTransform(sa.toArray(new TimeSeries[]{}), l, symbols);
+    fitTransform(sa.toArray(new TimeSeries[]{}), wordLength, symbols);
   }
 
-  public short[][] transformWindowing(TimeSeries ts, int windowLength, int l) {
-    double[][] mft = this.transformation.transformWindowing(ts, windowLength, l);
+  /**
+   * Extracts sliding windows from a time series and transforms it to its SFA word.
+   * @param ts
+   * @param windowLength
+   * @param wordLength
+   * @return
+   */
+  public short[][] transformWindowing(TimeSeries ts, int windowLength, int wordLength) {
+    double[][] mft = this.transformation.transformWindowing(ts, windowLength, wordLength);
     
     short[][] words = new short[mft.length][];
     for (int i = 0; i < mft.length; i++) {
@@ -176,12 +221,20 @@ public class SFA {
     return words;
   }
 
-  public short[][] fitTransform (TimeSeries[] samples, int l, int symbols) {
+  /**
+   * Trains SFA based on a set of samples. 
+   * At the end of this call, the quantization bins are set.
+   * @param samples
+   * @param wordLength
+   * @param symbols
+   * @return
+   */
+  public short[][] fitTransform (TimeSeries[] samples, int wordLength, int symbols) {
     if (!this.initialized) {
-      init(l, symbols);
+      init(wordLength, symbols);
     }
 
-    double[][] transformedSamples = fillOrderline(samples, l, symbols);
+    double[][] transformedSamples = fillOrderline(samples, wordLength, symbols);
 
     if (this.histogramType == HistogramType.EQUI_DEPTH) {
       divideEquiDepthHistogram();
@@ -219,6 +272,9 @@ public class SFA {
     return transformedSamples;
   }
 
+  /**
+   * Use equi-width binning to divide the orderline
+   */
   protected void divideEquiWidthHistogram () {
     int i = 0;
     for (List<ValueLabel> elements : this.orderLine) {
@@ -236,6 +292,9 @@ public class SFA {
     }
   }
 
+  /**
+   * Use equi-depth binning to divide the orderline
+   */
   protected void divideEquiDepthHistogram () {
     // For each real and imaginary part
     for (int i = 0; i < this.bins.length; i++) {

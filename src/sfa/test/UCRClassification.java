@@ -14,6 +14,7 @@ import sfa.timeseries.TimeSeriesLoader;
 
 public class UCRClassification {
 
+  // The datasets to use
   public static String[] datasets = new String[]{
     "Coffee",
     "CBF",
@@ -22,6 +23,7 @@ public class UCRClassification {
 
   public static void main(String argv[]) throws IOException {
     try {
+      // the relative path to the datasets
       File dir = new File("./datasets/");
 
       for (String s : datasets) {
@@ -39,13 +41,16 @@ public class UCRClassification {
 
               Classifier.DEBUG = false;
                   
+              // Load the train/test splits
               TimeSeries[] testSamples = TimeSeriesLoader.loadDatset(test);
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
 
+              // The BOSS ensemble classifier
               BOSSEnsembleClassifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
               BOSSEnsembleClassifier.Score scoreBOSS = boss.eval();
               System.out.println(s + ";" + scoreBOSS.toString());
               
+              // The BOSS VS classifier
               BOSSVSClassifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
               BOSSVSClassifier.Score scoreBOSSVS = bossVS.eval();
               System.out.println(s + ";" + scoreBOSSVS.toString());

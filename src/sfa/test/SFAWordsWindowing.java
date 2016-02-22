@@ -25,6 +25,7 @@ public class SFAWordsWindowing {
     
     SFA sfa = new SFA(HistogramType.EQUI_DEPTH, normMean);    
 
+    // Load the train/test splits
     TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TRAIN"));
     TimeSeries[] test = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
     

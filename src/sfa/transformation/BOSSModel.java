@@ -35,6 +35,9 @@ public class BOSSModel {
     this.normMean = normMean;
   }
   
+  /**
+   * The BOSS model: a histogram of SFA word frequencies 
+   */
   public static class BagOfPattern {
     public IntIntOpenHashMap bag;
     public String label;
@@ -45,6 +48,11 @@ public class BOSSModel {
     }
   }
   
+  /**
+   * Create SFA words for all samples
+   * @param samples
+   * @return
+   */
   public int[][] createWords(final TimeSeries[] samples) {
 
     final int[][] words = new int[samples.length][];
@@ -72,18 +80,22 @@ public class BOSSModel {
     
     return words;
   }
-  
+
   /**
-   * Create all words for a fixed windowLength
+   * Create the BOSS model for a fixed window-length and SFA word length
+   * @param words the SFA words of the time series
+   * @param samples 
+   * @param wordLength the SFA word length
+   * @return
    */
   public BagOfPattern[] createBagOfPattern(
       final int[][] words,       
       final TimeSeries[] samples,
-      final int features) {
+      final int wordLength) {
     BagOfPattern[] bagOfPatterns = new BagOfPattern[words.length];
 
     final byte usedBits = (byte)Words.binlog(symbols);
-    final long mask = (1l << (usedBits*features)) - 1l;
+    final long mask = (1l << (usedBits*wordLength)) - 1l;
 
     // iterate all samples
     for (int j = 0; j < words.length; j++) {

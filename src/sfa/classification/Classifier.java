@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
-public class Classifier {
+public abstract class Classifier {
 
   public static boolean[] NORMALIZATION = new boolean[]{true, false};
 

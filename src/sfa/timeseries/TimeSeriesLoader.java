@@ -11,6 +11,12 @@ import java.util.Arrays;
 
 public class TimeSeriesLoader {
   
+  /**
+   * Loads the time series from a csv-file of the UCR time series archive.
+   * @param dataset
+   * @return
+   * @throws IOException
+   */
   public static TimeSeries[] loadDatset(File dataset) throws IOException {
     ArrayList<TimeSeries> samples = new ArrayList<TimeSeries>();
 
