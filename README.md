@@ -19,6 +19,7 @@ The implemented algorithms are in the context of:
 
 3. **Classification and Scalability**: The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[4]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
 
+![SFA](images/classifiers.png)
 
 # SFA: Symbolic Fourier Approximation
 
@@ -36,7 +37,7 @@ Fourier coefficients to adapt the degree of approximation is at the core of the 
 
 First, train the SFA quantization using a set of samples.
 
-```
+```java
 // Load datasets
 TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
 
@@ -46,7 +47,7 @@ short[][] wordsTrain = sfa.fitTransform(train, wordLength, symbols);
 
 Next, transform a time series using the trained quantization bins.
 
-```
+```java
 // Transform a times series
 TimeSeries ts = ...;
 
@@ -59,7 +60,7 @@ short[] wordTs = sfa.quantization(dftTs);
 
 Similarity search using the SFA distance.
 
-```
+```java
 double distance = sfaDistance.getDistance(wordsTrain[t], wordTs, dftTs, normMean, minDistance);
   
 // check the real distance, if the lower bounding distance is smaller than the best-so-far distance
@@ -86,8 +87,22 @@ Apart from invariance to noise, the BOSS model provides invariances (robustness)
 occlusions by discarding the original ordering of the SFA words and normalization. This leads to the highest classification 
 and clustering accuracy in time series literature to date.
 
-![SFA](images/classifiers.png)
+**Usage:**
 
+First, to train the BOSS model using a set of samples, we first have to obtain the SFA words:
+
+```java
+TimeSeries[] trainSamples = ...
+
+BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, normMean);              
+int[][] words = model.createWords(trainSamples);
+```
+
+Next, we build a histogram of word frequencies (bag-of-patterns):
+
+```java
+BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
+```
 
 **References**
 
@@ -103,6 +118,29 @@ the computational complexity of the BOSS model to allow for the classifi- cation
 train complexity, which is lower than the test complexity of 1-NN DTW, allows for frequent model updates such as mining streaming 
 data (aka real-time predictive analytics). The BOSS VS is not the most accurate classifier. However, its high speed combined 
 with its good accuracy makes it unique and relevant for many practical use cases.
+
+**Usage:**
+
+First, to train the BOSS VS model using a set of samples, we first have to obtain the SFA words:
+
+```java
+TimeSeries[] trainSamples = ...
+
+BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, normMean);              
+int[][] words = model.createWords(trainSamples);
+```
+
+Next, we build a histogram of word frequencies (bag-of-patterns):
+
+```java
+BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
+```
+
+Finally, we build obtain the tf-idf model from the bag-of-patterns for each class label (uniqueLabels):
+
+```java
+ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag, trainIndices[s], uniqueLabels);
+```
 
 **References**
 
