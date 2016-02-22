@@ -32,7 +32,7 @@ Fourier coefficients to adapt the degree of approximation is at the core of the 
 
 ![SFA](images/sfa_representation.png)
 
-SFA was published in 
+References
 
 "Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and index for similarity search in high dimensional datasets. In: EDBT, ACM (2012)"
 http://dl.acm.org/citation.cfm?doid=2247596.2247656
@@ -49,7 +49,7 @@ and clustering accuracy in time series literature to date.
 ![SFA](images/classifiers.png)
 
 
-BOSS was published in 
+References
 
 "Schäfer, P.: The BOSS is concerned with time series classification in the presence of noise. DMKD 29(6) (2015) 1505–1530"
 http://link.springer.com/article/10.1007%2Fs10618-014-0377-7
@@ -64,7 +64,7 @@ train complexity, which is lower than the test complexity of 1-NN DTW, allows fo
 data (aka real-time predictive analytics). The BOSS VS is not the most accurate classifier. However, its high speed combined 
 with its good accuracy makes it unique and relevant for many practical use cases.
 
-BOSS VS was published in 
+References
 
 "The Bag-of-SFA-Symbols in Vector Space classifier as published in Schäfer, P.: Scalable time series classification. DMKD (Preprint)"
 http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
