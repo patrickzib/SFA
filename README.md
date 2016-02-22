@@ -2,22 +2,22 @@
 
 Working with time series is difficult due to the high dimensionality of the data, erroneous or extraneous data, 
 and large datasets. At the core of time series data analytics there are (a) a time series representation and (b) 
-a similarity measure to compare two time series. There are many desirable properties of similarity measures1. 
+a similarity measure to compare two time series. There are many desirable properties of similarity measures. 
 Common similarity measures in the context of time series are Dynamic Time Warping (DTW) or the Euclidean Distance (ED). 
 However, these are decades old and do not meet today’s requirements. The over-dependance of research on 
 the UCR time series classification benchmark has led to two pitfalls, namely: (a) they focus mostly on accuracy and (b) 
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
 
-This work introduces a symbolic time series representation (SFA) and two time series models (BOSS and BOSSVS) for alignment-free, noise-robust and scalable time series data analytics. 
+This repository contains a symbolic time series representation (**SFA**) and two time series models (**BOSS** and **BOSSVS**) for alignment-free, noise-robust and scalable time series data analytics. 
 
 The implemented algorithms are in the context of:
 
-1. Dimensionality Reduction: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques [[1]](http://dl.acm.org/citation.cfm?doid=2247596.2247656).
+1. **Dimensionality Reduction**: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques [[1]](http://dl.acm.org/citation.cfm?doid=2247596.2247656).
 
-2. Classification and Accuracy: The BOSS ensemble classifier offers state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7).
+2. **Classification and Accuracy**: The BOSS ensemble classifier offers state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7).
 
-3. Classification and Scalability: The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[4]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
+3. **Classification and Scalability**: The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[4]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
 
 
 # SFA: Symbolic Fourier Approximation
@@ -32,7 +32,47 @@ Fourier coefficients to adapt the degree of approximation is at the core of the 
 
 ![SFA](images/sfa_representation.png)
 
-References
+**Usage:**
+
+First, train the SFA quantization using a set of samples.
+
+```
+// Load datasets
+TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
+
+// Train the SFA representation
+short[][] wordsTrain = sfa.fitTransform(train, wordLength, symbols);
+```
+
+Next, transform a time series using the trained quantization bins.
+
+```
+// Transform a times series
+TimeSeries ts = ...;
+
+// DFT approximation of the time series
+double[] dftTs = sfa.transformation.transform(ts, ts.getLength(), wordLength);
+
+// SFA quantization to an SFA word
+short[] wordTs = sfa.quantization(dftTs);
+```
+
+Similarity search using the SFA distance.
+
+```
+double distance = sfaDistance.getDistance(wordsTrain[t], wordTs, dftTs, normMean, minDistance);
+  
+// check the real distance, if the lower bounding distance is smaller than the best-so-far distance
+if (distance < minDistance) {          
+  double realDistance = getEuclideanDistance(train[t], ts, minDistance);
+  if (realDistance < minDistance) {
+    minDistance = realDistance;
+    best = t;
+  }     
+}
+```
+	
+**References**
 
 "Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and index for similarity search in high dimensional datasets. In: EDBT, ACM (2012)"
 http://dl.acm.org/citation.cfm?doid=2247596.2247656
@@ -49,7 +89,7 @@ and clustering accuracy in time series literature to date.
 ![SFA](images/classifiers.png)
 
 
-References
+**References**
 
 "Schäfer, P.: The BOSS is concerned with time series classification in the presence of noise. DMKD 29(6) (2015) 1505–1530"
 http://link.springer.com/article/10.1007%2Fs10618-014-0377-7
@@ -64,7 +104,7 @@ train complexity, which is lower than the test complexity of 1-NN DTW, allows fo
 data (aka real-time predictive analytics). The BOSS VS is not the most accurate classifier. However, its high speed combined 
 with its good accuracy makes it unique and relevant for many practical use cases.
 
-References
+**References**
 
 "The Bag-of-SFA-Symbols in Vector Space classifier as published in Schäfer, P.: Scalable time series classification. DMKD (Preprint)"
 http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
