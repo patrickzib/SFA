@@ -165,7 +165,7 @@ There are 5 implemented use cases:
 4. SFA makes use of variable word lengths: SFAWordsVariableLength.java
 5. Extract sliding windows from a time series and transform each sliding window to its SFA word: SFAWordsWindowing.java
 
-# Acknowledgements
+# References & Acknowledgements
 
 This work is supported by the [ZIB (Zuse Institute Berlin)](http://www.zib.de/en/home.html).
 
