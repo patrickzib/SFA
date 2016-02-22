@@ -171,5 +171,6 @@ This work is supported by the [ZIB (Zuse Institute Berlin)](http://www.zib.de/en
 
 Read more about Scalable Time Series Data Analytics in the [Dissertation](http://edoc.hu-berlin.de/docviews/abstract.php?id=42117).
 
-The UCR Time Series Classification Archive can be downloaded from:
-http://www.cs.ucr.edu/~eamonn/time_series_data/
+[The UCR Time Series Classification Archive](http://www.cs.ucr.edu/~eamonn/time_series_data/)
+
+[The Great Time Series Classification Bake Off: An Experimental Evaluation of Recently Proposed Algorithms. Extended Version](http://arxiv.org/abs/1602.01711)
