@@ -1,6 +1,6 @@
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.timeseries;
-
-
 
 public class TimeSeries {
   protected double[] data = null;

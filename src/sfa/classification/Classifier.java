@@ -1,3 +1,5 @@
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
 import java.io.File;
@@ -12,16 +14,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import sfa.timeseries.TimeSeries;
+import sfa.timeseries.TimeSeriesLoader;
+
 import com.carrotsearch.hppc.FloatContainer;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
-
-import sfa.timeseries.TimeSeries;
-import sfa.timeseries.TimeSeriesLoader;
-import sfa.transformation.SFA;
-import sfa.transformation.SFA.HistogramType;
 
 public class Classifier {
 
