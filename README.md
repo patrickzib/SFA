@@ -13,11 +13,11 @@ This work introduces a symbolic time series representation (SFA) and two time se
 
 The implemented algorithms are in the context of:
 
-1. Dimensionality Reduction: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques.
+1. Dimensionality Reduction: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques [[1]](http://dl.acm.org/citation.cfm?doid=2247596.2247656).
 
-2. Classification and Accuracy: The BOSS ensemble classifier offers state of art classification accuracy [[1]](http://arxiv.org/abs/1602.01711), [[2]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7).
+2. Classification and Accuracy: The BOSS ensemble classifier offers state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7).
 
-3. Classification and Scalability: The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[3]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
+3. Classification and Scalability: The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[4]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
 
 
 # SFA: Symbolic Fourier Approximation
