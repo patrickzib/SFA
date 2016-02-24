@@ -49,7 +49,7 @@ public abstract class Classifier {
   protected static int MAX_WINDOW_LENGTH = 1000;
 
   // Blocks for parallel execution
-  public final int BLOCKS = Runtime.getRuntime().availableProcessors();
+  public final int BLOCKS = 8;
 
   static {
     Runtime runtime = Runtime.getRuntime();

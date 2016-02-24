@@ -88,7 +88,7 @@ public class BOSSVSClassifier extends Classifier {
         }
 
         // determine labels based on the majority of predictions
-        int correctTesting = predictEnsamble(scores, this.testSamples, normMean);
+        int correctTesting = predictEnsamble(exec, scores, this.testSamples, normMean);
 
         if (bestCorrectTraining <= this.correctTraining.get()) {
           bestCorrectTesting = correctTesting;
@@ -150,13 +150,13 @@ public class BOSSVSClassifier extends Classifier {
       TimeSeries[] samples,
       ExecutorService exec) {
     final List<BossVSScore<IntFloatOpenHashMap>> results = new ArrayList<BossVSScore<IntFloatOpenHashMap>>(allWindows.length);
-    ParallelFor.withIndex(exec, BLOCKS, new ParallelFor.Each() {
+    ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       HashSet<String> uniqueLabels = uniqueClassLabels(samples);
       BossVSScore<IntFloatOpenHashMap> bestScore = new BossVSScore<IntFloatOpenHashMap>(normMean, 0);
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < allWindows.length; i++) {
-          if (i % BLOCKS == id) {
+          if (i % threads == id) {
             BossVSScore<IntFloatOpenHashMap> score = new BossVSScore<IntFloatOpenHashMap>(normMean, allWindows[i]);
             try {
               BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, score.normed);              
@@ -281,10 +281,10 @@ public class BOSSVSClassifier extends Classifier {
   }
 
   public int predictEnsamble(
+      ExecutorService executor,
       final List<BossVSScore<IntFloatOpenHashMap>> results,
       final TimeSeries[] testSamples,
       boolean normMean) {
-    ExecutorService executor = Executors.newFixedThreadPool(BLOCKS);
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
@@ -294,48 +294,43 @@ public class BOSSVSClassifier extends Classifier {
     }
 
     final List<Integer> usedLengths = new ArrayList<Integer>(results.size());
+    final int[] indicesTest = createIndices(testSamples.length);
 
-    try {
-      final int[] indicesTest = createIndices(testSamples.length);
+    // parallel execution
+    ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        predictEnsambleLabel(id, processed);
+      }
+      public void predictEnsambleLabel(int id, AtomicInteger processed) {
+        // iterate each sample to classify
+        for (int i = 0; i < results.size(); i++) {
+          if (i % threads == id) {
+            final BossVSScore<IntFloatOpenHashMap> score = results.get(i);
+            if (score.training >= BOSSVSClassifier.this.correctTraining.get() * factor) { // all with same score
+              usedLengths.add(score.windowLength);
 
-      // parallel execution
-      ParallelFor.withIndex(executor, BLOCKS, new ParallelFor.Each() {
-        @Override
-        public void run(int id, AtomicInteger processed) {
-          predictEnsambleLabel(id, processed);
-        }
-        public void predictEnsambleLabel(int id, AtomicInteger processed) {
-          // iterate each sample to classify
-          for (int i = 0; i < results.size(); i++) {
-            if (i % BLOCKS == id) {
-              final BossVSScore<IntFloatOpenHashMap> score = results.get(i);
-              if (score.training >= BOSSVSClassifier.this.correctTraining.get() * factor) { // all with same score
-                usedLengths.add(score.windowLength);
+              BOSSVSModel model = score.model;
+              
+              // create words and BOSS model for test samples
+              int[][] wordsTest = model.createWords(testSamples);
+              BagOfPattern[] bagTest = model.createBagOfPattern(wordsTest, testSamples, score.features);
 
-                BOSSVSModel model = score.model;
-                
-                // create words and BOSS model for test samples
-                int[][] wordsTest = model.createWords(testSamples);
-                BagOfPattern[] bagTest = model.createBagOfPattern(wordsTest, testSamples, score.features);
+              Predictions p = predict(indicesTest, bagTest, score.idf);
 
-                Predictions p = predict(indicesTest, bagTest, score.idf);
-
-                for (int j = 0; j < p.labels.length; j++) {
-                  synchronized (testLabels[j]) {
-                    testLabels[j].add(new Pair<String, Double>(p.labels[j], score.training));
-                  }
+              for (int j = 0; j < p.labels.length; j++) {
+                synchronized (testLabels[j]) {
+                  testLabels[j].add(new Pair<String, Double>(p.labels[j], score.training));
                 }
               }
-              else {
-                score.clear();
-              }
+            }
+            else {
+              score.clear();
             }
           }
         }
-      });
-    } finally {
-      executor.shutdown();
-    }
+      }
+    });
 
     return score("BOSS VS", testSamples, startTime, testLabels, usedLengths);
   }
