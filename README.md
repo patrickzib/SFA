@@ -159,17 +159,25 @@ http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
 
 There are 5 implemented use cases:
 
-1. Classification accuracy of BOSS VS and BOSS ensemble on the UCR datasets: UCRClassification.java
-2. SFA lower bounding distance to the Euclidean distance: SFAMinDistance.java
-3. Generate SFA words from a set of samples: SFAWords.java
-4. SFA makes use of variable word lengths: SFAWordsVariableLength.java
-5. Extract sliding windows from a time series and transform each sliding window to its SFA word: SFAWordsWindowing.java
 
-# Acknowledgements
+
+
+1. Classification accuracy of BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassification.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/UCRClassification.java)
+2. SFA lower bounding distance to the Euclidean distance: 
+[SFAMinDistance.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAMinDistance.java)
+3. Generate SFA words from a set of samples: 
+[SFAWords.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWords.java)
+4. SFA makes use of variable word lengths: 
+[SFAWordsVariableLength.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWordsVariableLength.java)
+5. Extract sliding windows from a time series and transform each sliding window to its SFA word: 
+[SFAWordsWindowing.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWordsWindowing.java)
+
+# References & Acknowledgements
 
 This work is supported by the [ZIB (Zuse Institute Berlin)](http://www.zib.de/en/home.html).
 
 Read more about Scalable Time Series Data Analytics in the [Dissertation](http://edoc.hu-berlin.de/docviews/abstract.php?id=42117).
 
-The UCR Time Series Classification Archive can be downloaded from:
-http://www.cs.ucr.edu/~eamonn/time_series_data/
+[The UCR Time Series Classification Archive](http://www.cs.ucr.edu/~eamonn/time_series_data/)
+
+[The Great Time Series Classification Bake Off: An Experimental Evaluation of Recently Proposed Algorithms. Extended Version](http://arxiv.org/abs/1602.01711)
