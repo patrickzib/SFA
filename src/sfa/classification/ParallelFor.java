@@ -57,14 +57,4 @@ public class ParallelFor {
   public static void shutdown()  {
     executor.shutdown();
   }
-
-  public static void main(String [] argv) {
-    ParallelFor.withIndex(4, new ParallelFor.Each() {
-      public void run(int i, AtomicInteger processed) {
-        System.out.println(i*10);
-      }
-    });
-  }
-
-
 }

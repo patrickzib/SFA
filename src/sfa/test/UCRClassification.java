@@ -9,6 +9,8 @@ import sfa.classification.BOSSEnsembleClassifier;
 import sfa.classification.BOSSVSClassifier;
 import sfa.classification.Classifier;
 import sfa.classification.ParallelFor;
+import sfa.classification.ShotgunClassifier;
+import sfa.classification.ShotgunEnsembleClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
@@ -46,14 +48,24 @@ public class UCRClassification {
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
 
               // The BOSS ensemble classifier
-              BOSSEnsembleClassifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
-              BOSSEnsembleClassifier.Score scoreBOSS = boss.eval();
+              Classifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
+              Classifier.Score scoreBOSS = boss.eval();
               System.out.println(s + ";" + scoreBOSS.toString());
               
               // The BOSS VS classifier
-              BOSSVSClassifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
-              BOSSVSClassifier.Score scoreBOSSVS = bossVS.eval();
+              Classifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
+              Classifier.Score scoreBOSSVS = bossVS.eval();
               System.out.println(s + ";" + scoreBOSSVS.toString());
+              
+              // The Shotgun ensemble classifier
+              Classifier shotgunEnsemble = new ShotgunEnsembleClassifier(trainSamples, testSamples);
+              Classifier.Score scoreShotgunEnsemble = shotgunEnsemble.eval();
+              System.out.println(s + ";" + scoreShotgunEnsemble.toString());
+              
+//              // The Shotgun classifier
+//              Classifier shotgun = new ShotgunClassifier(trainSamples, testSamples);
+//              Classifier.Score scoreShotgun = shotgun.eval();
+//              System.out.println(s + ";" + scoreShotgun.toString());
             }
           }
         }

@@ -53,11 +53,9 @@ public class BOSSVSClassifier extends Classifier {
     public int features;
 
     public void clear() {
+      super.clear();
       this.idf = null;
-      this.model = null;
-      
-      this.testing = 0;
-      this.training = 0;
+      this.model = null;    
     }
   }
 
@@ -115,11 +113,10 @@ public class BOSSVSClassifier extends Classifier {
 
   public List<BossVSScore<IntFloatOpenHashMap>> fitEnsemble(ExecutorService exec, final boolean normMean) throws FileNotFoundException {
     int minWindowLength = 10;
-    int maxWindowLength = this.trainSamples[0].getLength();
+    int maxWindowLength = MAX_WINDOW_LENGTH;
     for (TimeSeries ts : this.trainSamples) {
       maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
     }
-    maxWindowLength = Math.min(MAX_WINDOW_LENGTH, maxWindowLength);
 
     // equi-distance sampling of windows
     ArrayList<Integer> windows = new ArrayList<Integer>();
@@ -128,20 +125,7 @@ public class BOSSVSClassifier extends Classifier {
     for (int c = minWindowLength; c <= maxWindowLength; c += distance) {
       windows.add(c);
     }
-
-    List<BossVSScore<IntFloatOpenHashMap>> results = fit(windows.toArray(new Integer[]{}), normMean, trainSamples, exec);
-
-    // cleanup unused scores
-    for (BossVSScore<IntFloatOpenHashMap> s : results) {
-      if (s.model != null
-          && s.training < this.correctTraining.get() * factor) { 
-        s.clear();
-      }
-    }
-
-    // sort descending
-    Collections.sort(results, Collections.reverseOrder());
-    return results;
+    return fit(windows.toArray(new Integer[]{}), normMean, trainSamples, exec);
   }
 
   public List<BossVSScore<IntFloatOpenHashMap>> fit(
@@ -204,10 +188,6 @@ public class BOSSVSClassifier extends Classifier {
                 }
               }
             }
-
-//           if (DEBUG) {
-//              System.out.println(BOSSVSClassifier.this.correctTraining.get());
-//           }
           
             // add to ensemble
             if (score.training >= BOSSVSClassifier.this.correctTraining.get() * factor) {
@@ -220,6 +200,16 @@ public class BOSSVSClassifier extends Classifier {
       }
     });
         
+    // cleanup unused scores
+    for (BossVSScore<IntFloatOpenHashMap> s : results) {
+      if (s.model != null
+          && s.training < this.correctTraining.get() * factor) { 
+        s.clear();
+      }
+    }
+
+    // sort descending
+    Collections.sort(results, Collections.reverseOrder());    
     return results;
   }
 
@@ -234,9 +224,6 @@ public class BOSSVSClassifier extends Classifier {
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        predict(id, processed);
-      }
-      public void predict(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i : indices) {
           if (i % BLOCKS == id) {
@@ -300,9 +287,6 @@ public class BOSSVSClassifier extends Classifier {
     ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        predictEnsambleLabel(id, processed);
-      }
-      public void predictEnsambleLabel(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i = 0; i < results.size(); i++) {
           if (i % threads == id) {

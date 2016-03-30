@@ -79,6 +79,8 @@ public abstract class Classifier {
     }
   }
 
+  public abstract Score eval() throws IOException;
+
   public static class Words{
     public static int binlog( int bits ) {
       int log = 0;
@@ -151,6 +153,10 @@ public abstract class Classifier {
         return 1;
       }
       return -1;
+    }
+    public void clear() {
+      this.testing = 0;
+      this.training = 0;
     }
   }
 

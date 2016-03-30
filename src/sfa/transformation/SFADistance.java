@@ -34,7 +34,7 @@ public class SFADistance {
       i+=2;
     }
 
-    // remaining Fourier values (mean and imaginary parts)
+    // remaining Fourier values (real and imaginary parts)
     for (; i < wordsTs.length; i++) {
 
       double value = dist(

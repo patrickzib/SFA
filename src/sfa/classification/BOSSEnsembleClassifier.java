@@ -48,10 +48,9 @@ public class BOSSEnsembleClassifier extends Classifier {
     public int features;
 
     public void clear() {
+      super.clear();
       this.model = null;
       this.bag = null;
-      this.testing = 0;
-      this.training = 0;
     }
   }
 
@@ -105,31 +104,15 @@ public class BOSSEnsembleClassifier extends Classifier {
       ExecutorService exec,
       final boolean normMean) throws FileNotFoundException {
     int minWindowLength = 10;
-    int maxWindowLength = this.trainSamples[0].getLength();
+    int maxWindowLength = MAX_WINDOW_LENGTH;
     for (TimeSeries ts : this.trainSamples) {
       maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
     }
-    maxWindowLength = Math.min(MAX_WINDOW_LENGTH, maxWindowLength);
-
     ArrayList<Integer> windows = new ArrayList<Integer>();
     for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
       windows.add(windowLength);
     }
-//    windows.add(15);
-
-    List<BossScore> results = fit(windows.toArray(new Integer[]{}), normMean, trainSamples, exec);
-    
-    // cleanup unused scores
-    for (BossScore s : results) {
-      if (s.bag != null
-          && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) { 
-        s.clear();
-      }
-    }
-
-    // sort descending
-    Collections.sort(results, Collections.reverseOrder());
-    return results;
+    return fit(windows.toArray(new Integer[]{}), normMean, trainSamples, exec);
   }
 
   public ArrayList<BossScore> fit(
@@ -181,10 +164,6 @@ public class BOSSEnsembleClassifier extends Classifier {
                 }
               }              
             }
-
-//            if (DEBUG) {
-//              System.out.println(i + "\t" + currentScore.training);
-//            }
             
             // add to ensemble
             if (score.training >= BOSSEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
@@ -197,6 +176,17 @@ public class BOSSEnsembleClassifier extends Classifier {
       }
     });
 
+    
+    // cleanup unused scores
+    for (BossScore s : results) {
+      if (s.bag != null
+          && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) { 
+        s.clear();
+      }
+    }
+
+    // sort descending
+    Collections.sort(results, Collections.reverseOrder());
     return results;
   }
 
@@ -210,9 +200,6 @@ public class BOSSEnsembleClassifier extends Classifier {
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        predict(id, processed);
-      }
-      public void predict(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i = 0; i < bagOfPatternsTestSamples.length; i++) {
           if (i % BLOCKS == id) {
@@ -252,7 +239,6 @@ public class BOSSEnsembleClassifier extends Classifier {
             if (bagOfPatternsTestSamples[i].label.equals(p.labels[i])) {
               p.correct.incrementAndGet();
             }
-//            System.out.println(i + " " + Double.valueOf(label[i]).intValue());
           }
         }
       }
@@ -280,9 +266,6 @@ public class BOSSEnsembleClassifier extends Classifier {
     ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        predictEnsambleLabel(id, processed);
-      }
-      public void predictEnsambleLabel(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i = 0; i < results.size(); i++) {
           if (i % threads == id) {
