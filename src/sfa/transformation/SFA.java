@@ -8,7 +8,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import sfa.classification.Classifier.Words;
 import sfa.timeseries.TimeSeries;
+
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.carrotsearch.hppc.cursors.IntCursor;
 
 /**
  * Symbolic Fourier Approximation as published in
@@ -24,8 +28,12 @@ public class SFA {
   public HistogramType histogramType = HistogramType.EQUI_DEPTH;
 
   public int alphabetSize = 256;
+  public byte neededBits = (byte)Words.binlog(this.alphabetSize);
   public int wordLength = 0;
   public boolean initialized = false;
+  public boolean lowerBounding = true;
+  
+  public int maxWordLength;
 
   // The Momentary Fourier Transform
   public MFT transformation;
@@ -34,7 +42,7 @@ public class SFA {
   public double[][] bins;
 
   public enum HistogramType {
-    EQUI_FREQUENCY, EQUI_DEPTH
+    EQUI_FREQUENCY, EQUI_DEPTH, INFORMATION_GAIN
   }
 
   static class ValueLabel {
@@ -50,9 +58,8 @@ public class SFA {
     }
   }
 
-  public SFA(HistogramType historgramType, boolean normMean) {
+  public SFA(HistogramType historgramType) {
     reset();
-    this.transformation = new MFT(normMean);
     this.histogramType = historgramType;
   }
  
@@ -65,11 +72,13 @@ public class SFA {
   @SuppressWarnings("unchecked")
   public void init(int l, int alphabetSize) {
     this.wordLength = l;
+    this.maxWordLength = l;
     this.alphabetSize = alphabetSize;
     this.initialized = true;
 
     // l-dimensional bins    
     this.alphabetSize = alphabetSize;
+    this.neededBits = (byte)Words.binlog(alphabetSize);
 
     this.bins = new double[l][alphabetSize-1];
     for (double[] row : this.bins ) {
@@ -103,7 +112,7 @@ public class SFA {
     }
     if (approximation == null) {
       // get approximation of the time series
-      approximation = this.transformation.transform(timeSeries, timeSeries.getLength(), this.wordLength);
+      approximation = this.transformation.transform(timeSeries, this.maxWordLength);
     }
 
     // use lookup table (bins) to get the word from the approximation
@@ -190,14 +199,14 @@ public class SFA {
    * @param symbols the SFA alphabet size
    * @param normMean if set, the mean is subtracted from each sliding window
    */
-  public void fitWindowing(TimeSeries[] timeSeries, int windowLength, int wordLength, int symbols, boolean normMean) {
-    this.transformation = new MFT(normMean);
+  public void fitWindowing(TimeSeries[] timeSeries, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
+    this.transformation = new MFT(windowLength, normMean, lowerBounding);
 
     ArrayList<TimeSeries> sa = new ArrayList<TimeSeries>(timeSeries.length * timeSeries[0].getLength() / windowLength);
     for (TimeSeries t : timeSeries) {
       sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
     }
-    fitTransform(sa.toArray(new TimeSeries[]{}), wordLength, symbols);
+    fitTransform(sa.toArray(new TimeSeries[]{}), wordLength, symbols, normMean);
   }
 
   /**
@@ -207,18 +216,53 @@ public class SFA {
    * @param wordLength
    * @return
    */
-  public short[][] transformWindowing(TimeSeries ts, int windowLength, int wordLength) {
-    double[][] mft = this.transformation.transformWindowing(ts, windowLength, wordLength);
+  public short[][] transformWindowing(TimeSeries ts, int wordLength) {
+    double[][] mft = this.transformation.transformWindowing(ts, maxWordLength);
     
     short[][] words = new short[mft.length][];
     for (int i = 0; i < mft.length; i++) {
-//      if (mft[i].length != l) {
-//        mft[i] = Arrays.copyOfRange(mft[i], 0, l);
-//      }
       words[i] = quantization(mft[i]);      
     }
     
     return words;
+  }
+  
+  /**
+   * Extracts sliding windows from a time series and transforms it to its SFA word.
+   * @param ts
+   * @param windowLength
+   * @param wordLength
+   * @return
+   */
+  public int[] transformWindowingInt(TimeSeries ts, int wordLength) {
+    short[][] words = transformWindowing(ts, wordLength);
+    int[] intWords = new int[words .length];
+    for (int i = 0; i < words .length; i++) {
+      intWords[i] = (int)Words.createWord(words[i], wordLength, neededBits);
+    }
+    return intWords;
+  }
+
+  protected double[][] fitTransformDouble (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
+    if (!this.initialized) {
+      init(wordLength, symbols);
+      
+      if (this.transformation == null) { // TODO!!
+        this.transformation = new MFT(samples[0].getLength(), normMean, lowerBounding);
+      }
+    }
+
+    double[][] transformedSamples = fillOrderline(samples, wordLength, symbols);
+
+    if (this.histogramType == HistogramType.EQUI_DEPTH) {
+      divideEquiDepthHistogram();
+    } else if (this.histogramType == HistogramType.EQUI_FREQUENCY) {
+      divideEquiWidthHistogram();
+    } else if (this.histogramType == HistogramType.INFORMATION_GAIN) {
+      divideHistogramInformationGain();
+    }
+    
+    return transformedSamples;
   }
 
   /**
@@ -229,22 +273,10 @@ public class SFA {
    * @param symbols
    * @return
    */
-  public short[][] fitTransform (TimeSeries[] samples, int wordLength, int symbols) {
-    if (!this.initialized) {
-      init(wordLength, symbols);
-    }
-
-    double[][] transformedSamples = fillOrderline(samples, wordLength, symbols);
-
-    if (this.histogramType == HistogramType.EQUI_DEPTH) {
-      divideEquiDepthHistogram();
-    } else if (this.histogramType == HistogramType.EQUI_FREQUENCY) {
-      divideEquiWidthHistogram();
-    }
-   
-    return transform(samples, transformedSamples);
+  public short[][] fitTransform (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {      
+    return transform(samples, fitTransformDouble(samples, wordLength, symbols, normMean));
   }
-
+  
   /**
    * Fill data in the orderline
    * @param samples
@@ -257,7 +289,7 @@ public class SFA {
       samples[i].norm();
 
       // approximation
-      transformedSamples[i] = this.transformation.transform(samples[i], samples[i].getLength(), l);
+      transformedSamples[i] = this.transformation.transform(samples[i], l);
 
       for (int j=0; j < transformedSamples[i].length; j++) {
         // round to 2 decimal places to reduce noise
@@ -312,6 +344,124 @@ public class SFA {
     }
   }
 
+  /**
+   * Use information-gain to divide the orderline
+   */
+  protected void divideHistogramInformationGain() {
+    // for each Fourier coefficient: split using maximal information gain
+    for (int i = 0; i < this.orderLine.length; i++) {
+      List<ValueLabel> element = this.orderLine[i];
+      if (!element.isEmpty()) {
+        ArrayList<Integer> splitPoints = new ArrayList<Integer>();
+        findBestSplit(element, 0, element.size(), this.alphabetSize, splitPoints);
+
+        Collections.sort(splitPoints);
+
+        // apply the split
+        for (int j = 0; j < splitPoints.size(); j++) {
+          double value = element.get(splitPoints.get(j)+1).value;
+//          double value = (element.get(splitPoints.get(j)).value + element.get(splitPoints.get(j)+1).value)/2.0;
+          this.bins[i][j] = value;
+        }
+      }
+    }
+  }
+  
+  protected static double entropy(ObjectIntOpenHashMap<String> frequency, double total) {
+    double entropy = 0;
+    double log2 = 1.0 / Math.log(2.0);
+    for (IntCursor element : frequency.values()) {
+      double p = element.value / total;
+      if (p > 0) {
+        entropy -= p * Math.log(p) * log2;
+      }
+    }
+    return entropy;
+  }
+
+  protected static double calculateInformationGain(
+      ObjectIntOpenHashMap<String> cIn,
+      ObjectIntOpenHashMap<String> cOut,
+      double class_entropy,
+      double total_c_in,
+      double total) {
+    double total_c_out = (total - total_c_in);
+    return class_entropy
+           - total_c_in / total * entropy(cIn, total_c_in)
+           - total_c_out / total * entropy(cOut, total_c_out);
+  }
+
+  protected void findBestSplit(
+      List<ValueLabel> element,
+      int start,
+      int end,
+      int remainingSymbols,
+      List<Integer> splitPoints
+      ) {
+
+    double bestGain = -1;
+    int bestPos = -1;
+
+    // class entropy
+    int total = end-start;
+    ObjectIntOpenHashMap<String> cIn = new ObjectIntOpenHashMap<String>();
+    ObjectIntOpenHashMap<String> cOut = new ObjectIntOpenHashMap<String>();
+    for (int pos = start; pos < end; pos++) {
+      cOut.putOrAdd(element.get(pos).label, 1, 1);
+    }
+    double class_entropy = entropy(cOut, total);
+
+    int i = start;
+    String lastLabel = element.get(i).label;
+    i += moveElement(element, cIn, cOut, start);
+
+    for (int split = start+1; split < end-1; split++) {
+      String label = element.get(i).label;
+      i += moveElement(element, cIn, cOut, split);
+
+      // only inspect changes of the label
+      if (!label.equals(lastLabel)) {
+        double gain = calculateInformationGain(cIn, cOut, class_entropy, i, total);
+
+        if (gain >= bestGain) {
+          bestPos = split;
+          bestGain = gain;
+        }
+      }
+      lastLabel = label;
+    }
+
+    if (bestPos > -1) {
+      splitPoints.add(bestPos);
+
+      // recursive split
+      remainingSymbols = remainingSymbols / 2;
+      if (remainingSymbols > 1) {
+        if (bestPos - start > 2 && end - bestPos > 2) { // enough data points?
+          findBestSplit(element, start, bestPos, remainingSymbols, splitPoints);
+          findBestSplit(element, bestPos, end, remainingSymbols, splitPoints);
+        }
+        else if (end - bestPos > 4) { // enough data points?
+          findBestSplit(element, bestPos, (end-bestPos)/2, remainingSymbols, splitPoints);
+          findBestSplit(element, (end-bestPos)/2, end, remainingSymbols, splitPoints);
+        }
+        else if (bestPos - start > 4) { // enough data points?
+          findBestSplit(element, start, (bestPos-start)/2, remainingSymbols, splitPoints);
+          findBestSplit(element, (bestPos-start)/2, end, remainingSymbols, splitPoints);
+        }
+      }
+    }
+  }
+
+  protected int moveElement(
+      List<ValueLabel> element,
+      ObjectIntOpenHashMap<String> cIn, ObjectIntOpenHashMap<String> cOut,
+      int pos) {
+    cIn.putOrAdd(element.get(pos).label, 1, 1);
+    cOut.putOrAdd(element.get(pos).label, -1, -1);
+    return 1;
+  }
+  
   public void printBins () {
     System.out.print("[");
     for (double[] element : this.bins) {

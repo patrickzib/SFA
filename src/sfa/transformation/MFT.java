@@ -5,6 +5,7 @@ package sfa.transformation;
 import java.util.Arrays;
 
 import sfa.timeseries.TimeSeries;
+import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
 /**
  * The Momentary Fourier Transform is alternative algorithm of
@@ -22,52 +23,52 @@ import sfa.timeseries.TimeSeries;
  */
 public class MFT {
   boolean normMean = false;
+  public int windowSize = 0;
+  int startOffset = 0;
+  double norm = 0;
+  
+  DoubleFFT_1D fft = null;
 
-  public MFT(boolean normMean) {
+  public MFT(int windowSize, boolean normMean, boolean lower_bounding) {
     this.normMean = normMean;
+    this.windowSize = windowSize;
+    this.fft = new DoubleFFT_1D(windowSize);
+
+    // ignore DC value?
+    this.startOffset = normMean? 2 : 0;
+    this.norm = lower_bounding? 1.0/Math.sqrt(windowSize) : 1.0;
   }
 
-  public double[] transform(TimeSeries ts, int windowSize, int l) {
-    return DFTNormed(ts.getData(), ts.calculateStddev(), windowSize, l);
-  }
-  
-  public double[] DFTNormed(double[] data, double std, int windowSize, int l) {
-    double[] dft = DFT(data, windowSize, l);
-    return normalizeFT(dft, std, 1.0/Math.sqrt(windowSize));
-  }
-  
-  public double[] DFT(double[] data, int windowSize, int l) {
-    double[] dft = new double[l];
-    double phi = 2*Math.PI / windowSize;
-    int startOffset = normMean? 1 : 0;
+  public double[] transform(TimeSeries timeSeries, int l) {
+    double[] data = new double[this.windowSize];
+    int windowSize = timeSeries.getLength();
 
-    for (int k = startOffset; k < l/2+startOffset; k++) { 
-      double real = 0.0;
-      double imag = 0.0;
-      for (int t = 0; t < windowSize; t++) { 
-        real += data[t]*Math.cos(phi * t * k);
-        imag += -data[t]*Math.sin(phi * t * k);
-      }
-      dft[(k-startOffset)*2] = real;
-      dft[(k-startOffset)*2+1] = imag;
+    System.arraycopy(timeSeries.getData(), 0, data, 0, windowSize);
+    this.fft.realForward(data);
+    data[1] = 0;
+
+    // norming
+    double[] copy = new double[Math.min(windowSize-this.startOffset, l)];
+    System.arraycopy(data, this.startOffset, copy, 0, copy.length);
+
+    int sign = 1;
+    for (int i = 0; i < copy.length; i++) {
+      copy[i] *= this.norm * sign;
+      sign *= -1;
     }
 
-    return dft;
+    return copy;
   }
 
-  public double[][] transformWindowing(TimeSeries timeSeries, int windowSize, int l) {
-    // ignore DC value?
-    int startOffset = normMean? 2 : 0;
-    double norm = 1.0/Math.sqrt(windowSize);
-
-    int wordLength = Math.min(windowSize-startOffset, l);    
+  public double[][] transformWindowing(TimeSeries timeSeries, int l) {
+    int wordLength = Math.min(windowSize, l+startOffset);
     wordLength = wordLength + wordLength % 2; // make it even
     double[] phis = new double[wordLength];
 
     for (int u = 0; u < phis.length; u+=2) {
-      double uHalve = -(u+startOffset)/2;
-      phis[u] = realephi(uHalve, windowSize);
-      phis[u+1] = complexephi(uHalve, windowSize);
+      double uHalve = -u/2;
+      phis[u] = realephi(uHalve, this.windowSize);
+      phis[u+1] = complexephi(uHalve, this.windowSize);
     }
 
     // means and stddev for each sliding window
@@ -76,8 +77,10 @@ public class MFT {
     double[] stds = new double[end];
     TimeSeries.calcIncreamentalMeanStddev(windowSize, timeSeries, means, stds);
 
-    // holds the DFT of each sliding window
     double[][] transformed = new double[end][];
+
+    // holds the DFT of each sliding window
+    int arraySize = Math.max(l+this.startOffset, this.windowSize);
     double[] mftData = null;
     double[] data = timeSeries.getData();
 
@@ -97,12 +100,16 @@ public class MFT {
       }
       // use the DFT for the first offset
       else {
-        mftData = Arrays.copyOf(timeSeries.getData(), windowSize);
-        mftData = DFT(mftData, windowSize, l);
+        mftData = Arrays.copyOf(timeSeries.getData(), arraySize);
+        this.fft.realForward(mftData);
+        mftData[1] = 0;
       }
 
       // normalization for lower bounding
-      transformed[t] = normalizeFT(Arrays.copyOf(mftData, l), stds[t], norm);
+      double[] copy = new double[l];
+      System.arraycopy(mftData, this.startOffset, copy, 0, l);
+
+      transformed[t] = normalizeFT(copy, stds[t]);
     }
 
     return transformed;
@@ -124,10 +131,12 @@ public class MFT {
     return -Math.sin(2*Math.PI*u/M);
   }
 
-  public double[] normalizeFT(double[] copy, double std, double norm) {
+  public double[] normalizeFT(double[] copy, double std) {
     double normalisingFactor = (std>0? 1.0 / std : 1.0) * norm;
+    int sign = 1;
     for (int i = 0; i < copy.length; i++) {
-      copy[i] *= normalisingFactor;
+      copy[i] *= sign * normalisingFactor;
+      sign *= -1;      
     }
     return copy;
   }

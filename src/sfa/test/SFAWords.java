@@ -22,14 +22,14 @@ public class SFAWords {
     int wordLength = 16;
     boolean normMean = true;
     
-    SFA sfa = new SFA(HistogramType.EQUI_DEPTH, normMean);    
+    SFA sfa = new SFA(HistogramType.EQUI_DEPTH);    
 
     // Load the train/test splits
     TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TRAIN"));
     TimeSeries[] test = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
     
     // train SFA representation
-    sfa.fitTransform(train, wordLength, symbols);
+    sfa.fitTransform(train, wordLength, symbols, normMean);
    
     // bins
     sfa.printBins();

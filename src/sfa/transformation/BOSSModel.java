@@ -58,8 +58,8 @@ public class BOSSModel {
     final int[][] words = new int[samples.length][];
     
     if (this.signature == null) {
-      this.signature = new SFA(HistogramType.EQUI_DEPTH, normMean);
-      this.signature.fitWindowing(samples, windowLength, maxF, symbols, normMean);
+      this.signature = new SFA(HistogramType.EQUI_DEPTH);
+      this.signature.fitWindowing(samples, windowLength, maxF, symbols, normMean, true);
     }
     
     // create sliding windows
@@ -68,7 +68,7 @@ public class BOSSModel {
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < samples.length; i++) {
           if (i % BLOCKS == id) {
-            short[][] sfaWords = signature.transformWindowing(samples[i], windowLength, maxF);
+            short[][] sfaWords = signature.transformWindowing(samples[i], maxF);
             words[i] = new int[sfaWords.length];
             for (int j = 0; j < sfaWords.length; j++) {
               words[i][j] = (int)Words.createWord(sfaWords[j], maxF, (byte)Words.binlog(symbols));

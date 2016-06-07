@@ -113,10 +113,7 @@ public class BOSSVSClassifier extends Classifier {
 
   public List<BossVSScore<IntFloatOpenHashMap>> fitEnsemble(ExecutorService exec, final boolean normMean) throws FileNotFoundException {
     int minWindowLength = 10;
-    int maxWindowLength = MAX_WINDOW_LENGTH;
-    for (TimeSeries ts : this.trainSamples) {
-      maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
-    }
+    int maxWindowLength = getMax(trainSamples, MAX_WINDOW_LENGTH);
 
     // equi-distance sampling of windows
     ArrayList<Integer> windows = new ArrayList<Integer>();

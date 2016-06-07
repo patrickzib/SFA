@@ -40,13 +40,11 @@ public abstract class Classifier {
   public File train;
   public File test;
 
-  public static boolean supervised = false;
-
   protected int[][] testIndices;
   protected int[][] trainIndices;
-  public static int folds = 3;
+  public static int folds = 10;
 
-  protected static int MAX_WINDOW_LENGTH = 1000;
+  protected static int MAX_WINDOW_LENGTH = 250;
 
   // Blocks for parallel execution
   public final int BLOCKS = 8;
@@ -302,6 +300,14 @@ public abstract class Classifier {
     return correctTesting;
   }
   
+  public int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {
+    int max = MAX_WINDOW_SIZE;
+    for (TimeSeries ts : samples) {
+      max = Math.min(ts.getLength(), max);
+    }
+    return max;
+  }
+    
   protected static HashSet<String> uniqueClassLabels(TimeSeries[] ts) {
     HashSet<String> labels = new HashSet<String>();
     for (TimeSeries t : ts) {
@@ -325,7 +331,7 @@ public abstract class Classifier {
     }
     return indices;
   }
-  
+ 
   protected void generateIndices() {
     IntArrayList[] sets = getStratifiedTrainTestSplitIndices(this.trainSamples, folds);
     this.testIndices = new int[folds][];

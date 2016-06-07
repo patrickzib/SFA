@@ -9,8 +9,8 @@ import sfa.classification.BOSSEnsembleClassifier;
 import sfa.classification.BOSSVSClassifier;
 import sfa.classification.Classifier;
 import sfa.classification.ParallelFor;
-import sfa.classification.ShotgunClassifier;
 import sfa.classification.ShotgunEnsembleClassifier;
+import sfa.classification.WClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
@@ -19,14 +19,26 @@ public class UCRClassification {
   // The datasets to use
   public static String[] datasets = new String[]{
     "Coffee",
-    "CBF",
+//    "ECG200",
+//    "FaceFour",
+//    "OliveOil",
+//    "Gun_Point",
     "Beef",
+//    "DiatomSizeReduction",
+    "CBF",
+//    "ECGFiveDays",
+//    "TwoLeadECG",
+//    "SonyAIBORobot SurfaceII",
+//    "MoteStrain",
+//    "ItalyPowerDemand",
+//    "SonyAIBORobot Surface",
   };
 
   public static void main(String argv[]) throws IOException {
     try {
       // the relative path to the datasets
       File dir = new File("./datasets/");
+//      File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification/");
 
       for (String s : datasets) {
         File d = new File(dir.getAbsolutePath()+"/"+s);
@@ -46,6 +58,11 @@ public class UCRClassification {
               // Load the train/test splits
               TimeSeries[] testSamples = TimeSeriesLoader.loadDatset(test);
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
+
+              // The W-classifier
+              Classifier w = new WClassifier(trainSamples, testSamples);
+              Classifier.Score scoreW = w.eval();
+              System.out.println(s + ";" + scoreW.toString());
 
               // The BOSS ensemble classifier
               Classifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);

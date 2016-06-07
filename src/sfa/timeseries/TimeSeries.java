@@ -238,6 +238,7 @@ public class TimeSeries {
       System.arraycopy(this.data, i*windowSize, subsequenceData, 0, windowSize);
       subsequences[i] = new TimeSeries(subsequenceData);
       subsequences[i].norm(normMean);
+      subsequences[i].setLabel(getLabel());
     }
 
     return subsequences;

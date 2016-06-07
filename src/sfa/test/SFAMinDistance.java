@@ -22,7 +22,7 @@ public class SFAMinDistance {
     int wordLength = 16;
     boolean normMean = true;
     
-    SFA sfa = new SFA(HistogramType.EQUI_DEPTH, normMean);    
+    SFA sfa = new SFA(HistogramType.EQUI_DEPTH);    
     SFADistance sfaDistance = new SFADistance(sfa);
 
     // Load the train/test splits
@@ -30,7 +30,7 @@ public class SFAMinDistance {
     TimeSeries[] test = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
     
     // train SFA representation
-    short[][] wordsTrain = sfa.fitTransform(train, wordLength, symbols);
+    short[][] wordsTrain = sfa.fitTransform(train, wordLength, symbols, normMean);
    
     double minDistance = Double.MAX_VALUE;   
     double accuracy = 0.0;    
@@ -40,7 +40,7 @@ public class SFAMinDistance {
     for (int q = 0; q < test.length; q++) {
       TimeSeries query = test[q];
       // approximation
-      double[] dftQuery = sfa.transformation.transform(query, query.getLength(), wordLength);
+      double[] dftQuery = sfa.transformation.transform(query, wordLength);
       
       // quantization
       short[] wordQuery = sfa.quantization(dftQuery);
