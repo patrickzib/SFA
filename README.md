@@ -80,7 +80,36 @@ if (distance < minDistance) {
   }     
 }
 ```
-	
+
+Similarity search using the index SFATrie.
+
+```java
+int l = 16; // SFA word length ( & dimensionality of the index)
+int windowLength = 256; // length of the subsequences to be indexed
+int leafThreshold = 100; // number of subsequences in each leaf node
+int k = 10; // k-NN search
+
+// Load datasets
+TimeSeries timeSeries = ...
+
+// create the SFA trie & and index the time series
+SFATrie index = new SFATrie(l, leafThreshold);
+index.buildIndex(timeSeries, windowLength);
+
+// perform a k-NN search
+SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
+
+// output result
+List<Integer> offsets = result.values();
+List<Double> distances = result.keys();
+
+for (int j = 0; j < result.size(); j++) {
+	System.out.println("\tResult:\t"+distances.get(j) + "\t" +offsets.get(j));
+}
+
+```
+
+
 **References**
 
 "Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and index for similarity search in high dimensional datasets. In: EDBT, ACM (2012)"
