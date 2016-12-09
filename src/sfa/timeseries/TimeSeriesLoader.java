@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class TimeSeriesLoader {
   
@@ -69,6 +70,45 @@ public class TimeSeriesLoader {
 
     System.out.println("Done reading from " + dataset + " samples " + samples.size() + " length " + samples.get(0).getLength());
     return samples.toArray(new TimeSeries[] {});
+  }
+  
+  public static TimeSeries readSamplesSubsequences (File dataset, int skipColumns) throws IOException {
+    FileReader fr = new FileReader(dataset);
+    BufferedReader br = new BufferedReader(fr);
+
+    try {      
+      List<Double> data = new ArrayList<Double>();
+      String line = null;
+      while( (line = br.readLine()) != null) {        
+        line.trim();        
+        String[] values = line.split("[ \\t]");
+        if (values.length > 0) {
+          for (int i = skipColumns; i < values.length; i++) {           
+            try {
+              values[i].trim();
+              if (isNonEmptyColumn(values[i])) {
+                data.add(Double.parseDouble(values[i]));
+              }
+            } catch (NumberFormatException nfe) {
+              // Parse-Exception ignorieren
+            }
+          }
+        }
+      }
+      double[] timeSeriesData = convertToDoubleArray(data);
+      return new TimeSeries(timeSeriesData);
+    } finally {
+      br.close();
+    }    
+  }
+  
+  public static double[] convertToDoubleArray(List<Double> data) {
+    double[] timeSeriesData = new double[data.size()];
+    int i = 0;
+    for (double d : data) {
+      timeSeriesData[i++] = d;
+    }
+    return timeSeriesData;
   }
   
   public static boolean isNonEmptyColumn(String column) {

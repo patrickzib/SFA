@@ -2,6 +2,8 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.timeseries;
 
+import java.util.Arrays;
+
 public class TimeSeries {
   protected double[] data = null;
 
@@ -151,6 +153,37 @@ public class TimeSeries {
     return true;
   }
 
+  
+  /**
+   * Get a subsequence starting at offset with length windowSize.
+   * @param windowSize
+   * @return
+   */
+  public TimeSeries getSubsequence(int offset, int windowSize) {
+    double[] subsequenceData = Arrays.copyOfRange(this.data, offset, offset+windowSize);
+    if (subsequenceData.length != windowSize) {
+      System.err.println("Wrong size!!");
+    }
+    TimeSeries sequence = new TimeSeries(subsequenceData);
+    sequence.norm();
+    return sequence;
+  }
+
+  /**
+   * Get a subsequence starting at offset with length windowSize.
+   * @param windowSize
+   * @return
+   */
+  public TimeSeries getSubsequence(int offset, int windowSize, double mean, double stddev) {
+    double[] subsequenceData = Arrays.copyOfRange(this.data, offset, offset+windowSize);
+    if (subsequenceData.length != windowSize) {
+      System.err.println("Wrong size!!");
+    }
+    TimeSeries sequence = new TimeSeries(subsequenceData);
+    sequence.norm(true, mean, stddev);
+    return sequence;
+  }
+  
   /**
    * Get sliding windows with windowSize.
    * @param windowSize

@@ -228,6 +228,17 @@ public class SFA {
   }
   
   /**
+   * Extracts sliding windows from a time series and applies the Fourier Transform.
+   * @param ts
+   * @param windowLength
+   * @param wordLength
+   * @return
+   */
+  public double[][] transformWindowingDouble(TimeSeries ts, int wordLength) {
+    return this.transformation.transformWindowing(ts, maxWordLength);    
+  }
+  
+  /**
    * Extracts sliding windows from a time series and transforms it to its SFA word.
    * @param ts
    * @param windowLength
