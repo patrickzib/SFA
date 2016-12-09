@@ -9,9 +9,9 @@ import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
-public class SFATree {
+public class SFATrieTest {
 
-  public static void testSFATree() throws IOException {
+  public static void testSFATrie() throws IOException {
     int l = 16; // SFA word length ( & dimensionality of the index)
     int windowLength = 256; // length of the subsequences to be indexed
     int leafThreshold = 100; // number of subsequences in each leaf node
@@ -122,6 +122,6 @@ public class SFATree {
   }
 
   public static void main(String argv[]) throws IOException {
-    testSFATree();
+    testSFATrie();
   }
 }
