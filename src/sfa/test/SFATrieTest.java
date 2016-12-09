@@ -54,9 +54,9 @@ public class SFATrieTest {
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
 
 //      List<Integer> offsets = result.values();
-      List<Double> distances = result.keys();
-
-//      for (int j = 0; j < offsets.size(); j++) {
+//      List<Double> distances = result.keys();
+//
+//      for (int j = 0; j < result.size(); j++) {
 //        System.out.println("\tResult:\t"+distances.get(j) + "\t" +offsets.get(j));
 //      }
 

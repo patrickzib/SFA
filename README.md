@@ -182,7 +182,7 @@ ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag
 
 **References**
 
-"The Bag-of-SFA-Symbols in Vector Space classifier as published in Schäfer, P.: Scalable time series classification. DMKD (Preprint)"
+"Schäfer, P.: Scalable Time Series Classification. DMKD 30(6) (2016)"
 http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
 
 # Use Cases / Tests
