@@ -90,7 +90,8 @@ int leafThreshold = 100; // number of subsequences in each leaf node
 int k = 10; // k-NN search
 
 // Load datasets
-TimeSeries timeSeries = ...
+TimeSeries timeSeries = ...;
+TimeSeries query = ...;
 
 // create the SFA trie & and index the time series
 SFATrie index = new SFATrie(l, leafThreshold);
