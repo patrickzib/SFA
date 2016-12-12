@@ -426,10 +426,10 @@ public class SFATrie {
     // quantization
     short[] wordQuery = quantization.quantization(dftQuery);
     
-    return searchNearestNeighbor(dftQuery, wordQuery, query, k);
+    return searchKNN(dftQuery, wordQuery, query, k);
   }
-
-  public SortedListMap<Double, Integer> searchNearestNeighbor(
+  
+  public SortedListMap<Double, Integer> searchKNN(
       double[] dftQuery, short[] wordQuery, TimeSeries query, int k) {
 
     // priority queues ordered by ascending distances
