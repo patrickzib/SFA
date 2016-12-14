@@ -2,6 +2,12 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,8 +26,9 @@ import com.carrotsearch.hppc.cursors.IntCursor;
  *    index for similarity search in high dimensional datasets. 
  *    In: EDBT, ACM (2012)
  */
-public class SFA {
-  
+public class SFA implements Serializable {
+  private static final long serialVersionUID = -3903361341617350743L;
+
   // distribution of Fourier values
   public ArrayList<ValueLabel>[] orderLine;
 
@@ -45,7 +52,9 @@ public class SFA {
     EQUI_FREQUENCY, EQUI_DEPTH, INFORMATION_GAIN
   }
 
-  static class ValueLabel {
+  static class ValueLabel implements Serializable {
+    private static final long serialVersionUID = 4392333771929261697L;
+
     public double value;
     public String label;
     public ValueLabel(double key, String  label) {
@@ -484,5 +493,25 @@ public class SFA {
       System.out.println(";");
     }
     System.out.println("]");
+  }
+  
+  public static SFA loadFromDisk(String path) {
+    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path));) {
+      return (SFA) in.readObject();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public boolean writeToDisk(String path) {
+    try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(path))) {
+      out.writeObject(this);
+      return true;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return false;
   }
 }

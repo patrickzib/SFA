@@ -2,16 +2,18 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.timeseries;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class TimeSeries {
+public class TimeSeries implements Serializable {
+  private static final long serialVersionUID = 6340030797230203868L;
+
   protected double[] data = null;
 
   protected double mean = 0;
   protected double stddev = 1;
 
   protected boolean normed = false;
-
   protected String label = null;
 
   public TimeSeries (double[] data) {

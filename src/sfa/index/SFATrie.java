@@ -2,6 +2,15 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.index;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,10 +20,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.SFA;
-import sfa.transformation.SFADistance;
 import sfa.transformation.SFA.HistogramType;
 
 /**
@@ -27,7 +37,9 @@ import sfa.transformation.SFA.HistogramType;
  *    In: EDBT, ACM (2012)
  *
  */
-public class SFATrie {
+public class SFATrie implements Serializable {
+  private static final long serialVersionUID = 8983404060948074333L;
+
   protected SFANode root;
 
   protected int wordLength;
@@ -36,8 +48,7 @@ public class SFATrie {
 
   protected int minimalHeight = -1;
 
-  public transient SFA quantization = null;
-  public transient SFADistance distance = null;
+  public SFA quantization = null;
   protected boolean compressed = false;
 
   protected transient long ioBlockRead = 0;
@@ -46,6 +57,10 @@ public class SFATrie {
 
   public static enum NodeType { Leaf, Internal };
 
+  TimeSeries ts;
+  double[] means;
+  double[] stddev;
+  
   /**
    * Create a new SFATrie with dimenionality l and threshold 'leafThreshold'.
    * A leaf will be split, once leafThreshold is exceeded.
@@ -55,7 +70,6 @@ public class SFATrie {
    */
   public SFATrie(int l, int leafThreshold) {
     this.quantization = new SFA(HistogramType.EQUI_DEPTH);
-    this.distance = new SFADistance(this.quantization);
 
     this.symbols = 8;
     this.wordLength = l;
@@ -84,13 +98,15 @@ public class SFATrie {
 
     // calculate means and stddev
     int size = (ts.getData().length-windowLength)+1;
-    double[] means = new double[size];
-    double[] stddevs = new double[size];
-    TimeSeries.calcIncreamentalMeanStddev(windowLength, ts, means, stddevs);
+    this.means = new double[size];
+    this.stddev = new double[size];
+    this.ts = ts;
+    TimeSeries.calcIncreamentalMeanStddev(windowLength, ts, this.means, this.stddev);
 
     // insert each timeseries window
     for (int offset = 0; offset < words.length; offset++) {
-      insert(new TimeSeriesWindow(ts, words[offset], this.quantization.quantization(words[offset]), offset, windowLength, means, stddevs), 0, this.root);
+      TimeSeriesWindow window = new TimeSeriesWindow(words[offset], this.quantization.quantization(words[offset]), offset, windowLength);
+      insert(window, 0, this.root);
     }
 
     System.out.println("\tLeaves before path-compression " + getLeafCount());
@@ -366,10 +382,10 @@ public class SFATrie {
       // retrieve all time series
       for (TimeSeriesWindow object : node.getElements()) {
         double originalDistance = getEuclideanDistance(
-            object.ts,
+            ts,
             query,
-            object.means[object.offset],
-            object.stddev[object.offset],
+            means[object.offset],
+            stddev[object.offset],
             Double.MAX_VALUE,
             object.offset);
         result.put(originalDistance, object);
@@ -470,10 +486,10 @@ public class SFATrie {
           for (TimeSeriesWindow object : currentNode.getElements()) {
             kthBestDistance = (result.size() < k ? Double.MAX_VALUE : result.lastKey());
             double distance = getEuclideanDistance(
-                object.ts,
+                ts,
                 query,
-                object.means[object.offset],
-                object.stddev[object.offset],
+                means[object.offset],
+                stddev[object.offset],
                 kthBestDistance,
                 object.offset);
             if (distance <= kthBestDistance) {
@@ -614,8 +630,9 @@ public class SFATrie {
     return thisTree.isEmpty() && otherTree.isEmpty();
   }
 
+
   /**
-   * setzt die IO-Kosten wieder auf 0
+   * reset IO-costs to 0
    * @param ioCost
    */
   public void resetIoCosts() {
@@ -625,7 +642,7 @@ public class SFATrie {
   }
 
   /**
-   * F�rgt den I/O-Kosten f�r das Auslesen von Knoten <code>ioCost</code> hinzu
+   * add costs for reading a node
    * @param ioCost
    */
   public void addToBlockRead(int blockCost) {
@@ -633,35 +650,46 @@ public class SFATrie {
   }
 
   /**
-   * F�rgt den I/O-Kosten f�r das Auslesen von Zeitreihen <code>ioCost</code> hinzu
+   * add I-O costs for reading a lead
    * @param ioCost
    */
   public void addToIOTimeSeriesRead(int ioCost) {
     this.ioTimeSeriesRead += (ioCost);
   }
 
+  /**
+   * add costs for distance calculations
+   * @param timeSeries
+   */
   public void addToTimeSeriesRead(int timeSeries) {
     this.timeSeriesRead += (timeSeries);
   }
 
 
   /**
-   * Die Kosten die ein Lesezugriff auf ein Knotenelement erzeugt.
-   * Dabei wird davon ausgegangen, dass das Laden von Knoten/Bl�ttern einen Random-Access ausmacht.
+   * the costs for reading a node
    * @return
    */
   public long getBlockRead() {
     return this.ioBlockRead;
   }
 
+  /**
+   * The costs for reading a leaf
+   * @return
+   */
   public long getIoTimeSeriesRead() {
     return this.ioTimeSeriesRead;
   }
 
+  /**
+   * the costs for distance calculations
+   * @return
+   */
   public long getTimeSeriesRead() {
     return this.timeSeriesRead;
   }
-
+  
   protected <E> E removeFromMultiMap(TreeMap<Double, List<E>> queue, double distance) {
     List<E> elements = queue.get(distance);
     E top = elements.remove(0);
@@ -679,8 +707,35 @@ public class SFATrie {
     queue.get(key).add(object);
   }
 
-  class TimeSeriesWindow {
-    TimeSeries ts;
+
+  public boolean writeToDisk(File path) {
+    try (ObjectOutputStream out = new ObjectOutputStream(
+        new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(path))))){
+      out.writeObject(this);
+      return true;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return false;
+  }
+
+  public static SFATrie loadFromDisk(File path) {
+    try (ObjectInputStream in = new ObjectInputStream(
+        new BufferedInputStream(new GZIPInputStream(new FileInputStream(path))))) {
+      return (SFATrie) in.readObject();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    resetIoCosts();
+  }
+  class TimeSeriesWindow implements Serializable {
+    private static final long serialVersionUID = -6192378071620042008L;
 
     short[] word;
     double[] fourierValues;
@@ -688,38 +743,27 @@ public class SFATrie {
     int offset;
     int windowSize;
 
-    transient double[] means;
-    transient double[] stddev;
-
     public TimeSeriesWindow(
-        TimeSeries ts,
         double[] fourierValues,
         short[] word,
         int offset,
-        int windowSize,
-        double[] means,
-        double[] stddev) {
-      this.ts = ts;
+        int windowSize) {
       this.word = word;
       this.offset = offset;
       this.windowSize = windowSize;
       this.fourierValues = fourierValues;
-      this.means = means;
-      this.stddev = stddev;
     }
 
 //    public TimeSeries getWindow() {
 //      return this.ts.getSubsequence(
 //          this.offset, this.windowSize, this.means[this.offset], this.stddev[this.offset]); // TODO cache
 //    }
-
-    public double[] getFourierTransform() {
-      return this.fourierValues;
-    }
   }
 
 
-  public class SFANode {
+  public class SFANode implements Serializable {
+    private static final long serialVersionUID = -645698847993760867L;
+
     protected long[] uuid = new long[2];
 
     // Children
@@ -843,7 +887,7 @@ public class SFATrie {
     }
 
     public void adaptMinMaxValues(TimeSeriesWindow element) {
-      adaptMinMaxValues(element.getFourierTransform(), element.getFourierTransform());
+      adaptMinMaxValues(element.fourierValues, element.fourierValues);
     }
 
     public void adaptMinMaxValues(SFANode node) {

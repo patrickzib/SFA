@@ -2,6 +2,8 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Arrays;
 
 import sfa.timeseries.TimeSeries;
@@ -21,13 +23,15 @@ import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
  * @author bzcschae
  *
  */
-public class MFT {
+public class MFT implements Serializable {
+  private static final long serialVersionUID = 8508604292241736378L;
+
   boolean normMean = false;
   public int windowSize = 0;
   int startOffset = 0;
   double norm = 0;
   
-  DoubleFFT_1D fft = null;
+  transient DoubleFFT_1D fft = null;
 
   public MFT(int windowSize, boolean normMean, boolean lower_bounding) {
     this.normMean = normMean;
@@ -140,4 +144,10 @@ public class MFT {
     }
     return copy;
   }
+  
+  private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    this.fft = new DoubleFFT_1D(this.windowSize);
+  }
+
 }

@@ -24,6 +24,10 @@ public class SFATrieTest {
     TimeSeries timeSeries2 = TimeSeriesLoader.readSamplesSubsequences(new File("./datasets/indexing/burst.dat"),0);
     System.out.println("Query DS size : " + timeSeries2.getLength());
 
+    Runtime runtime = Runtime.getRuntime();
+    long mem = runtime.totalMemory();
+    long time = System.currentTimeMillis();
+    
     SFATrie index = new SFATrie(l, leafThreshold);
     index.buildIndex(timeSeries, windowLength);
     index.checkIndex();
@@ -36,8 +40,22 @@ public class SFATrieTest {
       e.printStackTrace();
     }
 
-    System.out.println("Size of the index: "+index.getSize());
+//    // store index
+//    System.out.println("Write index to disk");
+//    File location = new File("./tmp/sfatrie.idx");
+//    location.deleteOnExit();
+//    index.writeToDisk(location);
+//
+//    System.out.println("Load index from disk");
+//    SFATrie index2 = SFATrie.loadFromDisk(location);
+//    if (!index.equals(index2)) {
+//      System.out.println("Failed to load index!");
+//    };
+//    index = index2;
 
+    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
+
+    System.out.println("Perform NN-queries");
     int size = (timeSeries.getData().length-windowLength)+1;
     double[] means = new double[size];
     double[] stds = new double[size];
@@ -48,7 +66,7 @@ public class SFATrieTest {
 
       TimeSeries query = timeSeries2.getSubsequence(i, windowLength);
 
-      long time = System.currentTimeMillis();
+      time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
