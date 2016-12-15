@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.carrotsearch.hppc.DoubleArrayList;
+
 public class TimeSeriesLoader {
   
   /**
@@ -20,10 +22,8 @@ public class TimeSeriesLoader {
    */
   public static TimeSeries[] loadDatset(File dataset) throws IOException {
     ArrayList<TimeSeries> samples = new ArrayList<TimeSeries>();
-
-    FileReader fr = new FileReader(dataset);
-    BufferedReader br = new BufferedReader(fr);
-    try {      
+   
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {      
       String line = null;
       while( (line = br.readLine()) != null) {        
         if (line.startsWith("@")) {
@@ -64,20 +64,15 @@ public class TimeSeriesLoader {
 
     } catch (IOException e) {
       e.printStackTrace();
-    } finally {
-      br.close();
-    }
+    } 
 
     System.out.println("Done reading from " + dataset + " samples " + samples.size() + " length " + samples.get(0).getLength());
     return samples.toArray(new TimeSeries[] {});
   }
   
   public static TimeSeries readSamplesSubsequences (File dataset, int skipColumns) throws IOException {
-    FileReader fr = new FileReader(dataset);
-    BufferedReader br = new BufferedReader(fr);
-
-    try {      
-      List<Double> data = new ArrayList<Double>();
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){      
+      DoubleArrayList data = new DoubleArrayList();
       String line = null;
       while( (line = br.readLine()) != null) {        
         line.trim();        
@@ -95,22 +90,10 @@ public class TimeSeriesLoader {
           }
         }
       }
-      double[] timeSeriesData = convertToDoubleArray(data);
-      return new TimeSeries(timeSeriesData);
-    } finally {
-      br.close();
-    }    
+      return new TimeSeries(data.toArray());
+    }   
   }
-  
-  public static double[] convertToDoubleArray(List<Double> data) {
-    double[] timeSeriesData = new double[data.size()];
-    int i = 0;
-    for (double d : data) {
-      timeSeriesData[i++] = d;
-    }
-    return timeSeriesData;
-  }
-  
+
   public static boolean isNonEmptyColumn(String column) {
     return column!=null && !"".equals(column) && !"NaN".equals(column) && !"\t".equals(column);
   }

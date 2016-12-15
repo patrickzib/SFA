@@ -74,7 +74,7 @@ public class SFATrie implements Serializable {
     this.symbols = 8;
     this.wordLength = l;
 
-    this.root = new SFANode(new short[0], this.symbols, this.wordLength);
+    this.root = new SFANode(new byte[0], this.symbols, this.wordLength);
     this.leafThreshold = leafThreshold;
 
     resetIoCosts();
@@ -105,7 +105,11 @@ public class SFATrie implements Serializable {
 
     // insert each timeseries window
     for (int offset = 0; offset < words.length; offset++) {
-      TimeSeriesWindow window = new TimeSeriesWindow(words[offset], this.quantization.quantization(words[offset]), offset, windowLength);
+      TimeSeriesWindow window = new TimeSeriesWindow(
+          words[offset], 
+          this.quantization.quantizationByte(words[offset]), 
+          offset, 
+          windowLength);
       insert(window, 0, this.root);
     }
 
@@ -122,7 +126,7 @@ public class SFATrie implements Serializable {
 
   private void insert(
       SFANode nodeToInsert,
-      short[] path,
+      byte[] path,
       int index,
       SFANode node,
       SFANode parentNode) {
@@ -131,7 +135,7 @@ public class SFATrie implements Serializable {
     node.adaptMinMaxValues(nodeToInsert);
 
     if (node.type == NodeType.Internal) {
-      short key = path[index];
+      byte key = path[index];
       SFANode childNode = node.getChild(key);
 
       if (childNode != null) {
@@ -199,7 +203,7 @@ public class SFATrie implements Serializable {
     // adapt min-max-bounds
     node.adaptMinMaxValues(element);
 
-    short key = element.word[index];
+    byte key = element.word[index];
     SFANode childNode = node.getChild(key);
 
     if (childNode == null) {
@@ -301,6 +305,7 @@ public class SFATrie implements Serializable {
 //              List<TimeSeriesWindow> elements = new ArrayList<>();
               for (TimeSeriesWindow ts : currentNode.getElements()) {
                 ts.fourierValues = null;
+                ts.word = null;                
               }
 //              currentNode.elements.clear();
 //              currentNode.addAll(elements);
@@ -345,10 +350,10 @@ public class SFATrie implements Serializable {
    * @param path
    * @return
    */
-  public SFANode getLeafNode(short[] path) {
+  public SFANode getLeafNode(byte[] path) {
     SFANode currentNode = this.root;
 
-    for (short element : path) {
+    for (byte element : path) {
       if (currentNode.type == NodeType.Internal) {
         addToBlockRead(1);
         SFANode newCurrentNode = currentNode.getChild(element);
@@ -368,7 +373,7 @@ public class SFATrie implements Serializable {
    * Approximate search for the query.
    */
   public SortedListMap<Double, TimeSeriesWindow> search(
-      double[] dftQuery, short[] wordQuery, TimeSeries query, int k) {
+      double[] dftQuery, byte[] wordQuery, TimeSeries query, int k) {
     SortedListMap<Double, TimeSeriesWindow> result = new SortedListMap<Double, TimeSeriesWindow>(k);
 
     // search for the exact path
@@ -421,10 +426,10 @@ public class SFATrie implements Serializable {
     return this.root.getLeafNodeCounts(leaves);
   }
 
-  protected SFANode getNode(short[] path, double epsilonSquare, double error) {
+  protected SFANode getNode(byte[] path, double epsilonSquare, double error) {
     SFANode currentNode = this.root;
 
-    for (short element : path) {
+    for (byte element : path) {
       currentNode = currentNode.getChild(element);
       if (currentNode == null) {
         return null;
@@ -440,13 +445,13 @@ public class SFATrie implements Serializable {
     double[] dftQuery = quantization.transformation.transform(query, wordLength);
     
     // quantization
-    short[] wordQuery = quantization.quantization(dftQuery);
+    byte[] wordQuery = quantization.quantizationByte(dftQuery);
     
     return searchKNN(dftQuery, wordQuery, query, k);
   }
   
   public SortedListMap<Double, Integer> searchKNN(
-      double[] dftQuery, short[] wordQuery, TimeSeries query, int k) {
+      double[] dftQuery, byte[] wordQuery, TimeSeries query, int k) {
 
     // priority queues ordered by ascending distances
     TreeMap<Double, List<SFANode>> queue = new TreeMap<>();
@@ -541,7 +546,7 @@ public class SFATrie implements Serializable {
 
   protected double getLowerBoundingDistance(
       double[] dftQuery,
-      short[] wordQuery,
+      byte[] wordQuery,
       double[] minValues,
       double[] maxValues) {
 
@@ -737,7 +742,7 @@ public class SFATrie implements Serializable {
   class TimeSeriesWindow implements Serializable {
     private static final long serialVersionUID = -6192378071620042008L;
 
-    short[] word;
+    byte[] word;
     double[] fourierValues;
 
     int offset;
@@ -745,7 +750,7 @@ public class SFATrie implements Serializable {
 
     public TimeSeriesWindow(
         double[] fourierValues,
-        short[] word,
+        byte[] word,
         int offset,
         int windowSize) {
       this.word = word;
@@ -773,7 +778,7 @@ public class SFATrie implements Serializable {
     private List<TimeSeriesWindow> elements;
 
     // Schranke mit reduzierter Kardinalität
-    protected short[] word;
+    protected byte[] word;
 
     // Untere und obere Schranke der vorhandenen Zeitreihen
     protected double[] minValues;
@@ -781,14 +786,16 @@ public class SFATrie implements Serializable {
 
     protected NodeType type = NodeType.Internal;
 
-    public SFANode(short[] word, int symbols, int length) {
+    public SFANode(byte[] word, int symbols, int length) {
       this.type = NodeType.Leaf;
       this.word = word;
 
       // generate uuid for leaf node file names
-      UUID uuidGen = UUID.randomUUID();
-      this.uuid[0] = uuidGen.getLeastSignificantBits();
-      this.uuid[1] = uuidGen.getMostSignificantBits();
+      if (this.type == NodeType.Leaf) {      
+        UUID uuidGen = UUID.randomUUID();
+        this.uuid[0] = uuidGen.getLeastSignificantBits();
+        this.uuid[1] = uuidGen.getMostSignificantBits();
+      }
 
       this.minValues = new double[length];
       this.maxValues = new double[length];
@@ -802,9 +809,9 @@ public class SFATrie implements Serializable {
 //
 //    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
 //      this.uuid = (long[]) in.readObject();
-//      this.children = (Map<Short, SFANode>) in.readObject();
+//      this.children = (Map<byte, SFANode>) in.readObject();
 //      this.elements = (List<TimeSeriesWindow>) in.readObject();
-//      this.word = (short[]) in.readObject();
+//      this.word = (byte[]) in.readObject();
 //      this.minValues = (double[]) in.readObject();
 //      this.maxValues = (double[]) in.readObject();
 //      this.type = (NodeType) in.readObject();
@@ -834,13 +841,13 @@ public class SFATrie implements Serializable {
       this.elements.addAll(elements);
     }
 
-    public SFANode addChild(short key, int symbols, int dimensionality) {
-      short[] newWord = Arrays.copyOf(this.word, this.word.length + 1);
+    public SFANode addChild(byte key, int symbols, int dimensionality) {
+      byte[] newWord = Arrays.copyOf(this.word, this.word.length + 1);
       newWord[newWord.length - 1] = key;
       return addChild(key, new SFANode(newWord, symbols, dimensionality));
     }
 
-    public SFANode addChild(short key, SFANode childNode) {
+    public SFANode addChild(byte key, SFANode childNode) {
       if (this.children == null) {
         this.children = new SFANode[SFATrie.this.symbols];
       }
@@ -857,7 +864,7 @@ public class SFATrie implements Serializable {
       return childNode;
     }
 
-    public SFANode getChild(short key) {
+    public SFANode getChild(byte key) {
       if (this.children != null) {
         return this.children[key];
       }
@@ -946,8 +953,8 @@ public class SFATrie implements Serializable {
     public String toString() {
       StringBuffer output = new StringBuffer();
       output.append(this.type + "\t");
-      for (short c : this.word) {
-        output.append("" + (short) c + " ");
+      for (byte c : this.word) {
+        output.append("" + (byte) c + " ");
       }
       return output.toString();
     }
@@ -1048,7 +1055,7 @@ public class SFATrie implements Serializable {
       return size;
     }
 
-    public short[] getWord() {
+    public byte[] getWord() {
       return this.word;
     }
 
@@ -1071,7 +1078,7 @@ public class SFATrie implements Serializable {
     protected String getFileName() {
       StringBuffer name = new StringBuffer("/sfa_leaf/leaf_" + this.uuid[0] + "_" + this.uuid[1]);
 
-      for (short element2 : this.word) {
+      for (byte element2 : this.word) {
         name.append("_" + (int) element2);
       }
       return name.toString() + ".dat";

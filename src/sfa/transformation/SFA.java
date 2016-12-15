@@ -183,6 +183,22 @@ public class SFA implements Serializable {
     }
     return word;
   }
+  
+  public byte[] quantizationByte(double[] approximation) {
+    int i = 0;
+    byte[] word = new byte[approximation.length];
+    for (double value : approximation) {
+      // lookup character:
+      byte c = 0;
+      for (c = 0; c < this.bins[i].length; c++) {
+        if (value < this.bins[i][c]) {
+          break;
+        }
+      }
+      word[i++] = c;
+    }
+    return word;
+  }
 
   protected void sortOrderLine() {
     for (List<ValueLabel> element : this.orderLine) {
