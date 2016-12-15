@@ -20,6 +20,9 @@ public class SFATrieTest {
     TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
+    //    TimeSeries[] timeSeries = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/sample_lightcurves.txt"));
+//    System.out.println("Sample DS size : " + timeSeries.length);
+    
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
     int windowLength = timeSeries2[0].getLength(); // length of the subsequences to be indexed
     System.out.println("Query DS size : " + windowLength);
@@ -56,7 +59,7 @@ public class SFATrieTest {
     TimeSeries.calcIncreamentalMeanStddev(windowLength, timeSeries, means, stds);
     
     for (int i = 0; i < timeSeries2.length; i++) {
-      System.out.println(i+". Query");
+      System.out.println((i+1) + ". Query");
       TimeSeries query = timeSeries2[i];
       
       time = System.currentTimeMillis();

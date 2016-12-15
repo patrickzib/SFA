@@ -57,9 +57,9 @@ public class SFATrie implements Serializable {
 
   public static enum NodeType { Leaf, Internal };
 
-  TimeSeries ts;
-  double[] means;
-  double[] stddev;
+  TimeSeries[] ts;
+  double[][] means;
+  double[][] stddev;
   
   /**
    * Create a new SFATrie with dimenionality l and threshold 'leafThreshold'.
@@ -81,7 +81,48 @@ public class SFATrie implements Serializable {
   }
   
   /**
-   * Inserts a given time series at the given path.
+   * Inserts multiple given time series
+   *
+   */
+  public void buildIndex(TimeSeries[] samples, int windowLength) {
+    // Train the SFA quantization histogram
+    this.quantization.fitWindowing(samples, windowLength, this.wordLength, this.symbols, true, true);
+    this.ts = samples;
+    
+    // Transform the time series to SFA words
+    for (int i = 0; i < samples.length; i++) {
+      TimeSeries ts = samples[i];
+      double[][] words = this.quantization.transformWindowingDouble(ts, this.wordLength);
+  
+      // calculate means and stddev
+      int size = (ts.getData().length-windowLength)+1;
+      this.means = new double[i][size];
+      this.stddev = new double[i][size];
+      TimeSeries.calcIncreamentalMeanStddev(windowLength, this.ts[i], this.means[i], this.stddev[i]);
+  
+      // insert each timeseries window
+      for (int offset = 0; offset < words.length; offset++) {
+        TimeSeriesWindow window = new TimeSeriesWindow(
+            words[offset], 
+            this.quantization.quantizationByte(words[offset]),
+            0,
+            offset);
+        insert(window, 0, this.root);
+      }
+    }
+
+    System.out.println("\tLeaves before path-compression " + getLeafCount());
+    System.out.println("\tHeight " + getHeight());
+    System.out.println("\tNodes " + getNodeCount());
+    compress();
+
+    System.out.println("\tLeaves after path-compression " + getLeafCount());
+    System.out.println("\tHeight " + getHeight());
+    System.out.println("\tNodes " + getNodeCount());
+  }
+  
+  /**
+   * Inserts a given time series
    *
    */
   public void buildIndex(TimeSeries ts, int windowLength) {
@@ -91,22 +132,23 @@ public class SFATrie implements Serializable {
     // Transform the time series to SFA words
     double[][] words = this.quantization.transformWindowingDouble(ts, this.wordLength);
 
-    // calculate means and stddev
-    int size = (ts.getData().length-windowLength)+1;
-    this.means = new double[size];
-    this.stddev = new double[size];
-    this.ts = ts;
-    TimeSeries.calcIncreamentalMeanStddev(windowLength, ts, this.means, this.stddev);
-
     // insert each timeseries window
     for (int offset = 0; offset < words.length; offset++) {
       TimeSeriesWindow window = new TimeSeriesWindow(
           words[offset], 
-          this.quantization.quantizationByte(words[offset]), 
+          this.quantization.quantizationByte(words[offset]),
+          0,
           offset);
       insert(window, 0, this.root);
     }
 
+    // calculate means and stddev
+    int size = (ts.getData().length-windowLength)+1;
+    this.means = new double[1][size];
+    this.stddev = new double[1][size];
+    this.ts = new TimeSeries[]{ts};
+    TimeSeries.calcIncreamentalMeanStddev(windowLength, this.ts[0], this.means[0], this.stddev[0]);
+    
     System.out.println("\tLeaves before path-compression " + getLeafCount());
     System.out.println("\tHeight " + getHeight());
     System.out.println("\tNodes " + getNodeCount());
@@ -378,12 +420,12 @@ public class SFATrie implements Serializable {
       // retrieve all time series
       for (TimeSeriesWindow object : node.getElements()) {
         double originalDistance = getEuclideanDistance(
-            ts,
+            ts[object.index],
             query,
-            means[object.offset],
-            stddev[object.offset],
+            means[object.index][object.pos],
+            stddev[object.index][object.pos],
             Double.MAX_VALUE,
-            object.offset);
+            object.pos);
         result.put(originalDistance, object);
       }
       return result;
@@ -482,14 +524,14 @@ public class SFATrie implements Serializable {
           for (TimeSeriesWindow object : currentNode.getElements()) {
             kthBestDistance = (result.size() < k ? Double.MAX_VALUE : result.lastKey());
             double distance = getEuclideanDistance(
-                ts,
+                ts[object.index],
                 query,
-                means[object.offset],
-                stddev[object.offset],
+                means[object.index][object.pos],
+                stddev[object.index][object.pos],
                 kthBestDistance,
-                object.offset);
+                object.pos);
             if (distance <= kthBestDistance) {
-              result.put(distance, object.offset);
+              result.put(distance, object.pos);
             }
           }
         }
@@ -736,14 +778,17 @@ public class SFATrie implements Serializable {
 
     byte[] word;
     double[] fourierValues;
-    int offset;
+    int index;
+    int pos;
 
     public TimeSeriesWindow(
         double[] fourierValues,
         byte[] word,
-        int offset) {
+        int index,
+        int pos) {
       this.word = word;
-      this.offset = offset;
+      this.pos = pos;
+      this.index = index;
       this.fourierValues = fourierValues;
     }
   }
