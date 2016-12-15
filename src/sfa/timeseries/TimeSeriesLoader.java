@@ -70,7 +70,8 @@ public class TimeSeriesLoader {
     return samples.toArray(new TimeSeries[] {});
   }
   
-  public static TimeSeries readSamplesSubsequences (File dataset, int skipColumns) throws IOException {
+    
+  public static TimeSeries readSampleSubsequence (File dataset) throws IOException {
     try (BufferedReader br = new BufferedReader(new FileReader(dataset))){      
       DoubleArrayList data = new DoubleArrayList();
       String line = null;
@@ -78,11 +79,11 @@ public class TimeSeriesLoader {
         line.trim();        
         String[] values = line.split("[ \\t]");
         if (values.length > 0) {
-          for (int i = skipColumns; i < values.length; i++) {           
+          for (String value : values) {           
             try {
-              values[i].trim();
-              if (isNonEmptyColumn(values[i])) {
-                data.add(Double.parseDouble(values[i]));
+              value.trim();
+              if (isNonEmptyColumn(value)) {
+                data.add(Double.parseDouble(value));
               }
             } catch (NumberFormatException nfe) {
               // Parse-Exception ignorieren
@@ -94,6 +95,32 @@ public class TimeSeriesLoader {
     }   
   }
 
+  public static TimeSeries[] readSamplesQuerySeries (File dataset) throws IOException {
+    List<TimeSeries> samples = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){      
+      String line = null;
+      while( (line = br.readLine()) != null) {        
+        DoubleArrayList data = new DoubleArrayList();
+        line.trim();        
+        String[] values = line.split("[ \\t]");
+        if (values.length > 0) {
+          for (String value : values) {           
+            try {
+              value.trim();
+              if (isNonEmptyColumn(value)) {
+                data.add(Double.parseDouble(value));
+              }
+            } catch (NumberFormatException nfe) {
+              // Parse-Exception ignorieren
+            }
+          }
+          samples.add(new TimeSeries(data.toArray()));
+        }
+      }
+    }   
+    return samples.toArray(new TimeSeries[]{});
+  }
+  
   public static boolean isNonEmptyColumn(String column) {
     return column!=null && !"".equals(column) && !"NaN".equals(column) && !"\t".equals(column);
   }

@@ -79,15 +79,10 @@ public class SFATrie implements Serializable {
 
     resetIoCosts();
   }
-
-
+  
   /**
-   * Inserts the given time series at the given path.
+   * Inserts a given time series at the given path.
    *
-   * @param prefixPath
-   *          the path where to insert the element.
-   * @param element
-   *          the element to be inserted.
    */
   public void buildIndex(TimeSeries ts, int windowLength) {
     // Train the SFA quantization histogram
@@ -108,8 +103,7 @@ public class SFATrie implements Serializable {
       TimeSeriesWindow window = new TimeSeriesWindow(
           words[offset], 
           this.quantization.quantizationByte(words[offset]), 
-          offset, 
-          windowLength);
+          offset);
       insert(window, 0, this.root);
     }
 
@@ -294,21 +288,16 @@ public class SFATrie implements Serializable {
     // join adjacent nodes
     if (node.type == NodeType.Internal) {
       SFANode previousNode = null;
-//      int count = 0;
+      int count = 0;
       for (int i = 0; i < node.children.length; i++) {
         SFANode currentNode = node.children[i];
         if (currentNode != null) {
           // leaf node
           if (currentNode.type == NodeType.Leaf) {
-            // transform currentNode's ts
-            if (currentNode.getElements() != null) {
-//              List<TimeSeriesWindow> elements = new ArrayList<>();
-              for (TimeSeriesWindow ts : currentNode.getElements()) {
-                ts.fourierValues = null;
-                ts.word = null;                
-              }
-//              currentNode.elements.clear();
-//              currentNode.addAll(elements);
+            // clean up currentNode's ts
+            for (TimeSeriesWindow ts : currentNode.getElements()) {
+              ts.fourierValues = null;
+              ts.word = null;                
             }
             if (previousNode != null
                 && previousNode != currentNode
@@ -330,16 +319,18 @@ public class SFATrie implements Serializable {
             compress(currentNode);
           }
         }
-//        count++;
+        // count non-empty positions
+        count++;
       }
 
-//      SFANode[] children = node.children;
-//      node.children = new SFANode[count];
-//      for (int i = 0, a = 0; i < node.children.length; i++) {
-//        if (node.children[i] != null) {
-//          node.children[a++] = children[i];
-//        }
-//      }
+      // remove unnecessary branches
+      SFANode[] children = node.children;
+      node.children = new SFANode[count];
+      for (int i = 0, a = 0; i < children.length; i++) {
+        if (children[i] != null) {
+          node.children[a++] = children[i];
+        }
+      }
     }
   }
 
@@ -739,30 +730,22 @@ public class SFATrie implements Serializable {
     in.defaultReadObject();
     resetIoCosts();
   }
+  
   class TimeSeriesWindow implements Serializable {
     private static final long serialVersionUID = -6192378071620042008L;
 
     byte[] word;
     double[] fourierValues;
-
     int offset;
-    int windowSize;
 
     public TimeSeriesWindow(
         double[] fourierValues,
         byte[] word,
-        int offset,
-        int windowSize) {
+        int offset) {
       this.word = word;
       this.offset = offset;
-      this.windowSize = windowSize;
       this.fourierValues = fourierValues;
     }
-
-//    public TimeSeries getWindow() {
-//      return this.ts.getSubsequence(
-//          this.offset, this.windowSize, this.means[this.offset], this.stddev[this.offset]); // TODO cache
-//    }
   }
 
 

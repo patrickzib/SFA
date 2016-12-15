@@ -12,17 +12,17 @@ import sfa.timeseries.TimeSeriesLoader;
 public class SFATrieTest {
 
   public static void testSFATrie() throws IOException {
-    int l = 16; // SFA word length ( & dimensionality of the index)
-    int windowLength = 256; // length of the subsequences to be indexed
+    int l = 20; // SFA word length ( & dimensionality of the index)
     int leafThreshold = 100; // number of subsequences in each leaf node
     int k = 1; // k-NN search
 
     System.out.println("Loading Time Series");
-    TimeSeries timeSeries = TimeSeriesLoader.readSamplesSubsequences(new File("./datasets/indexing/labeled_lightcurves1.txt"),1);
+    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
-    TimeSeries timeSeries2 = TimeSeriesLoader.readSamplesSubsequences(new File("./datasets/indexing/burst.dat"),0);
-    System.out.println("Query DS size : " + timeSeries2.getLength());
+    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
+    int windowLength = timeSeries2[0].getLength(); // length of the subsequences to be indexed
+    System.out.println("Query DS size : " + windowLength);
 
     Runtime runtime = Runtime.getRuntime();
     long mem = runtime.totalMemory();
@@ -31,14 +31,6 @@ public class SFATrieTest {
     SFATrie index = new SFATrie(l, leafThreshold);
     index.buildIndex(timeSeries, windowLength);
     index.checkIndex();
-
-    // GC
-    try {
-      System.gc();
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
 
 //    // store index
 //    System.out.println("Write index to disk");
@@ -53,6 +45,8 @@ public class SFATrieTest {
 //    };
 //    index = index2;
 
+    // GC
+    performGC();
     System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
 
     System.out.println("Perform NN-queries");
@@ -60,18 +54,16 @@ public class SFATrieTest {
     double[] means = new double[size];
     double[] stds = new double[size];
     TimeSeries.calcIncreamentalMeanStddev(windowLength, timeSeries, means, stds);
-
-    for (int i = 0; i < 10; i++) {
+    
+    for (int i = 0; i < timeSeries2.length; i++) {
       System.out.println(i+". Query");
-
-      TimeSeries query = timeSeries2.getSubsequence(i, windowLength);
-
+      TimeSeries query = timeSeries2[i];
+      
       time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
 
-//      List<Integer> offsets = result.values();
       List<Double> distances = result.keys();
 //
 //      for (int j = 0; j < result.size(); j++) {
@@ -107,6 +99,15 @@ public class SFATrieTest {
     }
 
     System.out.println("All ok...");
+  }
+
+  public static void performGC() {
+    try {
+      System.gc();
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   public static double getEuclideanDistance(

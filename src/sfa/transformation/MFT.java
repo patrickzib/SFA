@@ -47,7 +47,7 @@ public class MFT implements Serializable {
     double[] data = new double[this.windowSize];
     int windowSize = timeSeries.getLength();
 
-    System.arraycopy(timeSeries.getData(), 0, data, 0, windowSize);
+    System.arraycopy(timeSeries.getData(), 0, data, 0, this.windowSize);
     this.fft.realForward(data);
     data[1] = 0;
 
