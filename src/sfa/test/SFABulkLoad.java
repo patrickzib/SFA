@@ -54,7 +54,7 @@ public class SFABulkLoad {
     
     System.out.println("Loading Time Series");
     
-    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_40k.txt"));
+    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_10k.txt"));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
