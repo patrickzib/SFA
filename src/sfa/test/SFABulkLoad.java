@@ -42,7 +42,7 @@ public class SFABulkLoad {
     //  2 => 8^2
     //  3 => 8^3
     // tries will be built for merging
-    int trieDepth = 1; 
+    int trieDepth = 2; 
 
     // process data in chunks of 'chunkSize' and create one index each
     int chunkSize = 1000000;
@@ -54,7 +54,7 @@ public class SFABulkLoad {
     
     System.out.println("Loading Time Series");
     
-    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_10k.txt"));
+    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_40k.txt"));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
@@ -79,7 +79,7 @@ public class SFABulkLoad {
       for (int pos = 0; pos < words.length; pos++) {
         double[] word = words[pos];
         byte[] w = sfa.quantizationByte(word);
-        dataStream.addToPartition(w, word, 0, i+pos, trieDepth);
+        dataStream.addToPartition(w, word, i+pos, trieDepth);
       }
 
       // wait for all futures to finish
@@ -127,7 +127,7 @@ public class SFABulkLoad {
     }
 
     // add the subsequences to the trie
-    index.setTimeSeries(new TimeSeries[]{timeSeries}, windowLength);
+    index.setTimeSeries(timeSeries, windowLength);
     
     // path compression
     index.printStats(true);
@@ -308,11 +308,11 @@ public class SFABulkLoad {
     /**
      * Adds a time series to the corresponding queue
      */
-    public void addToPartition(byte[] words, double[] data, int index, int pos, int useLetters) {
+    public void addToPartition(byte[] words, double[] data, int pos, int useLetters) {
       try {
         // the bucket
         int l = getPosition(words, useLetters);
-        this.wordPartitions[l].put(new SFATrie.TimeSeriesWindow(data, words, index, pos));
+        this.wordPartitions[l].put(new SFATrie.TimeSeriesWindow(data, words, pos));
 
         // write to disk
         synchronized (this.wordPartitions[l]) {          

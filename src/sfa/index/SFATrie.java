@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -58,9 +57,9 @@ public class SFATrie implements Serializable {
 
   public static enum NodeType { Leaf, Internal };
 
-  TimeSeries[] timeSeries;
-  double[][] means;
-  double[][] stddev;
+  TimeSeries timeSeries;
+  double[] means;
+  double[] stddev;
   
   /**
    * Create a new SFATrie with dimenionality l and threshold 'leafThreshold'.
@@ -91,12 +90,10 @@ public class SFATrie implements Serializable {
    * @param idx
    */
   public void caluclateMeanStddev(int windowLength) {
-    int size = (this.timeSeries[0].getData().length-windowLength)+1;
-    this.means = new double[timeSeries.length][size];
-    this.stddev = new double[timeSeries.length][size];
-    for (int i = 0; i < timeSeries.length; i++) {      
-      TimeSeries.calcIncreamentalMeanStddev(windowLength, this.timeSeries[i], this.means[i], this.stddev[i]);
-    }
+    int size = (this.timeSeries.getData().length-windowLength)+1;
+    this.means = new double[size];
+    this.stddev = new double[size];
+    TimeSeries.calcIncreamentalMeanStddev(windowLength, this.timeSeries, this.means, this.stddev);
   }
   
 //  /**
@@ -138,7 +135,7 @@ public class SFATrie implements Serializable {
     this.quantization.fitWindowing(new TimeSeries[]{ts}, windowLength, this.wordLength, symbols, true, true);
 
     // calculates means and stddev
-    setTimeSeries(new TimeSeries[]{ts}, windowLength);
+    setTimeSeries(ts, windowLength);
     
     // Transform the time series to SFA words
     double[][] words = this.quantization.transformWindowingDouble(ts, this.wordLength);
@@ -148,7 +145,6 @@ public class SFATrie implements Serializable {
       TimeSeriesWindow window = new TimeSeriesWindow(
           words[offset], 
           this.quantization.quantizationByte(words[offset]),
-          0,
           offset);
       insert(window, 0, this.root);
     }
@@ -341,11 +337,11 @@ public class SFATrie implements Serializable {
     this.compressed = false;
   }
 
-  public TimeSeries[] getTimeSeries() {
+  public TimeSeries getTimeSeries() {
     return timeSeries;
   }
 
-  public void setTimeSeries(TimeSeries[] ts, int windowLength) {
+  public void setTimeSeries(TimeSeries ts, int windowLength) {
     this.timeSeries = ts;    
     caluclateMeanStddev(windowLength);
   }
@@ -456,10 +452,10 @@ public class SFATrie implements Serializable {
       // retrieve all time series
       for (TimeSeriesWindow object : node.getElements()) {
         double originalDistance = getEuclideanDistance(
-            timeSeries[object.index],
+            timeSeries,
             query,
-            means[object.index][object.pos],
-            stddev[object.index][object.pos],
+            means[object.pos],
+            stddev[object.pos],
             Double.MAX_VALUE,
             object.pos);
         result.put(originalDistance, object);
@@ -560,10 +556,10 @@ public class SFATrie implements Serializable {
           for (TimeSeriesWindow object : currentNode.getElements()) {
             kthBestDistance = (result.size() < k ? Double.MAX_VALUE : result.lastKey());
             double distance = getEuclideanDistance(
-                timeSeries[object.index],
+                timeSeries,
                 query,
-                means[object.index][object.pos],
-                stddev[object.index][object.pos],
+                means[object.pos],
+                stddev[object.pos],
                 kthBestDistance,
                 object.pos);
             if (distance <= kthBestDistance) {
@@ -815,16 +811,13 @@ public class SFATrie implements Serializable {
     byte[] word;
     double[] fourierValues;
     
-    int index;
     int pos;
 
     public TimeSeriesWindow(
         double[] fourierValues,
         byte[] word,
-        int index,
         int pos) {
       this.word = word;
-      this.index = index;
       this.pos = pos;
       this.fourierValues = fourierValues;
     }
@@ -839,6 +832,8 @@ public class SFATrie implements Serializable {
     // Children
     private SFANode[] children;
 
+    // TODO - extract approximations from pool and store only offsets.
+    //      - create a pool of approximations in the Tree and link to it.    
     // the elements for a leaf-node
     private List<TimeSeriesWindow> elements;
 
@@ -869,7 +864,6 @@ public class SFATrie implements Serializable {
 
       // create Elements
       this.elements = new ArrayList<>();
-
     }
 //
 //    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
