@@ -162,10 +162,7 @@ public class TimeSeries implements Serializable {
    * @return
    */
   public TimeSeries getSubsequence(int offset, int windowSize) {
-    double[] subsequenceData = Arrays.copyOfRange(this.data, offset, offset+windowSize);
-    if (subsequenceData.length != windowSize) {
-      System.err.println("Wrong size!!");
-    }
+    double[] subsequenceData = Arrays.copyOfRange(this.data, offset, Math.min(data.length, offset+windowSize));
     TimeSeries sequence = new TimeSeries(subsequenceData);
     sequence.norm();
     return sequence;

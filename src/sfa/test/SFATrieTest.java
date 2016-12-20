@@ -12,7 +12,7 @@ import sfa.timeseries.TimeSeriesLoader;
 public class SFATrieTest {
 
   public static void testSFATrie() throws IOException {
-    int l = 20; // SFA word length ( & dimensionality of the index)
+    int l = 16; // SFA word length ( & dimensionality of the index)
     int leafThreshold = 100; // number of subsequences in each leaf node
     int k = 1; // k-NN search
 
@@ -32,6 +32,7 @@ public class SFATrieTest {
     long time = System.currentTimeMillis();
     
     SFATrie index = new SFATrie(l, leafThreshold);
+    index.setMinimalHeight(1);
     index.buildIndex(timeSeries, windowLength);
     index.checkIndex();
 
