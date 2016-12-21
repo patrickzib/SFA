@@ -22,12 +22,12 @@ import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
-
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
+
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
 
 /**
  * Implementation of the SFATrie for time series subsequence-search
@@ -88,6 +88,10 @@ public class SFATrie implements Serializable {
     this.approximations = new ArrayList<>();
     
     resetIoCosts();
+  }
+  
+  public String getStoragePath() {
+    return "./tmp";
   }
   
   /**
@@ -835,7 +839,7 @@ public class SFATrie implements Serializable {
     double[] fourierValues;
     
     int pos;
-    int cacheId;
+    transient int cacheId;
     
     public Approximation(
         double[] fourierValues,
@@ -844,6 +848,18 @@ public class SFATrie implements Serializable {
       this.word = word;
       this.pos = pos;
       this.fourierValues = fourierValues;
+    }
+    
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+      this.word = (byte[])in.readUnshared();
+      this.fourierValues = (double[])in.readUnshared();
+      this.pos = (int) pos;
+    }
+
+    private void writeObject(ObjectOutputStream o) throws IOException {
+      o.writeUnshared(word);
+      o.writeUnshared(fourierValues);
+      o.writeInt(pos);
     }
   }
 
@@ -884,7 +900,7 @@ public class SFATrie implements Serializable {
       in.defaultReadObject();
       
       if (isLeaf()) {
-        int[] elem = (int[]) in.readObject();
+        int[] elem = (int[]) in.readUnshared();
         this.elementIds = new IntArrayList(elem.length);
         elementIds.add(elem);
       }
@@ -894,7 +910,7 @@ public class SFATrie implements Serializable {
       o.defaultWriteObject();
       
       if (isLeaf()) {
-        o.writeObject(elementIds.toArray());
+        o.writeUnshared(elementIds.toArray());
       }
     }
 

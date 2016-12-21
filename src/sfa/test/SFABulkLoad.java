@@ -18,7 +18,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import sfa.classification.ParallelFor;
 import sfa.index.SFATrie;
 import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
@@ -54,7 +56,7 @@ public class SFABulkLoad {
     
     System.out.println("Loading Time Series");
     
-    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_10k.txt"));
+    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_40k.txt"));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
@@ -69,30 +71,61 @@ public class SFABulkLoad {
     //		sfa.printBins();
 
     SerializedStreams dataStream = new SerializedStreams(trieDepth);
+    long time = System.currentTimeMillis();        
+   
+    // create sliding windows
+    int BLOCKS = (int)Math.ceil(timeSeries.getLength()/chunkSize);
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      long time = System.currentTimeMillis();        
 
-    long time = System.currentTimeMillis();
-    
-    for (int i = 0; i < timeSeries.getLength(); i+=chunkSize) {
-      System.out.println("Transforming Chunk:" + (i+1));
-      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
-      double[][] words = sfa.transformWindowingDouble(subsequence, l);
-      for (int pos = 0; pos < words.length; pos++) {
-        double[] word = words[pos];
-        byte[] w = sfa.quantizationByte(word);
-        dataStream.addToPartition(w, word, i+pos, trieDepth);
-      }
-
-      // wait for all futures to finish
-      long bytesWritten = 0;
-      while (!futures.isEmpty()) {
-        try {
-          bytesWritten = futures.remove().get();     
-        } catch (Exception e) {
-          e.printStackTrace();
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
+          if (a % BLOCKS == id) {
+            System.out.println("Transforming Chunk:" + (a+1));
+            TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
+            double[][] words = sfa.transformWindowingDouble(subsequence, l);
+            for (int pos = 0; pos < words.length; pos++) {
+              double[] word = words[pos];
+              byte[] w = sfa.quantizationByte(word);
+              dataStream.addToPartition(w, word, i+pos, trieDepth);
+            }
+            // wait for all futures to finish
+            long bytesWritten = 0;
+            while (!futures.isEmpty()) {
+              try {
+                bytesWritten = futures.remove().get();     
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+            System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
+          }      
         }
       }
-      System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
-    }
+    });
+        
+//    for (int i = 0; i < timeSeries.getLength(); i+=chunkSize) {
+//      System.out.println("Transforming Chunk:" + (i+1));
+//      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
+//      double[][] words = sfa.transformWindowingDouble(subsequence, l);
+//      for (int pos = 0; pos < words.length; pos++) {
+//        double[] word = words[pos];
+//        byte[] w = sfa.quantizationByte(word);
+//        dataStream.addToPartition(w, word, i+pos, trieDepth);
+//      }
+//
+//      // wait for all futures to finish
+//      long bytesWritten = 0;
+//      while (!futures.isEmpty()) {
+//        try {
+//          bytesWritten = futures.remove().get();     
+//        } catch (Exception e) {
+//          e.printStackTrace();
+//        }
+//      }
+//      System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
+//    }
 
     dataStream.setFinished();
 
@@ -355,10 +388,10 @@ public class SFABulkLoad {
           File file = new File(fileName);
           file.deleteOnExit();
           partitionsStream[letter] 
-              = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1024*1024));         
+              = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8kb */));         
         }    
         
-        partitionsStream[letter].writeObject(current.toArray(new SFATrie.Approximation[]{}));
+        partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[]{}));
         partitionsStream[letter].reset(); // reset the references to the objects
                 
         try {

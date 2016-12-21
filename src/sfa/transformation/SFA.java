@@ -262,7 +262,18 @@ public class SFA implements Serializable {
   public double[][] transformWindowingDouble(TimeSeries ts, int wordLength) {
     return this.transformation.transformWindowing(ts, maxWordLength);    
   }
-    
+
+//  public float[][] transformWindowingFloat(TimeSeries ts, int wordLength) {
+//    double[][] doubleData = this.transformation.transformWindowing(ts, maxWordLength);
+//    float[][] floatData = new float[doubleData.length][doubleData[0].length];
+//    for (int i = 0; i < doubleData.length; i++) {
+//      for (int j = 0; j < doubleData[i].length; j++) {
+//        floatData[i][j] =  (float) doubleData[i][j];
+//      }
+//    }
+//    return floatData;
+//  }
+
   /**
    * Extracts sliding windows from a time series and transforms it to its SFA word.
    * @param ts
