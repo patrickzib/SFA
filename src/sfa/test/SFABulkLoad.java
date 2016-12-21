@@ -106,7 +106,7 @@ public class SFABulkLoad {
     for (File bucket : directory.listFiles()) {
       if (bucket.isFile() && bucket.getName().contains("bucket")) {
         time = System.currentTimeMillis();
-        List<SFATrie.TimeSeriesWindow[]> windows = readFromFile(bucket);
+        List<SFATrie.Approximation[]> windows = readFromFile(bucket);
         if (!windows.isEmpty()) { 
           SFATrie trie = new SFATrie(l, leafThreshold, sfa);
           trie.buildIndex(windows, trieDepth, windowLength);
@@ -130,7 +130,8 @@ public class SFABulkLoad {
     index.setTimeSeries(timeSeries, windowLength);
     
     // path compression
-    index.printStats(true);
+    index.compress(true);
+    index.printStats();
 
     // store index
     System.out.println("Writing index to disk...");
@@ -224,13 +225,13 @@ public class SFABulkLoad {
     return distance;
   }
 
-  protected static List<SFATrie.TimeSeriesWindow[]> readFromFile(File name) {
+  protected static List<SFATrie.Approximation[]> readFromFile(File name) {
     System.out.println("Reading from : " + name.toString());
     long count = 0;
-    List<SFATrie.TimeSeriesWindow[]> data = new ArrayList<>();
+    List<SFATrie.Approximation[]> data = new ArrayList<>();
     try (ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(name)))) {
-      SFATrie.TimeSeriesWindow[] d = null;
-      while ((d = (SFATrie.TimeSeriesWindow[]) in.readObject()) != null) {
+      SFATrie.Approximation[] d = null;
+      while ((d = (SFATrie.Approximation[]) in.readObject()) != null) {
         data.add(d);
         count += d.length;
       }
@@ -244,7 +245,7 @@ public class SFABulkLoad {
   }
 
   static class SerializedStreams {   
-    LinkedBlockingQueue<SFATrie.TimeSeriesWindow>[] wordPartitions;
+    LinkedBlockingQueue<SFATrie.Approximation>[] wordPartitions;
     ObjectOutputStream[] partitionsStream;
 
     // the number of TS until the array is written to disk
@@ -275,7 +276,7 @@ public class SFABulkLoad {
       for (int i = 0; i < SerializedStreams.this.wordPartitions.length; i++) {
         try {        
           // copy contents
-          List<SFATrie.TimeSeriesWindow> current = new ArrayList<>(this.wordPartitions[i].size());
+          List<SFATrie.Approximation> current = new ArrayList<>(this.wordPartitions[i].size());
           this.wordPartitions[i].drainTo(current);
           writeToDisk(current, i);
         } catch (Exception e) {
@@ -312,12 +313,12 @@ public class SFABulkLoad {
       try {
         // the bucket
         int l = getPosition(words, useLetters);
-        this.wordPartitions[l].put(new SFATrie.TimeSeriesWindow(data, words, pos));
+        this.wordPartitions[l].put(new SFATrie.Approximation(data, words, pos));
 
         // write to disk
         synchronized (this.wordPartitions[l]) {          
           if (this.wordPartitions[l].size() >= minWriteToDiskLimit) {            
-            final List<SFATrie.TimeSeriesWindow> current = new ArrayList<>(this.wordPartitions[l].size());
+            final List<SFATrie.Approximation> current = new ArrayList<>(this.wordPartitions[l].size());
             this.wordPartitions[l].drainTo(current);
             
             futures.add(executor.submit(new Callable<Long>() {
@@ -347,7 +348,7 @@ public class SFABulkLoad {
       return id;
     }
 
-    protected void writeToDisk(List<SFATrie.TimeSeriesWindow> current, int letter) throws FileNotFoundException, IOException {      
+    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws FileNotFoundException, IOException {      
       if (!current.isEmpty()) {   
         if (partitionsStream[letter] == null) {
           String fileName = bucketDir + letter + ".bucket";
@@ -357,7 +358,7 @@ public class SFABulkLoad {
               = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1024*1024));         
         }    
         
-        partitionsStream[letter].writeObject(current.toArray(new SFATrie.TimeSeriesWindow[]{}));
+        partitionsStream[letter].writeObject(current.toArray(new SFATrie.Approximation[]{}));
         partitionsStream[letter].reset(); // reset the references to the objects
                 
         try {

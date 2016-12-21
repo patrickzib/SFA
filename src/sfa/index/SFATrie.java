@@ -22,6 +22,9 @@ import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
+
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
@@ -61,6 +64,8 @@ public class SFATrie implements Serializable {
   double[] means;
   double[] stddev;
   
+  private List<Approximation> approximations;
+
   /**
    * Create a new SFATrie with dimenionality l and threshold 'leafThreshold'.
    * A leaf will be split, once leafThreshold is exceeded.
@@ -80,6 +85,8 @@ public class SFATrie implements Serializable {
     this.root = new SFANode(new byte[0], symbols, this.wordLength);
     this.leafThreshold = leafThreshold;
 
+    this.approximations = new ArrayList<>();
+    
     resetIoCosts();
   }
   
@@ -138,52 +145,65 @@ public class SFATrie implements Serializable {
     setTimeSeries(ts, windowLength);
     
     // Transform the time series to SFA words
-    double[][] words = this.quantization.transformWindowingDouble(ts, this.wordLength);
-
+    double[][] transformed = this.quantization.transformWindowingDouble(ts, this.wordLength);
+        
     // insert each timeseries window
-    for (int offset = 0; offset < words.length; offset++) {
-      TimeSeriesWindow window = new TimeSeriesWindow(
-          words[offset], 
-          this.quantization.quantizationByte(words[offset]),
+    for (int offset = 0; offset < transformed.length; offset++) {
+      Approximation window = new Approximation(
+          transformed[offset], 
+          this.quantization.quantizationByte(transformed[offset]),
           offset);
+      
+      addApproximation(window);  
+      
       insert(window, 0, this.root);
     }
 
-    
-    printStats(true);
+    compress(true);
+    printStats();
   }
 
   /**
    * Bulk insertion into the SFA trie
    */
-  public void buildIndex(List<SFATrie.TimeSeriesWindow[]> windows, int minHeight, int windowLength) {
+  public void buildIndex(List<SFATrie.Approximation[]> windows, int minHeight, int windowLength) {
     this.minimalHeight = minHeight; // TODO move to constructor??
     
     // insert each timeseries window
-    for (SFATrie.TimeSeriesWindow[] w : windows) {
-      for (SFATrie.TimeSeriesWindow window : w) {
+    for (SFATrie.Approximation[] w : windows) {
+      for (SFATrie.Approximation window : w) {
+        addApproximation(window); 
         insert(window, 0, this.root);
       }
     }
-   
-    printStats(true);
+    
+    compress(false);
+    printStats();
   }
 
-  public void printStats(boolean compress) {
-    if (!compress) {
-      System.out.println("\tLeaves (not path-compressed): " + getLeafCount());
-      System.out.println("\tHeight " + getHeight());
-      System.out.println("\tNodes " + getNodeCount());
-      System.out.println("\tElements " + getSize());
-    }    
-    else if (compress) {
-      compress();
+  public void addApproximation(SFATrie.Approximation window) {
+    // the position within the approximations-cache
+    window.cacheId = this.approximations.size();
+    
+    // add the approximation
+    this.approximations.add(window);
+  }
   
+  public Approximation getApproximation(Integer ts) {
+    return approximations.get(ts);
+  }
+
+  public void printStats() {
+    if (!compressed) {
+      System.out.println("\tLeaves (not path-compressed): " + getLeafCount());
+    }    
+    else if (compressed) {
       System.out.println("\tLeaves (path-compressed): " + getLeafCount());
-      System.out.println("\tHeight " + getHeight());
-      System.out.println("\tNodes " + getNodeCount());
-      System.out.println("\tElements " + getSize());
     }
+    System.out.println("\tHeight " + getHeight());
+    System.out.println("\tNodes " + getNodeCount());
+    System.out.println("\tElements " + getSize());
+
   }
   
   private void insert(
@@ -216,8 +236,8 @@ public class SFATrie implements Serializable {
           }
           // insert all time series
           else if (nodeToInsert.type == NodeType.Leaf) {
-            for (TimeSeriesWindow ts : nodeToInsert.getElements()) {
-              insert(ts, index, node);
+            for (IntCursor ts : nodeToInsert.getApproximationIds()) {
+              insert(getApproximation(ts.value), index, node);
             }
             nodeToInsert.removeElements();
           }
@@ -230,8 +250,8 @@ public class SFATrie implements Serializable {
       if (nodeToInsert.type == NodeType.Internal) {
         // extend node by length
         node.type = NodeType.Internal;
-        for (TimeSeriesWindow ts : node.getElements()) {
-          insert(ts, index, node);
+        for (IntCursor ts : node.getApproximationIds()) {
+          insert(getApproximation(ts.value), index, node);
         }
         node.removeElements();
 
@@ -240,8 +260,8 @@ public class SFATrie implements Serializable {
       } else if (nodeToInsert.type == NodeType.Leaf) {
         // insert all time series
         // append all elements from node into nodeToInsert
-        for (TimeSeriesWindow ts : nodeToInsert.getElements()) {
-          insert(ts, index - 1, parentNode);
+        for (IntCursor ts : nodeToInsert.getApproximationIds()) {
+          insert(getApproximation(ts.value), index - 1, parentNode);
         }
         nodeToInsert.removeElements();
       }
@@ -258,7 +278,7 @@ public class SFATrie implements Serializable {
    *          the element to be inserted.
    */
   protected void insert(
-      TimeSeriesWindow element,
+      Approximation element,
       int index,
       SFANode node) {
 
@@ -303,8 +323,8 @@ public class SFATrie implements Serializable {
         childNode.type = NodeType.Internal;
 
         // reinsert all elements into the trie
-        for (TimeSeriesWindow ts : childNode.getElements()) {
-          insert(ts, index + 1, childNode);
+        for (IntCursor ts : childNode.getApproximationIds()) {
+          insert(getApproximation(ts.value), index + 1, childNode);
         }
 
         // add the new elements
@@ -329,7 +349,7 @@ public class SFATrie implements Serializable {
         insert(node, node.getWord(), 0, this.root, this.root);
       }
     }
-    if (tree.root.getElements() != null && !tree.root.getElements().isEmpty()) {
+    if (tree.root.getElementIds() != null && !tree.root.getElementIds().isEmpty()) {
       throw new RuntimeException("error");
     }
     tree.root = null;
@@ -350,36 +370,37 @@ public class SFATrie implements Serializable {
    * Applies path compression of on the SFA try
    * @param m
    */
-  public void compress() {
+  public void compress(boolean compact) {
     if (!this.compressed) {
-      compress(this.root);
+      compress(this.root, compact);
       this.compressed = true;
     }
   }
 
-  protected void compress(SFANode m) {
-    SFANode node = (SFANode) m;
+  protected void compress(SFANode m, boolean compact) {
+    // we don't need the approximations cache anymore.
+    this.approximations = null;
+    
+    SFANode node = (SFANode) m;    
     // join adjacent nodes
     if (node.type == NodeType.Internal) {
       SFANode previousNode = null;
-//      int count = 0;
+      int count = 0;
       for (int i = 0; i < node.children.length; i++) {
         SFANode currentNode = node.children[i];
         if (currentNode != null) {
           // leaf node
           if (currentNode.type == NodeType.Leaf) {
             // clean up currentNode's ts
-            for (TimeSeriesWindow ts : currentNode.getElements()) {
-              ts.fourierValues = null;
-              ts.word = null;                
-            }
+            currentNode.approximationIds = null;
+            
             if (previousNode != null
                 && previousNode != currentNode
                 && (previousNode.getSize()
                     + currentNode.getSize() < this.leafThreshold)) {
 
               // merge nodes
-              previousNode.addAll(currentNode.getElements());
+              previousNode.elementIds.addAll(currentNode.getElementIds());
               previousNode.adaptMinMaxValues(currentNode);
               currentNode.removeElements();
               node.children[i] = previousNode;
@@ -390,21 +411,23 @@ public class SFATrie implements Serializable {
           // Internal node
           else {
             previousNode = null;
-            compress(currentNode);
+            compress(currentNode, compact);
           }
         }
-//        // count non-empty positions
-//        count++;
+        // count non-empty positions
+        count++;
       }
 
-//      // remove unnecessary branches
-//      SFANode[] children = node.children;
-//      node.children = new SFANode[count];
-//      for (int i = 0, a = 0; i < children.length; i++) {
-//        if (children[i] != null) {
-//          node.children[a++] = children[i];
-//        }
-//      }
+      // remove unnecessary branches
+      if (compact) {
+        SFANode[] children = node.children;
+        node.children = new SFANode[count];
+        for (int i = 0, a = 0; i < children.length; i++) {
+          if (children[i] != null) {
+            node.children[a++] = children[i];
+          }
+        }
+      }
     }
   }
 
@@ -437,9 +460,9 @@ public class SFATrie implements Serializable {
   /**
    * Approximate search for the query.
    */
-  public SortedListMap<Double, TimeSeriesWindow> search(
+  public SortedListMap<Double, Integer> search(
       double[] dftQuery, byte[] wordQuery, TimeSeries query, int k) {
-    SortedListMap<Double, TimeSeriesWindow> result = new SortedListMap<Double, TimeSeriesWindow>(k);
+    SortedListMap<Double, Integer> result = new SortedListMap<Double, Integer>(k);
 
     // search for the exact path
     SFANode node = getLeafNode(wordQuery);
@@ -450,15 +473,15 @@ public class SFATrie implements Serializable {
       addToTimeSeriesRead(node.getSize());
 
       // retrieve all time series
-      for (TimeSeriesWindow object : node.getElements()) {
+      for (IntCursor idx : node.getElementIds()) {
         double originalDistance = getEuclideanDistance(
             timeSeries,
             query,
-            means[object.pos],
-            stddev[object.pos],
+            means[idx.value],
+            stddev[idx.value],
             Double.MAX_VALUE,
-            object.pos);
-        result.put(originalDistance, object);
+            idx.value);
+        result.put(originalDistance, idx.value); // TODO
       }
       return result;
     } else {
@@ -553,17 +576,17 @@ public class SFATrie implements Serializable {
           addToIOTimeSeriesRead(1);
           addToTimeSeriesRead(currentNode.getSize());
 
-          for (TimeSeriesWindow object : currentNode.getElements()) {
+          for (IntCursor idx : currentNode.getElementIds()) {
             kthBestDistance = (result.size() < k ? Double.MAX_VALUE : result.lastKey());
             double distance = getEuclideanDistance(
                 timeSeries,
                 query,
-                means[object.pos],
-                stddev[object.pos],
+                means[idx.value],
+                stddev[idx.value],
                 kthBestDistance,
-                object.pos);
+                idx.value);
             if (distance <= kthBestDistance) {
-              result.put(distance, object.pos);
+              result.put(distance, idx.value);
             }
           }
         }
@@ -644,14 +667,14 @@ public class SFATrie implements Serializable {
 
   private void testInvariant(SFANode node) {
     if (node.type == NodeType.Leaf) {
-      if (node.elements.size() == 0) {
+      if (node.elementIds.size() == 0) {
         throw new RuntimeException("Leaf Node has no Elements!");
       } else if (node.children != null && !node.getChildren().isEmpty()) {
         throw new RuntimeException("Leaf Node has Children!");
       }
 
     } else if (node.type == NodeType.Internal) {
-      if (node.elements != null && node.elements.size() != 0) {
+      if (node.elementIds != null && node.elementIds.size() != 0) {
         throw new RuntimeException("Internal Node has Elements!");
       } else if (node.children == null || node.getChildren().isEmpty()) {
         throw new RuntimeException("Internal Node has no Children!");
@@ -805,15 +828,16 @@ public class SFATrie implements Serializable {
     resetIoCosts();
   }
   
-  static public class TimeSeriesWindow implements Serializable {
+  static public class Approximation implements Serializable {
     private static final long serialVersionUID = -6192378071620042008L;
 
     byte[] word;
     double[] fourierValues;
     
     int pos;
-
-    public TimeSeriesWindow(
+    int cacheId;
+    
+    public Approximation(
         double[] fourierValues,
         byte[] word,
         int pos) {
@@ -827,15 +851,12 @@ public class SFATrie implements Serializable {
   public class SFANode implements Serializable {
     private static final long serialVersionUID = -645698847993760867L;
 
-//    protected long[] uuid = new long[2];
-
     // Children
     private SFANode[] children;
 
-    // TODO - extract approximations from pool and store only offsets.
-    //      - create a pool of approximations in the Tree and link to it.    
-    // the elements for a leaf-node
-    private List<TimeSeriesWindow> elements;
+    // the offset of the elements stored in a leaf-node
+    private transient IntArrayList elementIds;
+    private transient IntArrayList approximationIds;
 
     // path to the leaf node
     protected byte[] word;
@@ -850,55 +871,48 @@ public class SFATrie implements Serializable {
       this.type = NodeType.Leaf;
       this.word = word;
 
-//      // generate uuid for leaf node file names
-//      if (this.type == NodeType.Leaf) {      
-//        UUID uuidGen = UUID.randomUUID();
-//        this.uuid[0] = uuidGen.getLeastSignificantBits();
-//        this.uuid[1] = uuidGen.getMostSignificantBits();
-//      }
-
       this.minValues = new double[length];
       this.maxValues = new double[length];
       Arrays.fill(this.minValues, Double.MAX_VALUE);
       Arrays.fill(this.maxValues, Double.MIN_VALUE);
 
-      // create Elements
-      this.elements = new ArrayList<>();
+      this.elementIds = new IntArrayList(leafThreshold/2);
+      this.approximationIds = new IntArrayList(leafThreshold/2);
     }
 //
-//    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-//      this.uuid = (long[]) in.readObject();
-//      this.children = (Map<byte, SFANode>) in.readObject();
-//      this.elements = (List<TimeSeriesWindow>) in.readObject();
-//      this.word = (byte[]) in.readObject();
-//      this.minValues = (double[]) in.readObject();
-//      this.maxValues = (double[]) in.readObject();
-//      this.type = (NodeType) in.readObject();
-//    }
-//
-//    private void writeObject(ObjectOutputStream o) throws IOException {
-//      o.writeObject(this.uuid);
-//      o.writeObject(this.children);
-//      o.writeObject(this.elements);
-//      o.writeObject(this.word);
-//      o.writeObject(this.minValues);
-//      o.writeObject(this.maxValues);
-//      o.writeObject(this.type);
-//    }
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+      in.defaultReadObject();
+      
+      if (isLeaf()) {
+        int[] elem = (int[]) in.readObject();
+        this.elementIds = new IntArrayList(elem.length);
+        elementIds.add(elem);
+      }
+    }
+
+    private void writeObject(ObjectOutputStream o) throws IOException {
+      o.defaultWriteObject();
+      
+      if (isLeaf()) {
+        o.writeObject(elementIds.toArray());
+      }
+    }
 
     public void removeElements() {
-      if (this.elements != null) {
-        this.elements = null;
+      if (this.elementIds != null) {
+        this.elementIds = null;
+        this.approximationIds = null;
       }
     }
 
     public void clear() {
-      this.elements.clear();
+      this.elementIds.clear();
+      this.approximationIds.clear();
     }
 
-    public void addAll(List<TimeSeriesWindow> elements) {
-      this.elements.addAll(elements);
-    }
+//    public void addAll(List<Integer> elements) {
+//      this.elements.addAll(elements);
+//    }
 
     public SFANode addChild(byte key, int symbols, int dimensionality) {
       byte[] newWord = Arrays.copyOf(this.word, this.word.length + 1);
@@ -938,15 +952,17 @@ public class SFATrie implements Serializable {
       return uniqueNodes;
     }
 
-    public void addElement(TimeSeriesWindow element) {
+    public void addElement(Approximation element) {
       if (this.type == NodeType.Internal) {
         throw new RuntimeException("Called add Time Series on internal node!");
       }
-      this.elements.add(element);
+      this.elementIds.add(element.pos);
+      this.approximationIds.add(element.cacheId);
+
       adaptMinMaxValues(element);
     }
 
-    public void adaptMinMaxValues(TimeSeriesWindow element) {
+    public void adaptMinMaxValues(Approximation element) {
       adaptMinMaxValues(element.fourierValues, element.fourierValues);
     }
 
@@ -962,10 +978,14 @@ public class SFATrie implements Serializable {
       }
     }
 
-    public List<TimeSeriesWindow> getElements() {
-      return this.elements;
+    public IntArrayList getElementIds() {
+      return this.elementIds;
     }
-
+    
+    public IntArrayList getApproximationIds() {
+      return this.approximationIds;
+    }
+    
     @Override
     public String toString() {
       StringBuffer output = new StringBuffer();
@@ -1103,7 +1123,7 @@ public class SFATrie implements Serializable {
 
     public int getSize() {
       if (this.type == NodeType.Leaf) {
-        return this.elements.size();
+        return this.elementIds.size();
       } else {
         return getChildren().size();
       }

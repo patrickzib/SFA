@@ -262,7 +262,7 @@ public class SFA implements Serializable {
   public double[][] transformWindowingDouble(TimeSeries ts, int wordLength) {
     return this.transformation.transformWindowing(ts, maxWordLength);    
   }
-  
+    
   /**
    * Extracts sliding windows from a time series and transforms it to its SFA word.
    * @param ts
