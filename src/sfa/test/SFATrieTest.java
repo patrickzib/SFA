@@ -3,6 +3,7 @@ package sfa.test;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import sfa.index.SFATrie;
 import sfa.index.SortedListMap;
@@ -17,12 +18,10 @@ public class SFATrieTest {
     int k = 1; // k-NN search
 
     System.out.println("Loading Time Series");
-    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
+//    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
+    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(10 * 1000000, new Random(1));    
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
-    //    TimeSeries[] timeSeries = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/sample_lightcurves.txt"));
-//    System.out.println("Sample DS size : " + timeSeries.length);
-    
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
     int windowLength = timeSeries2[0].getLength(); // length of the subsequences to be indexed
     System.out.println("Query DS size : " + windowLength);
@@ -35,20 +34,7 @@ public class SFATrieTest {
     index.setMinimalDepth(1);
     index.buildIndex(timeSeries, windowLength);
     index.checkIndex();
-
-//    // store index
-//    System.out.println("Write index to disk");
-//    File location = new File("./tmp/sfatrie.idx");
-//    location.deleteOnExit();
-//    index.writeToDisk(location);
-//
-//    System.out.println("Load index from disk");
-//    SFATrie index2 = SFATrie.loadFromDisk(location);
-//    if (!index.equals(index2)) {
-//      System.out.println("Failed to load index!");
-//    };
-//    index = index2;
-
+    
     // GC
     performGC();
     System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
@@ -69,10 +55,6 @@ public class SFATrieTest {
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
 
       List<Double> distances = result.keys();
-//
-//      for (int j = 0; j < result.size(); j++) {
-//        System.out.println("\tResult:\t"+distances.get(j) + "\t" +offsets.get(j));
-//      }
 
       System.out.println("\tTS seen: " +index.getTimeSeriesRead());
       System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
@@ -80,14 +62,10 @@ public class SFATrieTest {
 
       index.resetIoCosts();
 
-//      if (!result.contains(query)) {
-//        System.out.println("Error: ts not found!<");
-//      }
-
-      // compare with nearest neighbor search!
+      // compare with 1-NN ED search
       time = System.currentTimeMillis();
       double resultDistance = Double.MAX_VALUE;
-      for (int ww = 0; ww < size; ww++) { // faster than reevaluation in for loop
+      for (int ww = 0; ww < size; ww++) {
         double distance = getEuclideanDistance(timeSeries, query, means[ww], stds[ww], resultDistance, ww);
         resultDistance = Math.min(distance, resultDistance);
       }

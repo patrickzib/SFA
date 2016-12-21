@@ -212,7 +212,7 @@ public class SFABulkLoad {
       time = System.currentTimeMillis();
       double resultDistance = Double.MAX_VALUE;
       for (int ww = 0; ww < size; ww++) { // faster than reevaluation in for loop
-        double distance = getEuclideanDistance(timeSeries, query, means[ww], stds[ww], resultDistance, ww);
+        double distance = SFATrieTest.getEuclideanDistance(timeSeries, query, means[ww], stds[ww], resultDistance, ww);
         resultDistance = Math.min(distance, resultDistance);
       }
       time = System.currentTimeMillis() - time;
@@ -237,37 +237,7 @@ public class SFABulkLoad {
       e.printStackTrace();
     }
   }
-
-  public static double getEuclideanDistance(
-      TimeSeries ts,
-      TimeSeries q,
-      double meanTs,
-      double stdTs,
-      double minValue,
-      int w
-      ) {
-
-    // 1 divided by stddev for fastert calculations
-    stdTs = (stdTs>0? 1.0 / stdTs : 1.0);
-
-    double distance = 0.0;
-    double[] tsData = ts.getData();
-    double[] qData = q.getData();
-
-    for (int ww = 0; ww < qData.length; ww++) {
-      double value1 = (tsData[w+ww]-meanTs) * stdTs;
-      double value = qData[ww] - value1;
-      distance += value*value;
-
-      // early abandoning
-      if (distance >= minValue) {
-        return Double.MAX_VALUE;
-      }
-    }
-
-    return distance;
-  }
-
+ 
   /**
    * Reads a bucket from a file
    * @param name

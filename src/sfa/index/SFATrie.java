@@ -47,10 +47,11 @@ public class SFATrie implements Serializable {
   protected int wordLength;
   protected int leafThreshold;
 
+  // the minimal prefix length where all nodes start.
   protected int minimalDepth = -1;
 
   public SFA quantization = null;
-  public final static int symbols  = 8;
+  public final static int symbols  = 8; // fanout of the SFA Trie
 
   protected boolean compressed = false;
 
@@ -60,10 +61,12 @@ public class SFATrie implements Serializable {
 
   public static enum NodeType { Leaf, Internal };
 
+  // the raw data
   public TimeSeries timeSeries;
   public double[] means;
   public double[] stddev;
   
+  // the SFA approximations of the time series
   private List<Approximation> approximations;
 
   /**
@@ -494,7 +497,7 @@ public class SFATrie implements Serializable {
             stddev[idx.value],
             Double.MAX_VALUE,
             idx.value);
-        result.put(originalDistance, idx.value); // TODO
+        result.put(originalDistance, idx.value);
       }
       return result;
     } else {
