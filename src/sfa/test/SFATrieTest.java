@@ -32,7 +32,7 @@ public class SFATrieTest {
     long time = System.currentTimeMillis();
     
     SFATrie index = new SFATrie(l, leafThreshold);
-    index.setMinimalHeight(1);
+    index.setMinimalDepth(1);
     index.buildIndex(timeSeries, windowLength);
     index.checkIndex();
 

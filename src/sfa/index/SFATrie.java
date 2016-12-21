@@ -47,7 +47,7 @@ public class SFATrie implements Serializable {
   protected int wordLength;
   protected int leafThreshold;
 
-  protected int minimalHeight = -1;
+  protected int minimalDepth = -1;
 
   public SFA quantization = null;
   public final static int symbols  = 8;
@@ -165,12 +165,16 @@ public class SFATrie implements Serializable {
 
   /**
    * Bulk insertion into the SFA trie
+   * @param approximations The approximations to insert
+   * @param minDepth The minimal depth of the trie (i.e. all nodes start with this prefix length)
+   *                 This is needed for bulk loading.
+   * @param windowLength (the window length to use)
    */
-  public void buildIndex(List<SFATrie.Approximation[]> windows, int minHeight, int windowLength) {
-    this.minimalHeight = minHeight; // TODO move to constructor??
+  public void buildIndex(List<SFATrie.Approximation[]> approximations, int minDepth, int windowLength) {
+    this.minimalDepth = minDepth;
     
     // insert each timeseries window
-    for (SFATrie.Approximation[] w : windows) {
+    for (SFATrie.Approximation[] w : approximations) {
       for (SFATrie.Approximation window : w) {
         addApproximation(window); 
         insert(window, 0, this.root);
@@ -181,16 +185,25 @@ public class SFATrie implements Serializable {
     printStats();
   }
 
-  public void addApproximation(SFATrie.Approximation window) {
+  /**
+   * Add an approximation to the SFA trie
+   * @param approximation
+   */
+  private void addApproximation(SFATrie.Approximation approximation) {
     // the position within the approximations-cache
-    window.cacheId = this.approximations.size();
+    approximation.cacheId = this.approximations.size();
     
     // add the approximation
-    this.approximations.add(window);
+    this.approximations.add(approximation);
   }
   
-  public Approximation getApproximation(Integer ts) {
-    return approximations.get(ts);
+  /**
+   * Get an approximation based on the pointer in the leaf node.
+   * @param ts
+   * @return
+   */
+  public Approximation getApproximation(int pos) {
+    return approximations.get(pos);
   }
 
   public void printStats() {
@@ -293,7 +306,7 @@ public class SFATrie implements Serializable {
       childNode = node.addChild(key, symbols, this.wordLength);
 
       // if needed, guarantee a minimal height (used for bulk loading)
-      if (this.minimalHeight - 1 > index) {
+      if (this.minimalDepth - 1 > index) {
         childNode.type = NodeType.Internal;
         insert(element, index + 1, childNode);
       }
@@ -682,8 +695,8 @@ public class SFATrie implements Serializable {
     }
   }
 
-  public void setMinimalHeight(int minimalHeight) {
-    this.minimalHeight = minimalHeight;
+  public void setMinimalDepth(int minimalHeight) {
+    this.minimalDepth = minimalHeight;
   }
 
   @Override
@@ -867,8 +880,10 @@ public class SFATrie implements Serializable {
     // Children
     private SFANode[] children;
 
-    // the offset of the elements stored in a leaf-node
+    // the offset in the time series of the elements stored in a leaf-node
     private transient IntArrayList elementIds;
+    
+    // the position in the approximations cache.
     private transient IntArrayList approximationIds;
 
     // path to the leaf node
@@ -892,7 +907,7 @@ public class SFATrie implements Serializable {
       this.elementIds = new IntArrayList(leafThreshold/2);
       this.approximationIds = new IntArrayList(leafThreshold/2);
     }
-//
+
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
       in.defaultReadObject();
       
@@ -922,10 +937,6 @@ public class SFATrie implements Serializable {
       this.elementIds.clear();
       this.approximationIds.clear();
     }
-
-//    public void addAll(List<Integer> elements) {
-//      this.elements.addAll(elements);
-//    }
 
     public SFANode addChild(byte key, int symbols, int dimensionality) {
       byte[] newWord = Arrays.copyOf(this.word, this.word.length + 1);
@@ -1124,15 +1135,6 @@ public class SFATrie implements Serializable {
     public int hashCode() {
       return Arrays.hashCode(getWord());
     }
-
-//    protected String getFileName() {
-//      StringBuffer name = new StringBuffer("/sfa_leaf/leaf_" + this.uuid[0] + "_" + this.uuid[1]);
-//
-//      for (byte element2 : this.word) {
-//        name.append("_" + (int) element2);
-//      }
-//      return name.toString() + ".dat";
-//    }
 
     public int getSize() {
       if (this.type == NodeType.Leaf) {

@@ -1,3 +1,5 @@
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.test;
 
 import java.io.BufferedInputStream;
@@ -19,9 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import sfa.classification.ParallelFor;
 import sfa.index.SFATrie;
 import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
@@ -51,7 +51,7 @@ public class SFABulkLoad {
     
     // samples to be indexed
 //    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
-    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(40 * 1000000, new Random(1));    
+    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100 * 1000000, new Random(1));    
     System.out.println("Sample DS size:\t" + timeSeries.getLength());
     
     // query subsequences
@@ -80,67 +80,65 @@ public class SFABulkLoad {
 
     SerializedStreams dataStream = new SerializedStreams(trieDepth);
     long time = System.currentTimeMillis();        
-   
-    // transform al approximations
-    
-    // create sliding windows
-    int BLOCKS = (int)Math.ceil(timeSeries.getLength()/chunkSize);
-    ParallelFor.withIndex(transformExec, BLOCKS, new ParallelFor.Each() {
-      long time = System.currentTimeMillis();        
-
-      @Override
-      public void run(int id, AtomicInteger processed) {
-        for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
-          if (a % BLOCKS == id) {
-            System.out.println("Transforming Chunk: " + (a+1));
-            TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
-            double[][] words = sfa.transformWindowingDouble(subsequence, l);
-            for (int pos = 0; pos < words.length; pos++) {
-              double[] word = words[pos];
-              byte[] w = sfa.quantizationByte(word);
-              dataStream.addToPartition(w, word, i+pos, trieDepth);
-            }
-            // wait for all futures to finish
-            long bytesWritten = 0;
-            while (!futures.isEmpty()) {
-              try {
-                bytesWritten = futures.remove().get();     
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            }
-            System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
-          }      
-        }
-      }
-    });
-        
-//    for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
-//      System.out.println("Transforming Chunk: " + (a+1));
-//      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
-//      double[][] words = sfa.transformWindowingDouble(subsequence, l);
-//      for (int pos = 0; pos < words.length; pos++) {
-//        double[] word = words[pos];
-//        byte[] w = sfa.quantizationByte(word);
-//        dataStream.addToPartition(w, word, i+pos, trieDepth);
-//      }
+       
+//    int BLOCKS = (int)Math.ceil(timeSeries.getLength()/chunkSize);
+//    ParallelFor.withIndex(transformExec, BLOCKS, new ParallelFor.Each() {
+//      long time = System.currentTimeMillis();        
 //
-//      // wait for all futures to finish
-//      long bytesWritten = 0;
-//      while (!futures.isEmpty()) {
-//        try {
-//          bytesWritten = futures.remove().get();     
-//        } catch (Exception e) {
-//          e.printStackTrace();
+//      @Override
+//      public void run(int id, AtomicInteger processed) {
+//        for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
+//          if (a % BLOCKS == id) {
+//            System.out.println("Transforming Chunk: " + (a+1));
+//            TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
+//            double[][] words = sfa.transformWindowingDouble(subsequence, l);
+//            for (int pos = 0; pos < words.length; pos++) {
+//              double[] word = words[pos];
+//              byte[] w = sfa.quantizationByte(word);
+//              dataStream.addToPartition(w, word, i+pos, trieDepth);
+//            }
+//            // wait for all futures to finish
+//            long bytesWritten = 0;
+//            while (!futures.isEmpty()) {
+//              try {
+//                bytesWritten = futures.remove().get();     
+//              } catch (Exception e) {
+//                e.printStackTrace();
+//              }
+//            }
+//            System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
+//          }      
 //        }
 //      }
-//      System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
-//    }
+//    });
+        
+    // transform all approximations    
+    for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
+      System.out.println("Transforming Chunk: " + (a+1));
+      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
+      double[][] words = sfa.transformWindowingDouble(subsequence, l);
+      for (int pos = 0; pos < words.length; pos++) {
+        double[] word = words[pos];
+        byte[] w = sfa.quantizationByte(word);
+        dataStream.addToPartition(w, word, i+pos, trieDepth);
+      }
 
-    // wait for all approximations to finish
+      // wait for all tasks to finish
+      long bytesWritten = 0;
+      while (!futures.isEmpty()) {
+        try {
+          bytesWritten = futures.remove().get();     
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+      System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
+    }
+
+    // close all streams
     dataStream.setFinished();
 
-    // process each bucket
+    // now, process each bucket on disk
     SFATrie index = null;
     
     System.out.println("Building and merging Trees:");
@@ -188,8 +186,10 @@ public class SFABulkLoad {
     performGC();
     System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
 
+    // k-NN search
     int k = 1;
     
+    // Preprocessing for Euclidean distance computations
     int size = (timeSeries.getData().length-windowLength)+1;
     double[] means = new double[size];
     double[] stds = new double[size];
@@ -270,6 +270,11 @@ public class SFABulkLoad {
     return distance;
   }
 
+  /**
+   * Reads a bucket from a file
+   * @param name
+   * @return
+   */
   protected static List<SFATrie.Approximation[]> readFromFile(File name) {
     System.out.println("Reading from : " + name.toString());
     long count = 0;
@@ -289,6 +294,10 @@ public class SFABulkLoad {
     return data;
   }
 
+  /**
+   * Opens multiple streams to disk but writes them sequentially to disk
+   *
+   */
   static class SerializedStreams {   
     LinkedBlockingQueue<SFATrie.Approximation>[] wordPartitions;
     ObjectOutputStream[] partitionsStream;
@@ -316,6 +325,9 @@ public class SFABulkLoad {
       }      
     }
 
+    /**
+     * Close all file streams
+     */
     public void setFinished() {      
       // finish all data
       for (int i = 0; i < SerializedStreams.this.wordPartitions.length; i++) {
@@ -352,13 +364,14 @@ public class SFABulkLoad {
     }
 
     /**
-     * Adds a time series to the corresponding queue
+     * Adds a time series to the corresponding queue and write the bucket to disk
+     * if the bucket exceeds minWriteToDiskLimit elements 
      */
-    public void addToPartition(byte[] words, double[] data, int pos, int useLetters) {
+    public void addToPartition(byte[] words, double[] data, int offset, int prefixLength) {
       try {
         // the bucket
-        int l = getPosition(words, useLetters);
-        this.wordPartitions[l].put(new SFATrie.Approximation(data, words, pos));
+        int l = getPrefix(words, prefixLength);
+        this.wordPartitions[l].put(new SFATrie.Approximation(data, words, offset));
 
         // write to disk
         synchronized (this.wordPartitions[l]) {          
@@ -382,7 +395,13 @@ public class SFABulkLoad {
       }
     }
 
-    protected int getPosition(byte[] word, int useLetters) {
+    /**
+     * Gets a prefix of length useLetters from the word, encoded as int.
+     * @param word
+     * @param useLetters
+     * @return
+     */
+    protected int getPrefix(byte[] word, int useLetters) {
       int id = word[0];
       if (useLetters > 1) {
         id = id * SFATrie.symbols + word[1];
@@ -393,6 +412,13 @@ public class SFABulkLoad {
       return id;
     }
 
+    /**
+     * Serializes the bucket to disk
+     * @param current
+     * @param letter
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws FileNotFoundException, IOException {      
       if (!current.isEmpty()) {   
         if (partitionsStream[letter] == null) {
@@ -400,7 +426,7 @@ public class SFABulkLoad {
           File file = new File(fileName);
           file.deleteOnExit();
           partitionsStream[letter] 
-              = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8kb */));         
+              = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8mb */));         
         }    
         
         partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[]{}));
