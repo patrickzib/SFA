@@ -14,7 +14,7 @@ public class SFATrieTest {
 
   public static void testSFATrie() throws IOException {
     int l = 16; // SFA word length ( & dimensionality of the index)
-    int leafThreshold = 100; // number of subsequences in each leaf node
+    int leafThreshold = 1000; // number of subsequences in each leaf node
     int k = 1; // k-NN search
 
     System.out.println("Loading Time Series");
