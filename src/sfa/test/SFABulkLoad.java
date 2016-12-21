@@ -51,7 +51,7 @@ public class SFABulkLoad {
     
     // samples to be indexed
 //    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
-    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100 * 1000000, new Random(1));    
+    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(80 * 1000000, new Random(1));    
     System.out.println("Sample DS size:\t" + timeSeries.getLength());
     
     // query subsequences
@@ -90,7 +90,7 @@ public class SFABulkLoad {
 //        for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
 //          if (a % BLOCKS == id) {
 //            System.out.println("Transforming Chunk: " + (a+1));
-//            TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
+//            TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize+windowLength-1);
 //            double[][] words = sfa.transformWindowingDouble(subsequence, l);
 //            for (int pos = 0; pos < words.length; pos++) {
 //              double[] word = words[pos];
@@ -115,7 +115,7 @@ public class SFABulkLoad {
     // transform all approximations    
     for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
       System.out.println("Transforming Chunk: " + (a+1));
-      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
+      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize+windowLength-1);
       double[][] words = sfa.transformWindowingDouble(subsequence, l);
       for (int pos = 0; pos < words.length; pos++) {
         double[] word = words[pos];
@@ -173,14 +173,13 @@ public class SFABulkLoad {
 
     // add the raw data to the trie
     index.setTimeSeries(timeSeries, windowLength);
-    
     index.printStats();
 
-    // store index
-    System.out.println("Writing index to disk...");
-    File location = new File("./tmp/sfatrie.idx");
+    // store index?
+//    System.out.println("Writing index to disk...");
+//    File location = new File("./tmp/sfatrie.idx");
 //    location.deleteOnExit();
-    index.writeToDisk(location);
+//    index.writeToDisk(location);
 
     // GC
     performGC();
@@ -189,11 +188,10 @@ public class SFABulkLoad {
     // k-NN search
     int k = 1;
     
-    // Preprocessing for Euclidean distance computations
+    // Used for Euclidean distance computations
     int size = (timeSeries.getData().length-windowLength)+1;
-    double[] means = new double[size];
-    double[] stds = new double[size];
-    TimeSeries.calcIncreamentalMeanStddev(windowLength, timeSeries, means, stds);
+    double[] means = index.means;
+    double[] stds = index.stddev;
     
     for (int i = 0; i < timeSeries2.length; i++) {
       System.out.println((i+1) + ". Query");
@@ -430,7 +428,10 @@ public class SFABulkLoad {
         }    
         
         partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[]{}));
-        partitionsStream[letter].reset(); // reset the references to the objects
+        
+        // reset the references to the objects to allow 
+        // the garbage collector to write the objects
+        partitionsStream[letter].reset(); 
                 
         try {
           Thread.sleep(100);

@@ -60,9 +60,9 @@ public class SFATrie implements Serializable {
 
   public static enum NodeType { Leaf, Internal };
 
-  TimeSeries timeSeries;
-  double[] means;
-  double[] stddev;
+  public TimeSeries timeSeries;
+  public double[] means;
+  public double[] stddev;
   
   private List<Approximation> approximations;
 
