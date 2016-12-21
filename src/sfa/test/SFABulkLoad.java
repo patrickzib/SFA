@@ -13,6 +13,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,37 +32,44 @@ import sfa.transformation.SFA.HistogramType;
 public class SFABulkLoad {
 
   static String bucketDir = "./tmp/";
-  static ExecutorService executor = Executors.newSingleThreadExecutor(); // serialize access to the disk
+  static ExecutorService serializerExec = Executors.newFixedThreadPool(2); // serialize access to the disk
+  static ExecutorService transformExec = Executors.newFixedThreadPool(4); // parallel SFA transformation
+  
   static LinkedList<Future<Long>> futures = new LinkedList<>();
 
   public static void testParallelWrite() throws IOException {
     int l = 16; // SFA word length ( & dimensionality of the index)
     int leafThreshold = 1000; // number of subsequences in each leaf node
     byte symbols = SFATrie.symbols;
-    
-    // the depth of the tree to use for bulk loading:
-    //  1 => 8^1 
-    //  2 => 8^2
-    //  3 => 8^3
-    // tries will be built for merging
-    int trieDepth = 2; 
-
-    // process data in chunks of 'chunkSize' and create one index each
-    int chunkSize = 1000000;
-    
+        
     if (!new File(bucketDir).exists()) {
-      System.out.println("Creating tmp directory");
+      System.out.println("Creating temp directory...");
       new File(bucketDir).mkdir();
     }
     
-    System.out.println("Loading Time Series");
+    System.out.println("Loading/generating Time Series...");
     
-    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves_40k.txt"));
-    System.out.println("Sample DS size : " + timeSeries.getLength());
-
+    // samples to be indexed
+//    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
+    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(40 * 1000000, new Random(1));    
+    System.out.println("Sample DS size:\t" + timeSeries.getLength());
+    
+    // query subsequences
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
-    int windowLength = timeSeries2[0].getLength(); // length of the subsequences to be indexed
-    System.out.println("Query DS size : " + windowLength);
+    int windowLength = timeSeries2[0].getLength(); 
+    System.out.println("Query DS size:\t" + windowLength);
+    
+    // process data in chunks of 'chunkSize' and create one index each
+    int chunkSize = 1000000;
+    System.out.println("Chunk size:\t" + chunkSize);
+    
+    // the depth of the tree to use for bulk loading:
+    //    depth 1 => 8^1 buckets 
+    //    depth 2 => 8^2 buckets
+    //    ...
+    //    depth i => symbols ^ i buckets 
+    int trieDepth = (int)(Math.round(Math.log(timeSeries.getLength() / chunkSize) / Math.log(8))); 
+    System.out.println("Using trie depth:\t" + trieDepth + " (" + (int) Math.pow(8,trieDepth) + " buckets)");
     
     Runtime runtime = Runtime.getRuntime();
     long mem = runtime.totalMemory();
@@ -73,16 +81,18 @@ public class SFABulkLoad {
     SerializedStreams dataStream = new SerializedStreams(trieDepth);
     long time = System.currentTimeMillis();        
    
+    // transform al approximations
+    
     // create sliding windows
     int BLOCKS = (int)Math.ceil(timeSeries.getLength()/chunkSize);
-    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+    ParallelFor.withIndex(transformExec, BLOCKS, new ParallelFor.Each() {
       long time = System.currentTimeMillis();        
 
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
           if (a % BLOCKS == id) {
-            System.out.println("Transforming Chunk:" + (a+1));
+            System.out.println("Transforming Chunk: " + (a+1));
             TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
             double[][] words = sfa.transformWindowingDouble(subsequence, l);
             for (int pos = 0; pos < words.length; pos++) {
@@ -105,8 +115,8 @@ public class SFABulkLoad {
       }
     });
         
-//    for (int i = 0; i < timeSeries.getLength(); i+=chunkSize) {
-//      System.out.println("Transforming Chunk:" + (i+1));
+//    for (int i = 0, a = 0; i < timeSeries.getLength(); i+=chunkSize, a++) {
+//      System.out.println("Transforming Chunk: " + (a+1));
 //      TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize);
 //      double[][] words = sfa.transformWindowingDouble(subsequence, l);
 //      for (int pos = 0; pos < words.length; pos++) {
@@ -127,15 +137,16 @@ public class SFABulkLoad {
 //      System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
 //    }
 
+    // wait for all approximations to finish
     dataStream.setFinished();
 
-    // process each task
+    // process each bucket
     SFATrie index = null;
+    
+    System.out.println("Building and merging Trees:");
     File directory = new File(bucketDir);
 
-    System.out.println("Building and merging Trees:");
-
-    // Merge the index
+    // create an index for each bucket and merge the indices
     for (File bucket : directory.listFiles()) {
       if (bucket.isFile() && bucket.getName().contains("bucket")) {
         time = System.currentTimeMillis();
@@ -143,9 +154,9 @@ public class SFABulkLoad {
         if (!windows.isEmpty()) { 
           SFATrie trie = new SFATrie(l, leafThreshold, sfa);
           trie.buildIndex(windows, trieDepth, windowLength);
-  
+        
           if (index == null) {
-            index = trie;          
+            index = trie;
           }
           else {
             index.mergeTrees(trie);
@@ -158,12 +169,13 @@ public class SFABulkLoad {
         }
       }
     }
-
-    // add the subsequences to the trie
-    index.setTimeSeries(timeSeries, windowLength);
     
     // path compression
     index.compress(true);
+
+    // add the raw data to the trie
+    index.setTimeSeries(timeSeries, windowLength);
+    
     index.printStats();
 
     // store index
@@ -354,7 +366,7 @@ public class SFABulkLoad {
             final List<SFATrie.Approximation> current = new ArrayList<>(this.wordPartitions[l].size());
             this.wordPartitions[l].drainTo(current);
             
-            futures.add(executor.submit(new Callable<Long>() {
+            futures.add(serializerExec.submit(new Callable<Long>() {
               @Override
               public Long call() throws Exception {
                 writeToDisk(current, l);
@@ -409,7 +421,8 @@ public class SFABulkLoad {
     try {
       testParallelWrite();
     } finally {
-      executor.shutdown();
+      serializerExec.shutdown();
+      transformExec.shutdown();
     }
   }
 

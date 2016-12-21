@@ -90,10 +90,6 @@ public class SFATrie implements Serializable {
     resetIoCosts();
   }
   
-  public String getStoragePath() {
-    return "./tmp";
-  }
-  
   /**
    * Calculates the mean and Stddev for the particular time series
    * @param samples
@@ -853,7 +849,8 @@ public class SFATrie implements Serializable {
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
       this.word = (byte[])in.readUnshared();
       this.fourierValues = (double[])in.readUnshared();
-      this.pos = (int) pos;
+      this.pos = (int) in.readInt();
+      this.cacheId = -1;
     }
 
     private void writeObject(ObjectOutputStream o) throws IOException {

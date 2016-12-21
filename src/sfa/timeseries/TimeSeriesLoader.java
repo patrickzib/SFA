@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import com.carrotsearch.hppc.DoubleArrayList;
 
@@ -123,5 +124,18 @@ public class TimeSeriesLoader {
   
   public static boolean isNonEmptyColumn(String column) {
     return column!=null && !"".equals(column) && !"NaN".equals(column) && !"\t".equals(column);
+  }
+  
+  public static TimeSeries generateRandomWalkData(int maxDimension, Random generator) {
+    double[] data = new double[maxDimension];
+
+    // Gaussian Distribution 
+    data[0] = generator.nextGaussian();
+
+    for (int d = 1; d < maxDimension; d++) {
+      data[d] = data[d-1] + generator.nextGaussian();
+    }
+
+    return new TimeSeries(data);
   }
 }
