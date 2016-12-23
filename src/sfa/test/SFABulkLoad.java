@@ -172,7 +172,7 @@ public class SFABulkLoad {
     index.compress(true);
 
     // add the raw data to the trie
-    index.setTimeSeries(timeSeries, windowLength);
+    index.initializeSubsequenceMatching(timeSeries, windowLength);
     index.printStats();
 
     // store index?

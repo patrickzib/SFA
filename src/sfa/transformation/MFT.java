@@ -79,7 +79,7 @@ public class MFT implements Serializable {
     int end = Math.max(1,timeSeries.getLength()-windowSize+1);
     double[] means = new double[end];
     double[] stds = new double[end];
-    TimeSeries.calcIncreamentalMeanStddev(windowSize, timeSeries, means, stds);
+    TimeSeries.calcIncreamentalMeanStddev(windowSize, timeSeries.getData(), means, stds);
 
     double[][] transformed = new double[end][];
 

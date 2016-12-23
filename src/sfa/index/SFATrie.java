@@ -2,8 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.index;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -66,9 +64,13 @@ public class SFATrie implements Serializable {
   protected transient long timeSeriesRead = 0;
 
   public static enum NodeType { Leaf, Internal };
-
+  public static enum MatchingType {WholeSeries, Subsequences};
+  
+  // The type of the SFA trie
+  public MatchingType type = MatchingType.Subsequences;
+  
   // the raw data
-  public TimeSeries timeSeries;
+  public double[][] timeSeries;
   public double[] means;
   public double[] stddev;
   
@@ -100,58 +102,44 @@ public class SFATrie implements Serializable {
   }
   
   /**
-   * Calculates the mean and Stddev for the particular time series
-   * @param samples
-   * @param windowLength
-   * @param idx
+   * Build an index for whole matching
    */
-  public void caluclateMeanStddev(int windowLength) {
-    int size = (this.timeSeries.getData().length-windowLength)+1;
-    this.means = new double[size];
-    this.stddev = new double[size];
-    TimeSeries.calcIncreamentalMeanStddev(windowLength, this.timeSeries, this.means, this.stddev);
+  public void buildIndexWholeMatching(TimeSeries[] samples) {
+    // Train the SFA quantization histogram
+    // and transform the time series
+    double[][] transformed = this.quantization.fitTransformDouble(samples, this.wordLength, symbols, true);
+    
+//    this.quantization.printBins();
+    
+    // calculates means and stddev
+    initializeWholeMatching(samples);
+    
+    // Transform the time series to SFA words
+    for (int i = 0; i < samples.length; i++) {
+      // insert each timeseries window
+      Approximation window = new Approximation(
+          transformed[i], 
+          this.quantization.quantizationByte(transformed[i]),
+          i);
+
+      addApproximation(window);
+        
+      insert(window, 0, this.root);
+    }
+
+    compress(true);
+    printStats();
   }
   
-//  /**
-//   * Inserts multiple given time series
-//   * TODO dont mix whole matching and subsequence matching!
-//   */
-//  public void buildIndex(TimeSeries[] samples, int windowLength) {
-//    // Train the SFA quantization histogram
-//    this.quantization.fitWindowing(samples, windowLength, this.wordLength, symbols, true, true);
-//    
-//    // calculates means and stddev
-//    setTimeSeries(samples, windowLength);
-//    
-//    // Transform the time series to SFA words
-//    for (int i = 0; i < samples.length; i++) {
-//      TimeSeries ts = samples[i];
-//      double[][] words = this.quantization.transformWindowingDouble(ts, this.wordLength);
-//    
-//      // insert each timeseries window
-//      for (int offset = 0; offset < words.length; offset++) {
-//        TimeSeriesWindow window = new TimeSeriesWindow(
-//            words[offset], 
-//            this.quantization.quantizationByte(words[offset]),
-//            i,
-//            offset);
-//        insert(window, 0, this.root);
-//      }
-//    }
-//
-//    printStats(true);
-//  }
-  
   /**
-   * Inserts a given time series
-   *
+   * Build an index for subsequence matching.
    */
-  public void buildIndex(TimeSeries ts, int windowLength) {
+  public void buildIndexSubsequenceMatching(TimeSeries ts, int windowLength) {
     // Train the SFA quantization histogram
     this.quantization.fitWindowing(new TimeSeries[]{ts}, windowLength, this.wordLength, symbols, true, true);
 
     // calculates means and stddev
-    setTimeSeries(ts, windowLength);
+    initializeSubsequenceMatching(ts, windowLength);
     
     // Transform the time series to SFA words
     double[][] transformed = this.quantization.transformWindowingDouble(ts, this.wordLength);
@@ -390,19 +378,61 @@ public class SFATrie implements Serializable {
     
     this.compressed = false;
   }
-
-  public TimeSeries getTimeSeries() {
-    return timeSeries;
+    
+  public double calculateMean(int offset) {
+    double mean=0.0;    
+    for (double value : timeSeries[offset]) {
+      mean += value;
+    }
+    return mean / (double)timeSeries[offset].length;
   }
-
+  
+  public double calculateStddev(int offset, double mean) {
+    double var = 0;
+    for (double value : timeSeries[offset]) {
+      var += value * value;
+    }
+    double norm = 1.0 / ((double)timeSeries[offset].length);
+    double buf = norm * var - mean*mean;
+    if (buf > 0) {
+      buf = Math.sqrt(buf);
+    }
+    return buf;
+  }
+  
   /**
-   * Set the raw time series data in the SFA trie.
+   * Set the raw time series data in the SFA trie for Subesequence Matching.
    * @param ts
    * @param windowLength
    */
-  public void setTimeSeries(TimeSeries ts, int windowLength) {
-    this.timeSeries = ts;    
-    caluclateMeanStddev(windowLength);
+  public void initializeSubsequenceMatching(TimeSeries ts, int windowLength) {
+    this.type = MatchingType.Subsequences;
+    this.timeSeries = new double[1][];
+    this.timeSeries[0] = ts.getData();
+    
+    int size = (ts.getLength()-windowLength)+1;
+    this.means = new double[size];
+    this.stddev = new double[size];
+    TimeSeries.calcIncreamentalMeanStddev(windowLength, ts.getData(), this.means, this.stddev);
+  }
+  
+  /**
+   * Set the raw time series data in the SFA trie for Whole Matching.
+   * @param ts
+   * @param windowLength
+   */
+  public void initializeWholeMatching(TimeSeries[] ts) {
+    this.type = MatchingType.WholeSeries;
+    this.timeSeries = new double[ts.length][ts[0].getLength()];
+    this.means = new double[timeSeries.length];
+    this.stddev = new double[timeSeries.length];
+    for (int offset = 0; offset < ts.length; offset++) {
+      // norm the time series data
+      ts[offset].norm();
+      this.timeSeries[offset] = ts[offset].getData();
+      this.means[offset] = 0;
+      this.stddev[offset] = 1;
+    }
   }
   
   /**
@@ -513,14 +543,14 @@ public class SFATrie implements Serializable {
 
       // retrieve all time series
       for (IntCursor idx : node.getElementIds()) {
-        double originalDistance = getEuclideanDistance(
-            timeSeries,
+        double distance = getEuclideanDistance(
+            type == MatchingType.Subsequences? timeSeries[0] : timeSeries[idx.value],
             query,
             means[idx.value],
             stddev[idx.value],
             Double.MAX_VALUE,
-            idx.value);
-        result.put(originalDistance, idx.value);
+            type == MatchingType.Subsequences? idx.value : 0);
+        result.put(distance, idx.value);
       }
       return result;
     } else {
@@ -608,12 +638,12 @@ public class SFATrie implements Serializable {
           for (IntCursor idx : currentNode.getElementIds()) {
             kthBestDistance = (result.size() < k ? Double.MAX_VALUE : result.lastKey());
             double distance = getEuclideanDistance(
-                timeSeries,
+                type == MatchingType.Subsequences? timeSeries[0] : timeSeries[idx.value],
                 query,
                 means[idx.value],
                 stddev[idx.value],
                 kthBestDistance,
-                idx.value);
+                type == MatchingType.Subsequences? idx.value : 0);
             if (distance <= kthBestDistance) {
               result.put(distance, idx.value);
             }
@@ -632,7 +662,7 @@ public class SFATrie implements Serializable {
    * Euclidean distance between a window in raw ts and the query q
    */
   protected double getEuclideanDistance(
-      TimeSeries ts,
+      double[] ts,
       TimeSeries q,
       double meanTs,
       double stdTs,
@@ -644,7 +674,7 @@ public class SFATrie implements Serializable {
     stdTs = (stdTs>0? 1.0 / stdTs : 1.0);
 
     double distance = 0.0;
-    double[] tsData = ts.getData();
+    double[] tsData = ts;
     double[] qData = q.getData();
 
     for (int ww = 0; ww < qData.length; ww++) {

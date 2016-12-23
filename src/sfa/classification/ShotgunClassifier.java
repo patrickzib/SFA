@@ -252,7 +252,7 @@ public class ShotgunClassifier extends Classifier {
       int w = Math.min(windowLength, trainSamples[i].getLength());
       means[i] = new double[trainSamples[i].getLength()-w+1];
       stds[i] = new double[trainSamples[i].getLength()-w+1];
-      TimeSeries.calcIncreamentalMeanStddev(w, trainSamples[i], means[i], stds[i]);
+      TimeSeries.calcIncreamentalMeanStddev(w, trainSamples[i].getData(), means[i], stds[i]);
       for (int j = 0; j < stds[i].length; j++) {
         stds[i][j] = (stds[i][j]>0? 1.0 / stds[i][j] : 1.0);
         means[i][j] = normMean? means[i][j] : 0;

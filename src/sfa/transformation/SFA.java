@@ -290,7 +290,7 @@ public class SFA implements Serializable {
     return intWords;
   }
 
-  protected double[][] fitTransformDouble (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
+  public double[][] fitTransformDouble (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
     if (!this.initialized) {
       init(wordLength, symbols);
       

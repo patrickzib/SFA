@@ -199,7 +199,7 @@ public class TimeSeries implements Serializable {
     double[] means = new double[size];
     double[] stddevs = new double[size];
 
-    calcIncreamentalMeanStddev(windowSize, this, means, stddevs);
+    calcIncreamentalMeanStddev(windowSize, this.data, means, stddevs);
 
     int pos = 0;
     for (int i=0; i < subsequences.length; i++) {
@@ -226,7 +226,7 @@ public class TimeSeries implements Serializable {
    */
   public static void calcIncreamentalMeanStddev(
       int windowLength,
-      TimeSeries ts,
+      double[] ts,
       double[] means,
       double[] stds) {
     double sum = 0;
@@ -235,7 +235,7 @@ public class TimeSeries implements Serializable {
     // it is faster to multiply than to divide
     double rWindowLength = 1.0 / (double)windowLength;
 
-    double[] tsData = ts.getData();
+    double[] tsData = ts;
     for (int ww = 0; ww < windowLength; ww++) {
       sum += tsData[ww];
       squareSum += tsData[ww]*tsData[ww];
