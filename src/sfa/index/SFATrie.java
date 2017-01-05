@@ -9,14 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -64,25 +57,30 @@ public class SFATrie implements Serializable {
   protected transient long timeSeriesRead = 0;
 
   public static enum NodeType { Leaf, Internal };
-  public static enum MatchingType {WholeSeries, Subsequences};
-  
+  public static enum MatchingType { WholeSeries, Subsequences };
+
+  // store the raw data in memory or on disk
+  public static enum StorageType { Memory, Disk };
+
   // The type of the SFA trie
   public MatchingType type = MatchingType.Subsequences;
   
-  // the raw data
+  // the raw TS
   public double[][] timeSeries;
+  // TODO change to HashMap<String, List<double[]>>
+
   public double[] means;
   public double[] stddev;
   
   // the SFA approximations of the time series
   private List<Approximation> approximations;
 
+
   /**
    * Create a new SFATrie with dimenionality l and threshold 'leafThreshold'.
    * A leaf will be split, once leafThreshold is exceeded.
    * @param l word length of the SFA transformation
    * @param leafThreshold number of ts in a leaf
-   * @param quantization
    */
   public SFATrie(int l, int leafThreshold) {
     this(l, leafThreshold, new SFA(HistogramType.EQUI_FREQUENCY));
@@ -97,7 +95,7 @@ public class SFATrie implements Serializable {
     this.leafThreshold = leafThreshold;
 
     this.approximations = new ArrayList<>();
-    
+
     resetIoCosts();
   }
   
@@ -196,7 +194,6 @@ public class SFATrie implements Serializable {
   
   /**
    * Get an approximation based on the pointer in the leaf node.
-   * @param ts
    * @return
    */
   public Approximation getApproximation(int pos) {
@@ -291,8 +288,8 @@ public class SFATrie implements Serializable {
   /**
    * Inserts the given approximation at the given path.
    *
-   * @param path
-   *          the path where to insert the element.
+   * @param index
+   *          the offset at which to compare
    * @param element
    *          the element to be inserted.
    */
@@ -361,7 +358,7 @@ public class SFATrie implements Serializable {
    * Used for bulk loading. Tries at disjoint prefices are 
    * constructured and merged
    * 
-   * @param t
+   * @param tree
    */
   public void mergeTrees(SFATrie tree) {
     // test if children are not contained
@@ -419,7 +416,6 @@ public class SFATrie implements Serializable {
   /**
    * Set the raw time series data in the SFA trie for Whole Matching.
    * @param ts
-   * @param windowLength
    */
   public void initializeWholeMatching(TimeSeries[] ts) {
     this.type = MatchingType.WholeSeries;
@@ -437,7 +433,7 @@ public class SFATrie implements Serializable {
   
   /**
    * Applies path-compression
-   * @param m
+   * @param compact
    */
   public void compress(boolean compact) {
     if (!this.compressed) {
@@ -800,7 +796,6 @@ public class SFATrie implements Serializable {
 
   /**
    * reset IO-costs to 0
-   * @param ioCost
    */
   public void resetIoCosts() {
     this.ioBlockRead = 0;
@@ -810,7 +805,7 @@ public class SFATrie implements Serializable {
 
   /**
    * add costs for reading a node
-   * @param ioCost
+   * @param blockCost
    */
   public void addToBlockRead(int blockCost) {
     this.ioBlockRead += (blockCost);
@@ -992,9 +987,8 @@ public class SFATrie implements Serializable {
 
     /**
      * Java serialization
-     * @param in
+     * @param o
      * @throws IOException
-     * @throws ClassNotFoundException
      */
     private void writeObject(ObjectOutputStream o) throws IOException {
       o.defaultWriteObject();

@@ -35,7 +35,6 @@ public static void testWholeMatching() throws IOException {
     long time = System.currentTimeMillis();
     
     SFATrie index = new SFATrie(l, leafThreshold);
-    index.setMinimalDepth(1);
     index.buildIndexWholeMatching(timeSeries);
     index.checkIndex();
     
@@ -98,7 +97,6 @@ public static void testWholeMatching() throws IOException {
     long time = System.currentTimeMillis();
     
     SFATrie index = new SFATrie(l, leafThreshold);
-    index.setMinimalDepth(1);
     index.buildIndexSubsequenceMatching(timeSeries, windowLength);
     index.checkIndex();
     
