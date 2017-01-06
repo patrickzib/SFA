@@ -40,85 +40,85 @@ public class SFABulkLoad {
   }
 
   public static void testBulkLoadWholeMatching() throws IOException {
-    setUpBucketDir();
-
-    int N = 100000;
-    System.out.println("Loading/generating "+N+" Time Series...");
-
-    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
-    int n = timeSeries2[0].getLength();
-    System.out.println("Queries DS size: " + timeSeries2.length);
-
-    long mem = runtime.totalMemory();
-
-    // train SFA quantization bins on a SUBSET of all time series,
-    // as we cannot fit all into main memory
-    TimeSeries[] timeSeriesSubset = new TimeSeries[50_000];
-    for (int i = 0; i < N; i++) {
-      timeSeriesSubset[i] = getTimeSeries(i, n);
-      timeSeriesSubset[i].norm();
-    }
-    System.out.println("Sample DS size: " + N);
-
-    SFA sfa = new SFA(HistogramType.EQUI_FREQUENCY);
-    sfa.fitTransform(timeSeriesSubset, l, symbols, true);
-    //		sfa.printBins();
-
-    // process data in chunks of 'chunkSize' to create one SFA trie each
-    int chunkSize = 10_000;
-    System.out.println("Chunk size:\t" + chunkSize);
-    int trieDepth = getBestDepth(N, chunkSize);
-
-    // write the Fourier-transformed TS to buckets on disk
-    SerializedStreams dataStream = new SerializedStreams(trieDepth);
-
-    // process in parallel, as the Fourier transform of whole series takes O(n log n)
-    int BLOCKS = (int)Math.ceil(N/chunkSize);
-    ParallelFor.withIndex(transformExec, BLOCKS, new ParallelFor.Each() {
-      long time = System.currentTimeMillis();
-      @Override
-      public void run(int id, AtomicInteger processed) {
-        for (int i = 0, a = 0; i < N; i+=chunkSize, a++) { // process TS in chunkSize
-          if (a % BLOCKS == id) {
-            System.out.println("Transforming Chunk: " + (a + 1));
-            for (int j = i; j < Math.min(i+chunkSize, N); j++) {
-              // could as well load TS from file
-              TimeSeries ts = getTimeSeries(j, n);
-              // Fourier transform
-              double[] words = sfa.transformation.transform(ts, l);
-              // SFA words
-              byte[] w = sfa.quantizationByte(words);
-              dataStream.addToPartition(w, words, j, trieDepth);
-            }
-
-            // wait for all futures to finish (data to be written)
-            long bytesWritten = 0;
-            while (!futures.isEmpty()) {
-              try {
-                bytesWritten = futures.remove().get();
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            }
-            System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
-          }
-        }
-
-      }
-    });
-    // close all streams
-    dataStream.setFinished();
-
-    // build the SFA trie from the bucket files
-    SFATrie index = buildSFATrie(l, leafThreshold, n, trieDepth, sfa);
-
-    // add the raw data to the trie
-    // TODO ?? index.initializeWholeMatching(timeSeries);
-    index.printStats();
-
-    // GC
-    performGC();
-    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
+//    setUpBucketDir();
+//
+//    int N = 100000;
+//    System.out.println("Loading/generating "+N+" Time Series...");
+//
+//    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
+//    int n = timeSeries2[0].getLength();
+//    System.out.println("Queries DS size: " + timeSeries2.length);
+//
+//    long mem = runtime.totalMemory();
+//
+//    // train SFA quantization bins on a SUBSET of all time series,
+//    // as we cannot fit all into main memory
+//    TimeSeries[] timeSeriesSubset = new TimeSeries[50_000];
+//    for (int i = 0; i < N; i++) {
+//      timeSeriesSubset[i] = getTimeSeries(i, n);
+//      timeSeriesSubset[i].norm();
+//    }
+//    System.out.println("Sample DS size: " + N);
+//
+//    SFA sfa = new SFA(HistogramType.EQUI_FREQUENCY);
+//    sfa.fitTransform(timeSeriesSubset, l, symbols, true);
+//    //		sfa.printBins();
+//
+//    // process data in chunks of 'chunkSize' to create one SFA trie each
+//    int chunkSize = 10_000;
+//    System.out.println("Chunk size:\t" + chunkSize);
+//    int trieDepth = getBestDepth(N, chunkSize);
+//
+//    // write the Fourier-transformed TS to buckets on disk
+//    SerializedStreams dataStream = new SerializedStreams(trieDepth);
+//
+//    // process in parallel, as the Fourier transform of whole series takes O(n log n)
+//    int BLOCKS = (int)Math.ceil(N/chunkSize);
+//    ParallelFor.withIndex(transformExec, BLOCKS, new ParallelFor.Each() {
+//      long time = System.currentTimeMillis();
+//      @Override
+//      public void run(int id, AtomicInteger processed) {
+//        for (int i = 0, a = 0; i < N; i+=chunkSize, a++) { // process TS in chunkSize
+//          if (a % BLOCKS == id) {
+//            System.out.println("Transforming Chunk: " + (a + 1));
+//            for (int j = i; j < Math.min(i+chunkSize, N); j++) {
+//              // could as well load TS from file
+//              TimeSeries ts = getTimeSeries(j, n);
+//              // Fourier transform
+//              double[] words = sfa.transformation.transform(ts, l);
+//              // SFA words
+//              byte[] w = sfa.quantizationByte(words);
+//              dataStream.addToPartition(w, words, j, trieDepth);
+//            }
+//
+//            // wait for all futures to finish (data to be written)
+//            long bytesWritten = 0;
+//            while (!futures.isEmpty()) {
+//              try {
+//                bytesWritten = futures.remove().get();
+//              } catch (Exception e) {
+//                e.printStackTrace();
+//              }
+//            }
+//            System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time))  + " kb/s");
+//          }
+//        }
+//
+//      }
+//    });
+//    // close all streams
+//    dataStream.setFinished();
+//
+//    // build the SFA trie from the bucket files
+//    SFATrie index = buildSFATrie(l, leafThreshold, n, trieDepth, sfa);
+//
+//    // add the raw data to the trie
+//    // TODO ?? index.initializeWholeMatching(timeSeries);
+//    index.printStats();
+//
+//    // GC
+//    performGC();
+//    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
 
   }
 
@@ -263,58 +263,58 @@ public class SFABulkLoad {
     System.out.println("All ok...");
   }
 
-//  /**
-//   * Builds one SFA trie for each bucket and merges these to one SFA trie.
-//   * @param l
-//   * @param leafThreshold
-//   * @param windowLength
-//   * @param trieDepth
-//   * @param sfa
-//   * @return
-//   */
-//  protected static SFATrie buildSFATrie(
-//          int l, int leafThreshold, int windowLength, int trieDepth, SFA sfa) {
-//    long time;// now, process each bucket on disk
-//    SFATrie index = null;
-//
-//    System.out.println("Building and merging Trees:");
-//    File directory = new File(bucketDir);
-//
-//    // create an index for each bucket and merge the indices
-//    for (File bucket : directory.listFiles()) {
-//      if (bucket.isFile() && bucket.getName().contains("bucket")) {
-//        time = System.currentTimeMillis();
-//        List<SFATrie.Approximation[]> windows = readFromFile(bucket);
-//        if (!windows.isEmpty()) {
-//          SFATrie trie = new SFATrie(l, leafThreshold, sfa);
-//          trie.buildIndex(windows, trieDepth, windowLength);
-//
-//          if (index == null) {
-//            index = trie;
-//          }
-//          else {
-//            index.mergeTrees(trie);
-//          }
-//
-//          System.out.println("Merging done in "
-//              + (System.currentTimeMillis() - time) + " ms. "
-//              + "\t Elements: " + index.getSize()
-//              + "\t Height: " + index.getHeight());
-//        }
-//      }
-//    }
-//
-//    // path compression
-//    index.compress(true);
-//
-//    // write index to disk?
-////    System.out.println("Writing index to disk...");
-////    File location = new File("./tmp/sfatrie.idx");
-////    location.deleteOnExit();
-////    index.writeToDisk(location);
-//
-//    return index;
-//  }
+  /**
+   * Builds one SFA trie for each bucket and merges these to one SFA trie.
+   * @param l
+   * @param leafThreshold
+   * @param windowLength
+   * @param trieDepth
+   * @param sfa
+   * @return
+   */
+  protected static SFATrie buildSFATrie(
+          int l, int leafThreshold, int windowLength, int trieDepth, SFA sfa) {
+    long time;// now, process each bucket on disk
+    SFATrie index = null;
+
+    System.out.println("Building and merging Trees:");
+    File directory = new File(bucketDir);
+
+    // create an index for each bucket and merge the indices
+    for (File bucket : directory.listFiles()) {
+      if (bucket.isFile() && bucket.getName().contains("bucket")) {
+        time = System.currentTimeMillis();
+        List<SFATrie.Approximation[]> windows = readFromFile(bucket);
+        if (!windows.isEmpty()) {
+          SFATrie trie = new SFATrie(l, leafThreshold, sfa);
+          trie.buildIndex(windows, trieDepth, windowLength);
+
+          if (index == null) {
+            index = trie;
+          }
+          else {
+            index.mergeTrees(trie);
+          }
+
+          System.out.println("Merging done in "
+              + (System.currentTimeMillis() - time) + " ms. "
+              + "\t Elements: " + index.getSize()
+              + "\t Height: " + index.getHeight());
+        }
+      }
+    }
+
+    // path compression
+    index.compress(true);
+
+    // write index to disk?
+//    System.out.println("Writing index to disk...");
+//    File location = new File("./tmp/sfatrie.idx");
+//    location.deleteOnExit();
+//    index.writeToDisk(location);
+
+    return index;
+  }
 
   public static void performGC() {
     try {
