@@ -10,9 +10,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
-import sfa.transformation.WModel;
-import sfa.transformation.WModel.BagOfBigrams;
-import sfa.transformation.WModel.Dictionary;
+import sfa.transformation.WEASELModel;
+import sfa.transformation.WEASELModel.BagOfBigrams;
+import sfa.transformation.WEASELModel.Dictionary;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
@@ -33,7 +33,7 @@ import de.bwaldvogel.liblinear.SolverType;
  * @author bzcschae
  *
  */
-public class WClassifier extends Classifier {
+public class WEASELClassifier extends Classifier {
 
   public static int maxF = 6;
   public static int minF = 4;
@@ -47,7 +47,7 @@ public class WClassifier extends Classifier {
   public static int iter = 5000;
   public static double c = 1;
   
-  public WClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
     super(train, test);    
   }
 
@@ -56,7 +56,7 @@ public class WClassifier extends Classifier {
         double testing,
         boolean normed,
         int features,
-        WModel model,
+        WEASELModel model,
         Model linearModel
         ) {
       super("W", testing, testing, normed, -1);
@@ -66,7 +66,7 @@ public class WClassifier extends Classifier {
     }
 
     public int features;
-    public WModel model;
+    public WEASELModel model;
     public Model linearModel;
 
     @Override
@@ -135,7 +135,7 @@ public class WClassifier extends Classifier {
 
       optimize:
         for (final boolean mean : NORMALIZATION) {
-          WModel model = new WModel(maxF, maxS, windowLengths, mean, false);
+          WEASELModel model = new WEASELModel(maxF, maxS, windowLengths, mean, false);
           int[][][] words = model.createWords(samples);
 
           for (int f = minF; f <= maxF; f+=2) {
@@ -159,7 +159,7 @@ public class WClassifier extends Classifier {
         }
 
       // obtain the final matrix
-      WModel model = new WModel(maxF, maxS, windowLengths, bestNorm, false);
+      WEASELModel model = new WEASELModel(maxF, maxS, windowLengths, bestNorm, false);
       int[][][] words = model.createWords(samples);
       BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, bestF);
       model.filterChiSquared(bob, chi);

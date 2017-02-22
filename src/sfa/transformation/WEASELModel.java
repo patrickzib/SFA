@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.timeseries.TimeSeries;
-import sfa.transformation.SFA.HistogramType;
 
 import com.carrotsearch.hppc.IntFloatOpenHashMap;
 import com.carrotsearch.hppc.IntIntOpenHashMap;
@@ -17,12 +16,11 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 
 /**
- * The W-Model.
+ * The WEASEL-Model.
  *
- * @author bzcschae
  *
  */
-public class WModel {
+public class WEASELModel {
 
   public int alphabetSize;
   public int maxF;
@@ -48,7 +46,7 @@ public class WModel {
 //    BLOCKS = 1;
   }
 
-  public WModel(
+  public WEASELModel(
       int maxF, int maxS,
       int[] windowLengths, boolean normMean, boolean lowerBounding) {
     this.maxF = maxF;
@@ -84,7 +82,7 @@ public class WModel {
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        for (int w = 0; w < WModel.this.windowLengths.length; w++) {
+        for (int w = 0; w < WEASELModel.this.windowLengths.length; w++) {
           if (w % BLOCKS == id) {
             words[w] = createWords(samples, w);
           }
