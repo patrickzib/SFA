@@ -124,8 +124,10 @@ public class WEASELModel {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
     final byte usedBits = (byte)Words.binlog(this.alphabetSize);
-    final int count = usedBits*wordLength;
-    final long mask = (1l << (count)) - 1l;
+
+    // FIXME
+//    final long mask = (usedBits << wordLength) - 1l; 
+    final long mask = (1l << (usedBits * wordLength)) - 1l; 
 
     // iterate all samples
     // and create a bag of pattern
