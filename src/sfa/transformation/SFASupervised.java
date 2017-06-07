@@ -13,6 +13,7 @@ import sfa.timeseries.TimeSeries;
  * SFA using the ANOVA F-statistic to determine the best Fourier coefficients
  */
 public class SFASupervised extends SFA {
+  private static final long serialVersionUID = -6435016083374045799L;
   public int[] bestValues;
 
   public SFASupervised() {

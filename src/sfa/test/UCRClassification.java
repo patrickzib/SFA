@@ -10,7 +10,7 @@ import sfa.classification.BOSSVSClassifier;
 import sfa.classification.Classifier;
 import sfa.classification.ParallelFor;
 import sfa.classification.ShotgunEnsembleClassifier;
-import sfa.classification.WClassifier;
+import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
@@ -60,7 +60,7 @@ public class UCRClassification {
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
 
               // The W-classifier
-              Classifier w = new WClassifier(trainSamples, testSamples);
+              Classifier w = new WEASELClassifier(trainSamples, testSamples);
               Classifier.Score scoreW = w.eval();
               System.out.println(s + ";" + scoreW.toString());
 
