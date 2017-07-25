@@ -16,12 +16,26 @@ import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 /**
  * The Bag-of-SFA-Symbols in Vector Space model as published in
  *    Schäfer, P.: Scalable time series classification. DMKD (Preprint)
- *   
+ *
  * @author bzcschae
  *
  */
 public class BOSSVSModel extends BOSSModel {
-  
+
+  /**
+   * Create a BOSS VS model.
+   *
+   *
+   * @param maxF
+   *          length of the SFA words
+   * @param maxS
+   *          alphabet size
+   * @param windowLength
+   *          subsequence (window) length used for extracting SFA words from
+   *          time series.
+   * @param normMean
+   *          set to true, if mean should be set to 0 for a window
+   */
   public BOSSVSModel(int maxF, int maxS, int windowLength, boolean normMean) {
     super(maxF, maxS, windowLength, normMean);
   }
@@ -30,9 +44,9 @@ public class BOSSVSModel extends BOSSModel {
       final BagOfPattern[] bagOfPatterns,
       final HashSet<String> uniqueLabels) {
     int[] sampleIndices = createIndices(bagOfPatterns.length);
-    return createTfIdf(bagOfPatterns, sampleIndices, uniqueLabels);        
+    return createTfIdf(bagOfPatterns, sampleIndices, uniqueLabels);
   }
-  
+
   protected static int[] createIndices(int length) {
     int[] indices = new int[length];
     for (int i = 0; i < length; i++) {
@@ -40,10 +54,10 @@ public class BOSSVSModel extends BOSSModel {
     }
     return indices;
   }
-  
+
   /**
    * Obtains the TF-IDF representation based on the BOSS represenation. Only those elements
-   * in sampleIndices are used (usefull for cross-validation). 
+   * in sampleIndices are used (usefull for cross-validation).
    * @param bagOfPatterns The BOSS (bag-of-patterns) representation of the time series
    * @param sampleIndices The indices to use
    * @param uniqueLabels The unique class labels in the dataset
@@ -96,16 +110,16 @@ public class BOSSVSModel extends BOSSModel {
         }
       }
     }
-    
+
     // norm the tf-idf-matrix
     normalizeTfIdf(matrix);
-    
+
     return matrix;
   }
-  
+
   protected void initMatrix(
       final ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> matrix,
-      final HashSet<String> uniqueLabels, 
+      final HashSet<String> uniqueLabels,
       final BagOfPattern[] bag) {
     for (String label : uniqueLabels) {
       IntFloatOpenHashMap stat = matrix.get(label);
@@ -118,7 +132,7 @@ public class BOSSVSModel extends BOSSModel {
       }
     }
   }
-  
+
   /**
    * Norm the vector to length 1
    * @param classStatistics

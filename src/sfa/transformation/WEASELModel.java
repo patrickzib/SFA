@@ -42,10 +42,26 @@ public class WEASELModel {
     else {
       BLOCKS = runtime.availableProcessors();
     }
-    
-//    BLOCKS = 1;
+
+    //    BLOCKS = 1;
   }
 
+  /**
+   * Create a WEASEL model.
+   *
+   * @param maxF
+   *          length of the SFA words
+   * @param maxS
+   *          alphabet size
+   * @param windowLength
+   *          the set of window lengths to use for extracting SFA words from
+   *          time series.
+   * @param normMean
+   *          set to true, if mean should be set to 0 for a window
+   * @param normMean
+   *          set to true, if the Fourier transform should be normed (typically
+   *          used to lower bound / mimic Euclidean distance).
+   */
   public WEASELModel(
       int maxF, int maxS,
       int[] windowLengths, boolean normMean, boolean lowerBounding) {
@@ -59,7 +75,7 @@ public class WEASELModel {
   }
 
   /**
-   * The W-model: a histogram of SFA word and bi-gram frequencies
+   * The Weasel-model: a histogram of SFA word and bi-gram frequencies
    */
   public static class BagOfBigrams {
     public IntIntOpenHashMap bob;
@@ -126,8 +142,8 @@ public class WEASELModel {
     final byte usedBits = (byte)Words.binlog(this.alphabetSize);
 
     // FIXME
-//    final long mask = (usedBits << wordLength) - 1l; 
-    final long mask = (1l << (usedBits * wordLength)) - 1l; 
+    //    final long mask = (usedBits << wordLength) - 1l;
+    final long mask = (1l << (usedBits * wordLength)) - 1l;
 
     // iterate all samples
     // and create a bag of pattern
@@ -144,7 +160,7 @@ public class WEASELModel {
           // add 2 grams
           if (offset-this.windowLengths[w] >= 0) {
             long prevWord = this.dict.getWord( (long)w << 52 | (words[w][j][offset-this.windowLengths[w]] & mask));
-            int newWord = this.dict.getWord( (long)w << 52 |  prevWord << 26 | (long)word);
+            int newWord = this.dict.getWord( (long)w << 52 |  prevWord << 26 | word);
             bagOfPatterns[j].bob.putOrAdd(newWord, factor, factor);
           }
         }
@@ -193,7 +209,7 @@ public class WEASELModel {
 
     // chi square: observed minus expected occurence
     for (LongFloatCursor prob : classProb) {
-      prob.value /= (float) bob.length; // (float) frequencies.get(prob.key);
+      prob.value /= bob.length; // (float) frequencies.get(prob.key);
 
       for (IntIntCursor feature : featureCount) {
         long key = prob.key << 32 | feature.key;
