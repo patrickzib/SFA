@@ -192,7 +192,7 @@ public class WEASELClassifier extends Classifier {
     // chi square changes key mappings => remap
     score.model.dict.remap(bagTest);
 
-    FeatureNode[][] features = initLibLinear(bagTest);
+    FeatureNode[][] features = initLibLinear(bagTest, score.linearModel.getNrFeature());
 
     int correct = 0;
     for (int ind = 0; ind < features.length; ind++) {
@@ -210,23 +210,25 @@ public class WEASELClassifier extends Classifier {
       final double bias) {
     Linear.resetRandom();
 
-    final FeatureNode[][] features = initLibLinear(bob);
     Problem problem = new Problem();
     problem.bias = bias;
     problem.n = dict.size()+1;
     problem.y = getLabels(bob);
+    
+    final FeatureNode[][] features = initLibLinear(bob, problem.n);
+
     problem.l = features.length;
     problem.x = features;
     return problem;
   }
 
-  public static FeatureNode[][] initLibLinear(final BagOfBigrams[] bob) {
+  public static FeatureNode[][] initLibLinear(final BagOfBigrams[] bob, int max_feature) {
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
       BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<FeatureNode>(bop.bob.size());
       for (IntIntCursor word : bop.bob) {
-        if (word.value > 0) {
+        if (word.value > 0 && word.key <= max_feature) {
           features.add(new FeatureNode(word.key, ((double)word.value)));
         }
       }

@@ -95,7 +95,9 @@ public class BOSSModel {
     BagOfPattern[] bagOfPatterns = new BagOfPattern[words.length];
 
     final byte usedBits = (byte)Words.binlog(symbols);
-    final long mask = (1l << (usedBits*wordLength)) - 1l;
+    // FIXME
+    // final long mask = (usedBits << wordLength) - 1l;
+    final long mask = (1l << (usedBits * wordLength)) - 1l; 
 
     // iterate all samples
     for (int j = 0; j < words.length; j++) {

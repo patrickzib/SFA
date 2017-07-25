@@ -9,6 +9,7 @@ import sfa.classification.BOSSEnsembleClassifier;
 import sfa.classification.BOSSVSClassifier;
 import sfa.classification.Classifier;
 import sfa.classification.ParallelFor;
+import sfa.classification.ShotgunClassifier;
 import sfa.classification.ShotgunEnsembleClassifier;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
@@ -18,27 +19,24 @@ public class UCRClassification {
 
   // The datasets to use
   public static String[] datasets = new String[]{
-    "Coffee",
-//    "ECG200",
-//    "FaceFour",
-//    "OliveOil",
-//    "Gun_Point",
-    "Beef",
-//    "DiatomSizeReduction",
+    "Coffee", "ECG200", "FaceFour", "OliveOil",
+    "Gun_Point", "Beef",
+    "DiatomSizeReduction",
     "CBF",
-//    "ECGFiveDays",
-//    "TwoLeadECG",
-//    "SonyAIBORobot SurfaceII",
-//    "MoteStrain",
-//    "ItalyPowerDemand",
-//    "SonyAIBORobot Surface",
+    "ECGFiveDays",
+    "TwoLeadECG",
+    "SonyAIBORobot SurfaceII",
+    "MoteStrain",
+    "ItalyPowerDemand",
+    "SonyAIBORobot Surface",
   };
 
   public static void main(String argv[]) throws IOException {
     try {
       // the relative path to the datasets
       File dir = new File("./datasets/");
-//      File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification/");
+      // File dir = new
+      // File("/Users/bzcschae/workspace/similarity/datasets/classification/");
 
       for (String s : datasets) {
         File d = new File(dir.getAbsolutePath()+"/"+s);
@@ -54,7 +52,7 @@ public class UCRClassification {
               }
 
               Classifier.DEBUG = false;
-                  
+
               // Load the train/test splits
               TimeSeries[] testSamples = TimeSeriesLoader.loadDatset(test);
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
@@ -68,21 +66,21 @@ public class UCRClassification {
               Classifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
               Classifier.Score scoreBOSS = boss.eval();
               System.out.println(s + ";" + scoreBOSS.toString());
-              
+
               // The BOSS VS classifier
               Classifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
               Classifier.Score scoreBOSSVS = bossVS.eval();
               System.out.println(s + ";" + scoreBOSSVS.toString());
-              
+
               // The Shotgun ensemble classifier
               Classifier shotgunEnsemble = new ShotgunEnsembleClassifier(trainSamples, testSamples);
               Classifier.Score scoreShotgunEnsemble = shotgunEnsemble.eval();
               System.out.println(s + ";" + scoreShotgunEnsemble.toString());
-              
-//              // The Shotgun classifier
-//              Classifier shotgun = new ShotgunClassifier(trainSamples, testSamples);
-//              Classifier.Score scoreShotgun = shotgun.eval();
-//              System.out.println(s + ";" + scoreShotgun.toString());
+
+              // The Shotgun classifier
+              Classifier shotgun = new ShotgunClassifier(trainSamples, testSamples);
+              Classifier.Score scoreShotgun = shotgun.eval();
+              System.out.println(s + ";" + scoreShotgun.toString());
             }
           }
         }

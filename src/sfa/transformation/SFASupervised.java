@@ -11,6 +11,8 @@ import sfa.timeseries.TimeSeries;
 
 /**
  * SFA using the ANOVA F-statistic to determine the best Fourier coefficients
+ * (those that best separate between class labels) as opposed to using the first
+ * ones.
  */
 public class SFASupervised extends SFA {
   private static final long serialVersionUID = -6435016083374045799L;
@@ -21,6 +23,13 @@ public class SFASupervised extends SFA {
     this.lowerBounding = false;
   }
 
+  /**
+   * Quantization of a DFT approximation to its SFA word
+   *
+   * @param approximation
+   *          the DFT approximation of a time series
+   * @return
+   */
   @Override
   public short[] quantization(double[] approximation) {
     short[] signal = new short[Math.min(approximation.length,this.bestValues.length)];
@@ -40,14 +49,32 @@ public class SFASupervised extends SFA {
     return signal;
   }
 
+  /**
+   * Trains the SFA model based on a set of samples. At the end of this call,
+   * the quantization bins are set.
+   *
+   * @param samples
+   *          the samples to use for training.
+   * @param wordLength
+   *          Length of the resuting SFA words. Each character of a word
+   *          corresponds to one Fourier value. As opposed to the normal SFA
+   *          model, here characters correspond to those Fourier values that are
+   *          most distinctive between class labels.
+   * @param symbols
+   *          the alphabet size, i.e. number of quantization bins to use
+   * @param normMean
+   *          true: sets mean to 0 for each time series.
+   * @return the Fourier transformation of the time series.
+   */
   @Override
   public short[][] fitTransform (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
+    // TODO maxWordLength = samples[0].getLength();???
     int length = samples[0].getLength();
     double[][] transformedSignal = fitTransformDouble(samples, length, symbols, normMean);
 
     Indices<Double>[] best = calcBestCoefficients(samples, transformedSignal);
 
-    // use best coefficients (the ones with largest f-value
+    // use best coefficients (the ones with largest f-value)
     this.bestValues = new int[Math.min(best.length, wordLength)];
     this.maxWordLength = 0;
     for (int i = 0; i < this.bestValues.length; i++) {
@@ -92,7 +119,7 @@ public class SFASupervised extends SFA {
     for (int i = 0; i < f.length; i++) {
       best[i] = new Indices<Double>(i, f[i]);
     }
-    Arrays.sort(best);
+    Arrays.sort(best); // TODO????
     return best;
   }
 
