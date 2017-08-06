@@ -8,10 +8,10 @@ import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.timeseries.TimeSeries;
 
-import com.carrotsearch.hppc.IntFloatOpenHashMap;
-import com.carrotsearch.hppc.IntIntOpenHashMap;
-import com.carrotsearch.hppc.LongFloatOpenHashMap;
-import com.carrotsearch.hppc.LongIntOpenHashMap;
+import com.carrotsearch.hppc.IntFloatHashMap;
+import com.carrotsearch.hppc.IntIntHashMap;
+import com.carrotsearch.hppc.LongFloatHashMap;
+import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 
@@ -78,11 +78,11 @@ public class WEASELModel {
    * The Weasel-model: a histogram of SFA word and bi-gram frequencies
    */
   public static class BagOfBigrams {
-    public IntIntOpenHashMap bob;
+    public IntIntHashMap bob;
     public String label;
 
     public BagOfBigrams(int size, String label) {
-      this.bob = new IntIntOpenHashMap(size);
+      this.bob = new IntIntHashMap(size);
       this.label = label;
     }
   }
@@ -177,17 +177,17 @@ public class WEASELModel {
    */
   public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // class frequencies
-    LongIntOpenHashMap classFrequencies  = new LongIntOpenHashMap();
+    LongIntHashMap classFrequencies  = new LongIntHashMap();
     for (BagOfBigrams ts : bob) {
       long label = Double.valueOf(ts.label).longValue();
       classFrequencies.putOrAdd(label, 1, 1);
     }
 
     // Chi2 Test
-    IntIntOpenHashMap featureCount = new IntIntOpenHashMap(bob[0].bob.size());
-    LongFloatOpenHashMap classProb = new LongFloatOpenHashMap(10);
-    LongIntOpenHashMap observed = new LongIntOpenHashMap(bob[0].bob.size());
-    IntFloatOpenHashMap chiSquare = new IntFloatOpenHashMap(bob[0].bob.size());
+    IntIntHashMap featureCount = new IntIntHashMap(bob[0].bob.size());
+    LongFloatHashMap classProb = new LongFloatHashMap(10);
+    LongIntHashMap observed = new LongIntHashMap(bob[0].bob.size());
+    IntFloatHashMap chiSquare = new IntFloatHashMap(bob[0].bob.size());
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
@@ -243,37 +243,41 @@ public class WEASELModel {
    * Condenses the SFA word space.
    */
   public static class Dictionary {
-    LongIntOpenHashMap dict;
-    LongIntOpenHashMap dictChi;
+    LongIntHashMap dict;
+    LongIntHashMap dictChi;
 
     public Dictionary() {
-      this.dict = new LongIntOpenHashMap();
-      this.dictChi = new LongIntOpenHashMap();
+      this.dict = new LongIntHashMap();
+      this.dictChi = new LongIntHashMap();
     }
 
     public void reset() {
-      this.dict = new LongIntOpenHashMap();
-      this.dictChi = new LongIntOpenHashMap();
+      this.dict = new LongIntHashMap();
+      this.dictChi = new LongIntHashMap();
     }
 
     public int getWord(long word) {
-      if (this.dict.containsKey(word)) {
-        word = this.dict.lget();
-      }
-      else {
-        int newWord = this.dict.size()+1;
+      int index;
+
+      if ((index = this.dict.indexOf(word)) >= 0) {
+        word = this.dict.indexGet(index);
+      } else {
+        int newWord = this.dict.size() + 1;
         this.dict.put(word, newWord);
         word = newWord;
       }
+
       return (int)word;
     }
 
     public int getWordChi(long word) {
-      if (this.dictChi.containsKey(word)) {
-        return this.dictChi.lget();
+      int index;
+
+      if ((index = this.dictChi.indexOf(word)) >= 0) {
+        return this.dict.indexGet(index);
       }
       else {
-        int newWord = this.dictChi.size()+1;
+        int newWord = this.dictChi.size() + 1;
         this.dictChi.put(word, newWord);
         return newWord;
       }
@@ -290,8 +294,8 @@ public class WEASELModel {
 
     public void remap(final BagOfBigrams[] bagOfPatterns) {
       for (int j = 0; j < bagOfPatterns.length; j++) {
-        IntIntOpenHashMap oldMap = bagOfPatterns[j].bob;
-        bagOfPatterns[j].bob = new IntIntOpenHashMap(oldMap.size());
+        IntIntHashMap oldMap = bagOfPatterns[j].bob;
+        bagOfPatterns[j].bob = new IntIntHashMap(oldMap.size());
         for (IntIntCursor word : oldMap) {
           if (word.value > 0) {
             bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);

@@ -17,7 +17,7 @@ import java.util.List;
 import sfa.classification.Classifier.Words;
 import sfa.timeseries.TimeSeries;
 
-import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
 /**
@@ -445,7 +445,7 @@ public class SFA implements Serializable {
     }
   }
 
-  protected static double entropy(ObjectIntOpenHashMap<String> frequency, double total) {
+  protected static double entropy(ObjectIntHashMap<String> frequency, double total) {
     double entropy = 0;
     double log2 = 1.0 / Math.log(2.0);
     for (IntCursor element : frequency.values()) {
@@ -458,8 +458,8 @@ public class SFA implements Serializable {
   }
 
   protected static double calculateInformationGain(
-      ObjectIntOpenHashMap<String> cIn,
-      ObjectIntOpenHashMap<String> cOut,
+      ObjectIntHashMap<String> cIn,
+      ObjectIntHashMap<String> cOut,
       double class_entropy,
       double total_c_in,
       double total) {
@@ -482,8 +482,8 @@ public class SFA implements Serializable {
 
     // class entropy
     int total = end-start;
-    ObjectIntOpenHashMap<String> cIn = new ObjectIntOpenHashMap<String>();
-    ObjectIntOpenHashMap<String> cOut = new ObjectIntOpenHashMap<String>();
+    ObjectIntHashMap<String> cIn = new ObjectIntHashMap<String>();
+    ObjectIntHashMap<String> cOut = new ObjectIntHashMap<String>();
     for (int pos = start; pos < end; pos++) {
       cOut.putOrAdd(element.get(pos).label, 1, 1);
     }
@@ -533,7 +533,7 @@ public class SFA implements Serializable {
 
   protected int moveElement(
       List<ValueLabel> element,
-      ObjectIntOpenHashMap<String> cIn, ObjectIntOpenHashMap<String> cOut,
+      ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
       int pos) {
     cIn.putOrAdd(element.get(pos).label, 1, 1);
     cOut.putOrAdd(element.get(pos).label, -1, -1);
