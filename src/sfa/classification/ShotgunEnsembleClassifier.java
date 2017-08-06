@@ -13,11 +13,11 @@ import sfa.timeseries.TimeSeries;
 
 /**
  *  The Shotgun Ensemble Classifier as published in:
- *  
- *    Schäfer, P.: Towards time series classification without human preprocessing. 
- *    In Machine Learning and Data Mining in Pattern Recognition, 
+ *
+ *    Schäfer, P.: Towards time series classification without human preprocessing.
+ *    In Machine Learning and Data Mining in Pattern Recognition,
  *    pages 228–242. Springer, 2014.
- *  
+ *
  * @author bzcschae
  *
  */

@@ -24,8 +24,8 @@ import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 /**
  *  The Bag-of-SFA-Symbols in Vector Space classifier as published in
  *    Schäfer, P.: Scalable time series classification. DMKD (Preprint)
- *    
- *    
+ *
+ *
  * @author bzcschae
  *
  */
@@ -49,13 +49,13 @@ public class BOSSVSClassifier extends Classifier {
     }
 
     public ObjectObjectOpenHashMap<String, E> idf;
-    public BOSSVSModel model;    
+    public BOSSVSModel model;
     public int features;
 
     public void clear() {
       super.clear();
       this.idf = null;
-      this.model = null;    
+      this.model = null;
     }
   }
 
@@ -140,7 +140,7 @@ public class BOSSVSClassifier extends Classifier {
           if (i % threads == id) {
             BossVSScore<IntFloatOpenHashMap> score = new BossVSScore<IntFloatOpenHashMap>(normMean, allWindows[i]);
             try {
-              BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, score.normed);              
+              BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, score.normed);
               int[][] words = model.createWords(trainSamples);
 
               optimize :
@@ -166,17 +166,17 @@ public class BOSSVSClassifier extends Classifier {
                   }
                 }
 
-              // obtain the final matrix              
+              // obtain the final matrix
               BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, score.features);
 
               // calculate the tf-idf for each class
               score.idf = model.createTfIdf(bag, uniqueLabels);
-              score.model = model;      
+              score.model = model;
 
             } catch (Exception e) {
               e.printStackTrace();
             }
-            
+
             if (this.bestScore.compareTo(score)<0) {
               synchronized(this.bestScore) {
                 if (this.bestScore.compareTo(score)<0) {
@@ -185,7 +185,7 @@ public class BOSSVSClassifier extends Classifier {
                 }
               }
             }
-          
+
             // add to ensemble
             if (score.training >= BOSSVSClassifier.this.correctTraining.get() * factor) {
               synchronized(results) {
@@ -196,17 +196,17 @@ public class BOSSVSClassifier extends Classifier {
         }
       }
     });
-        
+
     // cleanup unused scores
     for (BossVSScore<IntFloatOpenHashMap> s : results) {
       if (s.model != null
-          && s.training < this.correctTraining.get() * factor) { 
+          && s.training < this.correctTraining.get() * factor) {
         s.clear();
       }
     }
 
     // sort descending
-    Collections.sort(results, Collections.reverseOrder());    
+    Collections.sort(results, Collections.reverseOrder());
     return results;
   }
 
@@ -292,7 +292,7 @@ public class BOSSVSClassifier extends Classifier {
               usedLengths.add(score.windowLength);
 
               BOSSVSModel model = score.model;
-              
+
               // create words and BOSS model for test samples
               int[][] wordsTest = model.createWords(testSamples);
               BagOfPattern[] bagTest = model.createBagOfPattern(wordsTest, testSamples, score.features);

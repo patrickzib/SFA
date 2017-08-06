@@ -14,11 +14,11 @@ import sfa.timeseries.TimeSeries;
 
 /**
  *  The Shotgun Classifier as published in:
- *  
- *    Schäfer, P.: Towards time series classification without human preprocessing. 
- *    In Machine Learning and Data Mining in Pattern Recognition, 
+ *
+ *    Schäfer, P.: Towards time series classification without human preprocessing.
+ *    In Machine Learning and Data Mining in Pattern Recognition,
  *    pages 228–242. Springer, 2014.
- *  
+ *
  * @author bzcschae
  *
  */
@@ -214,7 +214,7 @@ public class ShotgunClassifier extends Classifier {
 
     return p;
   }
-  
+
   public static double getEuclideanDistance(
       TimeSeries ts,
       TimeSeries q,
@@ -241,7 +241,7 @@ public class ShotgunClassifier extends Classifier {
 
     return distance;
   }
-  
+
   public static void calcMeansStds(
       final int windowLength,
       final TimeSeries[] trainSamples,

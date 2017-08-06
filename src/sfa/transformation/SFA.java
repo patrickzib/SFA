@@ -356,7 +356,7 @@ public class SFA implements Serializable {
 
   /**
    * Fills data in the orderline
-   * 
+   *
    * @param samples
    */
   protected double[][] fillOrderline (TimeSeries[] samples, int l, int symbols) {

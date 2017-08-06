@@ -12,14 +12,14 @@ import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 /**
  * The Momentary Fourier Transform is alternative algorithm of
  * the Discrete Fourier Transform for overlapping windows. It has
- * a constant computational complexity for in the window length n as 
- * opposed to O(n log n) for the Fast Fourier Transform algorithm. 
- * 
+ * a constant computational complexity for in the window length n as
+ * opposed to O(n log n) for the Fast Fourier Transform algorithm.
+ *
  * It was first published in:
- *    Albrecht, S., Cumming, I., Dudas, J.: The momentary fourier transformation 
- *    derived from recursive matrix transformations. In: Digital Signal Processing 
+ *    Albrecht, S., Cumming, I., Dudas, J.: The momentary fourier transformation
+ *    derived from recursive matrix transformations. In: Digital Signal Processing
  *    Proceedings, 1997., IEEE (1997)
- *  
+ *
  * @author bzcschae
  *
  */
@@ -30,7 +30,7 @@ public class MFT implements Serializable {
   public int windowSize = 0;
   int startOffset = 0;
   double norm = 0;
-  
+
   transient DoubleFFT_1D fft = null;
 
   public MFT(int windowSize, boolean normMean, boolean lower_bounding) {
@@ -140,11 +140,11 @@ public class MFT implements Serializable {
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
       copy[i] *= sign * normalisingFactor;
-      sign *= -1;      
+      sign *= -1;
     }
     return copy;
   }
-  
+
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
     this.fft = new DoubleFFT_1D(this.windowSize);

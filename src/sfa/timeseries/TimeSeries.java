@@ -19,7 +19,7 @@ public class TimeSeries implements Serializable {
   public TimeSeries (double[] data) {
     this.data = data;
   }
-  
+
   public TimeSeries (double[] data, String label) {
     this(data);
     this.label = label;
@@ -117,7 +117,7 @@ public class TimeSeries implements Serializable {
 
     return this.mean;
   }
-  
+
   public double getStddev() {
     return this.stddev;
   }
@@ -155,7 +155,7 @@ public class TimeSeries implements Serializable {
     return true;
   }
 
-  
+
   /**
    * Get a subsequence starting at offset with length windowSize.
    * @param windowSize
@@ -182,7 +182,7 @@ public class TimeSeries implements Serializable {
     sequence.norm(true, mean, stddev);
     return sequence;
   }
-  
+
   /**
    * Get sliding windows with windowSize.
    * @param windowSize
@@ -253,7 +253,7 @@ public class TimeSeries implements Serializable {
       stds[w] = buf > 0? Math.sqrt(buf) : 0;
     }
   }
-  
+
   /**
    * Extracts disjoint subsequences
    * @param windowSize

@@ -23,7 +23,7 @@ public class SFABulkLoad {
   static String bucketDir = "./tmp/";
   static ExecutorService serializerExec = Executors.newFixedThreadPool(2); // serialize access to the disk
   static ExecutorService transformExec = Executors.newFixedThreadPool(4); // parallel SFA transformation
-  
+
   static LinkedList<Future<Long>> futures = new LinkedList<>();
 
   static int l = 16; // SFA word length ( & dimensionality of the index)
@@ -159,7 +159,7 @@ public class SFABulkLoad {
     // samples to be indexed
     TimeSeries timeSeries = getTimeSeries(1, N);
     System.out.println("Sample DS size:\t" + N);
-    
+
     // query subsequences
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
     int n = timeSeries2[0].getLength();
@@ -179,7 +179,7 @@ public class SFABulkLoad {
 
     // write the Fourier-transformed TS to buckets on disk
     SerializedStreams dataStream = new SerializedStreams(trieDepth);
-    long time = System.currentTimeMillis();        
+    long time = System.currentTimeMillis();
 
     // transform all approximations
     // no need to transform in parallel, as the Momentary Fourier transform transforms
@@ -197,7 +197,7 @@ public class SFABulkLoad {
       long bytesWritten = 0;
       while (!futures.isEmpty()) {
         try {
-          bytesWritten = futures.remove().get();     
+          bytesWritten = futures.remove().get();
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -324,7 +324,7 @@ public class SFABulkLoad {
       e.printStackTrace();
     }
   }
- 
+
   /**
    * Reads a bucket with Fourier-approximations from a file
    *
@@ -344,7 +344,7 @@ public class SFABulkLoad {
     } catch (EOFException e) {
     } catch (Exception e) {
       e.printStackTrace();
-    } 
+    }
     System.out.println("\t" + count + " time series read.");
 
     return data;
@@ -354,21 +354,21 @@ public class SFABulkLoad {
    * Opens multiple streams to disk but writes them sequentially to disk
    *
    */
-  static class SerializedStreams {   
+  static class SerializedStreams {
     LinkedBlockingQueue<SFATrie.Approximation>[] wordPartitions;
     ObjectOutputStream[] partitionsStream;
 
     // the number of TS until the array is written to disk
-    static final int minWriteToDiskLimit = 100000; 
+    static final int minWriteToDiskLimit = 100000;
 
-    long[] writtenSamples;    
+    long[] writtenSamples;
     long totalBytes = 0;
     double time = 0;
 
     @SuppressWarnings("unchecked")
-    public SerializedStreams(final int useLetters) {      
+    public SerializedStreams(final int useLetters) {
       // the number of partitions to process
-      int count = (int) Math.pow(SFATrie.symbols, useLetters);     
+      int count = (int) Math.pow(SFATrie.symbols, useLetters);
       this.wordPartitions = new LinkedBlockingQueue[count];
       this.partitionsStream = new ObjectOutputStream[count];
 
@@ -378,16 +378,16 @@ public class SFABulkLoad {
       for (int i = 0; i < this.wordPartitions.length; i++) {
         this.wordPartitions[i] = new LinkedBlockingQueue<>(minWriteToDiskLimit*2);
         this.writtenSamples[i] = 0;
-      }      
+      }
     }
 
     /**
      * Close all file streams
      */
-    public void setFinished() {      
+    public void setFinished() {
       // finish all data
       for (int i = 0; i < SerializedStreams.this.wordPartitions.length; i++) {
-        try {        
+        try {
           // copy contents to current and write these to disk
           List<SFATrie.Approximation> current = new ArrayList<>(this.wordPartitions[i].size());
           this.wordPartitions[i].drainTo(current);
@@ -395,11 +395,11 @@ public class SFABulkLoad {
         } catch (Exception e) {
           e.printStackTrace();
         }
-      }      
+      }
       // wait for all futures/threads to finish
       while (!futures.isEmpty()) {
         try {
-          futures.remove().get();          
+          futures.remove().get();
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -407,21 +407,21 @@ public class SFABulkLoad {
       // close all streams
       long totalTSwritten = 0;
       for (int i = 0; i < SerializedStreams.this.wordPartitions.length; i++) {
-        try {        
+        try {
           if (partitionsStream[i]!=null) {
             partitionsStream[i].close();
             totalTSwritten += writtenSamples[i];
           }
         } catch (Exception e) {
           e.printStackTrace();
-        }        
+        }
       }
       System.out.println("Time series written:" + totalTSwritten);
     }
 
     /**
      * Adds a time series to the corresponding queue and writes the bucket to disk
-     * if the bucket exceeds minWriteToDiskLimit elements 
+     * if the bucket exceeds minWriteToDiskLimit elements
      */
     public void addToPartition(byte[] words, double[] data, int offset, int prefixLength) {
       try {
@@ -430,7 +430,7 @@ public class SFABulkLoad {
         this.wordPartitions[l].put(new SFATrie.Approximation(data, words, offset));
 
         // write to disk
-        synchronized (this.wordPartitions[l]) {          
+        synchronized (this.wordPartitions[l]) {
           if (this.wordPartitions[l].size() >= minWriteToDiskLimit) {
             // copy the elements to current and write this to disk
             final List<SFATrie.Approximation> current = new ArrayList<>(this.wordPartitions[l].size());
@@ -445,7 +445,7 @@ public class SFABulkLoad {
             }));
           }
 
-        }                   
+        }
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -463,7 +463,7 @@ public class SFABulkLoad {
         id = id * SFATrie.symbols + word[1];
       }
       if (useLetters > 2) {
-        id = id * SFATrie.symbols + word[2];        
+        id = id * SFATrie.symbols + word[2];
       }
       return id;
     }
@@ -475,29 +475,29 @@ public class SFABulkLoad {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws FileNotFoundException, IOException {      
-      if (!current.isEmpty()) {   
+    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws FileNotFoundException, IOException {
+      if (!current.isEmpty()) {
         if (partitionsStream[letter] == null) {
           String fileName = bucketDir + letter + ".bucket";
           File file = new File(fileName);
           file.deleteOnExit();
-          partitionsStream[letter] 
-              = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8mb */));         
-        }    
-        
+          partitionsStream[letter]
+              = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8mb */));
+        }
+
         partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[]{}));
-        
-        // reset the references to the objects to allow 
+
+        // reset the references to the objects to allow
         // the garbage collector to write the objects
-        partitionsStream[letter].reset(); 
-                
+        partitionsStream[letter].reset();
+
         try {
           Thread.sleep(100);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-        
-        this.writtenSamples[letter] += current.size();        
+
+        this.writtenSamples[letter] += current.size();
       }
     }
   }

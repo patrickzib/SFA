@@ -14,7 +14,7 @@ import java.util.Random;
 import com.carrotsearch.hppc.DoubleArrayList;
 
 public class TimeSeriesLoader {
-  
+
   /**
    * Loads the time series from a csv-file of the UCR time series archive.
    * @param dataset
@@ -23,10 +23,10 @@ public class TimeSeriesLoader {
    */
   public static TimeSeries[] loadDatset(File dataset) throws IOException {
     ArrayList<TimeSeries> samples = new ArrayList<TimeSeries>();
-   
-    try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {      
+
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {
       String line = null;
-      while( (line = br.readLine()) != null) {        
+      while( (line = br.readLine()) != null) {
         if (line.startsWith("@")) {
           continue;
         }
@@ -58,29 +58,29 @@ public class TimeSeriesLoader {
         }
         if (j > 0) {
           TimeSeries ts = new TimeSeries(Arrays.copyOfRange(data, 0, j), label);
-          ts.norm();          
-          samples.add(ts);          
+          ts.norm();
+          samples.add(ts);
         }
       }
 
     } catch (IOException e) {
       e.printStackTrace();
-    } 
+    }
 
     System.out.println("Done reading from " + dataset + " samples " + samples.size() + " length " + samples.get(0).getLength());
     return samples.toArray(new TimeSeries[] {});
   }
-  
-    
+
+
   public static TimeSeries readSampleSubsequence (File dataset) throws IOException {
-    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){      
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){
       DoubleArrayList data = new DoubleArrayList();
       String line = null;
-      while( (line = br.readLine()) != null) {        
-        line.trim();        
+      while( (line = br.readLine()) != null) {
+        line.trim();
         String[] values = line.split("[ \\t]");
         if (values.length > 0) {
-          for (String value : values) {           
+          for (String value : values) {
             try {
               value.trim();
               if (isNonEmptyColumn(value)) {
@@ -93,19 +93,19 @@ public class TimeSeriesLoader {
         }
       }
       return new TimeSeries(data.toArray());
-    }   
+    }
   }
 
   public static TimeSeries[] readSamplesQuerySeries (File dataset) throws IOException {
     List<TimeSeries> samples = new ArrayList<>();
-    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){      
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){
       String line = null;
-      while( (line = br.readLine()) != null) {        
+      while( (line = br.readLine()) != null) {
         DoubleArrayList data = new DoubleArrayList();
-        line.trim();        
+        line.trim();
         String[] values = line.split("[ \\t]");
         if (values.length > 0) {
-          for (String value : values) {           
+          for (String value : values) {
             try {
               value.trim();
               if (isNonEmptyColumn(value)) {
@@ -118,18 +118,18 @@ public class TimeSeriesLoader {
           samples.add(new TimeSeries(data.toArray()));
         }
       }
-    }   
+    }
     return samples.toArray(new TimeSeries[]{});
   }
-  
+
   public static boolean isNonEmptyColumn(String column) {
     return column!=null && !"".equals(column) && !"NaN".equals(column) && !"\t".equals(column);
   }
-  
+
   public static TimeSeries generateRandomWalkData(int maxDimension, Random generator) {
     double[] data = new double[maxDimension];
 
-    // Gaussian Distribution 
+    // Gaussian Distribution
     data[0] = generator.nextGaussian();
 
     for (int d = 1; d < maxDimension; d++) {

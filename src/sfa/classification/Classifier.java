@@ -92,7 +92,7 @@ public abstract class Classifier {
     public static long createWord(short[] words, int features, byte usedBits) {
       return fromByteArrayOne(words, features, usedBits);
     }
-    
+
     /**
      * Returns a long containing the values in bytes.
      * @param bytes
@@ -259,7 +259,7 @@ public abstract class Classifier {
       return this.key.equals(((Pair<E,T>)obj).key);
     }
   }
-  
+
   public int score(
       final String name,
       final TimeSeries[] samples,
@@ -299,7 +299,7 @@ public abstract class Classifier {
     }
     return correctTesting;
   }
-  
+
   public int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {
     int max = MAX_WINDOW_SIZE;
     for (TimeSeries ts : samples) {
@@ -307,7 +307,7 @@ public abstract class Classifier {
     }
     return max;
   }
-    
+
   protected static HashSet<String> uniqueClassLabels(TimeSeries[] ts) {
     HashSet<String> labels = new HashSet<String>();
     for (TimeSeries t : ts) {
@@ -315,7 +315,7 @@ public abstract class Classifier {
     }
     return labels;
   }
-  
+
   protected static double magnitude(FloatContainer values) {
     double mag = 0.0D;
     for (FloatCursor value : values) {
@@ -323,7 +323,7 @@ public abstract class Classifier {
     }
     return Math.sqrt(mag);
   }
-  
+
   protected static int[] createIndices(int length) {
     int[] indices = new int[length];
     for (int i = 0; i < length; i++) {
@@ -331,7 +331,7 @@ public abstract class Classifier {
     }
     return indices;
   }
- 
+
   protected void generateIndices() {
     IntArrayList[] sets = getStratifiedTrainTestSplitIndices(this.trainSamples, folds);
     this.testIndices = new int[folds][];
@@ -383,7 +383,7 @@ public abstract class Classifier {
 
     return sets;
   }
-  
+
   protected static int[] convertToInt(IntArrayList trainSet) {
     int[] train = new int[trainSet.size()];
     int a = 0;
@@ -392,7 +392,7 @@ public abstract class Classifier {
     }
     return train;
   }
-  
+
   protected static int[] convertToInt(IntArrayList[] setToSplit, int exclude) {
     int count = 0;
 

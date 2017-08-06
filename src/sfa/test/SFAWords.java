@@ -15,37 +15,37 @@ import sfa.transformation.SFA.HistogramType;
  *
  */
 public class SFAWords {
-  
+
   public static void main(String[] argv) throws IOException {
-    
+
     int symbols = 8;
     int wordLength = 16;
     boolean normMean = true;
-    
-    SFA sfa = new SFA(HistogramType.EQUI_DEPTH);    
+
+    SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
 
     // Load the train/test splits
     TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TRAIN"));
     TimeSeries[] test = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
-    
+
     // train SFA representation
     sfa.fitTransform(train, wordLength, symbols, normMean);
-   
+
     // bins
     sfa.printBins();
-    
+
     // transform
     for (int q = 0; q < test.length; q++) {
-      short[] wordQuery = sfa.transform(test[q]);      
-      System.out.println("Time Series " + q + "\t" + toSfaWord(wordQuery));      
+      short[] wordQuery = sfa.transform(test[q]);
+      System.out.println("Time Series " + q + "\t" + toSfaWord(wordQuery));
     }
   }
-  
+
   public static String toSfaWord(short[] word) {
     StringBuffer sfaWord = new StringBuffer();
     for (short c : word) {
       sfaWord.append((char)(Character.valueOf('a') + c));
     }
     return sfaWord.toString();
-  }  
+  }
 }

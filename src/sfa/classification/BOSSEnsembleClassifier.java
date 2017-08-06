@@ -18,16 +18,16 @@ import sfa.transformation.BOSSModel.BagOfPattern;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
 /**
- * 
+ *
  * The Bag-of-SFA-Symbols Ensemble Classifier as published in
- *    Schäfer, P.: The boss is concerned with time series classification 
+ *    Schäfer, P.: The boss is concerned with time series classification
  *    in the presence of noise. DMKD 29(6) (2015) 1505–1530
- *   
+ *
  * @author bzcschae
  *
  */
 public class BOSSEnsembleClassifier extends Classifier {
-  
+
   public static double factor = 0.92;
 
   public static int maxF = 16; // 12
@@ -44,7 +44,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     }
 
     public BagOfPattern[] bag;
-    public BOSSModel model;    
+    public BOSSModel model;
     public int features;
 
     public void clear() {
@@ -126,17 +126,17 @@ public class BOSSEnsembleClassifier extends Classifier {
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < allWindows.length; i++) {
-          if (i % threads == id) {         
+          if (i % threads == id) {
             BossScore score = new BossScore(normMean, allWindows[i]);
             try {
-              BOSSModel boss = new BOSSModel(maxF, maxS, allWindows[i], score.normed);              
+              BOSSModel boss = new BOSSModel(maxF, maxS, allWindows[i], score.normed);
               int[][] words = boss.createWords(samples);
-              
+
               optimize :
                 for (int f = minF; f <= maxF; f+=2) {
-                  
+
                   BagOfPattern[] bag = boss.createBagOfPattern(words, samples, f);
-                  
+
                   Predictions p = predict(score.windowLength, bag, bag);
 
                   if (p.correct.get() > score.training) {
@@ -145,7 +145,7 @@ public class BOSSEnsembleClassifier extends Classifier {
                     score.features = f;
                     score.model = boss;
                     score.bag = bag;
-                    
+
                     if (p.correct.get() == samples.length) {
                       break optimize;
                     }
@@ -154,7 +154,7 @@ public class BOSSEnsembleClassifier extends Classifier {
             } catch (Exception e) {
               e.printStackTrace();
             }
-            
+
             // keep best scores
             if (this.bestScore.compareTo(score)<0) {
               synchronized(this.bestScore) {
@@ -162,9 +162,9 @@ public class BOSSEnsembleClassifier extends Classifier {
                   BOSSEnsembleClassifier.this.correctTraining.set((int)score.training);
                   this.bestScore = score;
                 }
-              }              
+              }
             }
-            
+
             // add to ensemble
             if (score.training >= BOSSEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
               synchronized(results) {
@@ -176,11 +176,11 @@ public class BOSSEnsembleClassifier extends Classifier {
       }
     });
 
-    
+
     // cleanup unused scores
     for (BossScore s : results) {
       if (s.bag != null
-          && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) { 
+          && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) {
         s.clear();
       }
     }
@@ -211,7 +211,7 @@ public class BOSSEnsembleClassifier extends Classifier {
             for (IntIntCursor key : bagOfPatternsTestSamples[i].bag) {
               noMatchDistance += key.value * key.value;
             }
-            
+
             nnSearch:
               for (int j = 0; j < bagOfPatternsTrainSamples.length; j++) {
                 if (bagOfPatternsTestSamples[i] != bagOfPatternsTrainSamples[j]) {
@@ -271,14 +271,14 @@ public class BOSSEnsembleClassifier extends Classifier {
           if (i % threads == id) {
             final BossScore score = results.get(i);
             if (score.training >= BOSSEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
-              usedLengths.add(score.windowLength);                
+              usedLengths.add(score.windowLength);
 
               BOSSModel model = score.model;
-              
+
               // create words and BOSS model for test samples
-              int[][] wordsTest = model.createWords(testSamples);                
+              int[][] wordsTest = model.createWords(testSamples);
               BagOfPattern[] bagTest = model.createBagOfPattern(wordsTest, testSamples, score.features);
-              
+
               Predictions p = predict(score.windowLength, bagTest, score.bag);
 
               for (int j = 0; j < p.labels.length; j++) {

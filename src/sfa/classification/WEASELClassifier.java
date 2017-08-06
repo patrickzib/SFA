@@ -46,9 +46,9 @@ public class WEASELClassifier extends Classifier {
   public static double p = 0.1;
   public static int iter = 5000;
   public static double c = 1;
-  
+
   public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
-    super(train, test);    
+    super(train, test);
   }
 
   public static class WScore extends Score {
@@ -214,7 +214,7 @@ public class WEASELClassifier extends Classifier {
     problem.bias = bias;
     problem.n = dict.size()+1;
     problem.y = getLabels(bob);
-    
+
     final FeatureNode[][] features = initLibLinear(bob, problem.n);
 
     problem.l = features.length;
@@ -242,7 +242,7 @@ public class WEASELClassifier extends Classifier {
     }
     return featuresTrain;
   }
-  
+
 
   @SuppressWarnings("static-access")
   public static int trainLibLinear(
@@ -316,13 +316,13 @@ public class WEASELClassifier extends Classifier {
     });
     return correct.get();
   }
-  
+
   static void swap(int[] array, int idxA, int idxB) {
     int temp = array[idxA];
     array[idxA] = array[idxB];
     array[idxB] = temp;
   }
-  
+
   public static double[] getLabels(final BagOfBigrams[] bagOfPatternsTestSamples) {
     double[] labels = new double[bagOfPatternsTestSamples.length];
     for (int i = 0; i < bagOfPatternsTestSamples.length; i++) {
@@ -330,5 +330,5 @@ public class WEASELClassifier extends Classifier {
     }
     return labels;
   }
-  
+
 }

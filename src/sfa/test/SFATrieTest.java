@@ -19,7 +19,7 @@ public static void testWholeMatching() throws IOException {
     int N = 100000;
 
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
-    int n = timeSeries2[0].getLength(); 
+    int n = timeSeries2[0].getLength();
     System.out.println("Queries: " + timeSeries2.length);
 
     System.out.println("Generating Time Series");
@@ -33,20 +33,20 @@ public static void testWholeMatching() throws IOException {
     Runtime runtime = Runtime.getRuntime();
     long mem = runtime.totalMemory();
     long time = System.currentTimeMillis();
-    
+
     SFATrie index = new SFATrie(l, leafThreshold);
     index.buildIndexWholeMatching(timeSeries);
     index.checkIndex();
-    
+
     // GC
     performGC();
     System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
 
-    System.out.println("Perform NN-queries");    
+    System.out.println("Perform NN-queries");
     for (int i = 0; i < timeSeries2.length; i++) {
       System.out.println((i+1) + ". Query");
       TimeSeries query = timeSeries2[i];
-      
+
       time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
@@ -82,10 +82,10 @@ public static void testWholeMatching() throws IOException {
   }
 
   public static void testSubsequenceMatching() throws IOException {
-    
+
     System.out.println("Loading Time Series");
 //    TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
-    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));    
+    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
@@ -95,11 +95,11 @@ public static void testWholeMatching() throws IOException {
     Runtime runtime = Runtime.getRuntime();
     long mem = runtime.totalMemory();
     long time = System.currentTimeMillis();
-    
+
     SFATrie index = new SFATrie(l, leafThreshold);
     index.buildIndexSubsequenceMatching(timeSeries, windowLength);
     index.checkIndex();
-    
+
     // GC
     performGC();
     System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
@@ -109,11 +109,11 @@ public static void testWholeMatching() throws IOException {
     double[] means = new double[size];
     double[] stds = new double[size];
     TimeSeries.calcIncreamentalMeanStddev(windowLength, timeSeries.getData(), means, stds);
-    
+
     for (int i = 0; i < timeSeries2.length; i++) {
       System.out.println((i+1) + ". Query");
       TimeSeries query = timeSeries2[i];
-      
+
       time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
