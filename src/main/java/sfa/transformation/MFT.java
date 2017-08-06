@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 import sfa.timeseries.TimeSeries;
-import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
+import org.jtransforms.fft.DoubleFFT_1D;
 
 /**
  * The Momentary Fourier Transform is alternative algorithm of
