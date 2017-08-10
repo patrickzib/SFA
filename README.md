@@ -17,7 +17,7 @@ The implemented algorithms are in the context of:
 
 2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]] https://arxiv.org/abs/1701.07681.
 
-3. **Classification and Scalability**: WEASEL follows the bag-of-pattern approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation on altogether 87 datasets, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]] https://arxiv.org/abs/1701.07681.
+3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation on altogether 87 datasets, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]] https://arxiv.org/abs/1701.07681.
 The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[5]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y). 
 
 ![SFA](images/classifiers2.png)
@@ -26,7 +26,7 @@ Figure (second from left) shows the BOSS model as a histogram over SFA words. It
  
 Figure (second from right) illustrates the BOSS VS model. The BOSS VS model extends the BOSS model by a compact representation of classes instead of time series by using the term frequency - inverse document frequency (tf-idf) for each class. It significantly reduces the computational complexity and highlights characteristic SFA words by the use of the tf-idf weight matrix which provides an additional noise reducing effect.
 
-Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns (BOSS) model. It derives discriminative features based on the dataset labels. WEASEL extracts subsequences at multiple lengths and also considers the order of subsequences (using bi-grams as features) instead of considering each fixed-length window as independent feature. It then builds a single model from the concatenation of feature vectors. It then applies an aggressive statistical feature selection to remove irrelevant features from each class. The resulting feature set is highly discriminative, which allows us to use fast logistic regression.
+Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns model. It derives discriminative features based on dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using bi-grams as features) instead of considering each fixed-length window as independent feature (as in BOSS or BOSS VS). It then builds a single model from the concatenation of feature vectors. It finally applies an aggressive statistical feature selection to remove irrelevant features from each class. This resulting feature set is highly discriminative, which allows us to use fast logistic regression.
 
 # SFA: Symbolic Fourier Approximation
 
@@ -250,7 +250,7 @@ There are 5 implemented use cases:
 
 # References & Acknowledgements
 
-This work is supported by the [ZIB (Zuse Institute Berlin)](http://www.zib.de/en/home.html).
+This work is supported by the [ZIB (Zuse Institute Berlin)](http://www.zib.de/en/home.html) and [HU Berlin (Humboldt-Universität zu Berlin)](http://www.hu-berlin.de).
 
 Read more about Scalable Time Series Data Analytics in the [Dissertation](http://edoc.hu-berlin.de/docviews/abstract.php?id=42117).
 
