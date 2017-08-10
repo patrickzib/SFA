@@ -9,22 +9,24 @@ the UCR time series classification benchmark has led to two pitfalls, namely: (a
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
 
-This repository contains a symbolic time series representation (**SFA**) and two time series models (**BOSS** and **BOSSVS**) for alignment-free, noise-robust and scalable time series data analytics. 
+This repository contains a symbolic time series representation (**SFA**) and three time series models (**WEASEL**, **BOSS** and **BOSSVS**) for alignment-free, noise-robust and scalable time series data analytics. 
 
 The implemented algorithms are in the context of:
 
 1. **Dimensionality Reduction**: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques [[1]](http://dl.acm.org/citation.cfm?doid=2247596.2247656).
 
-2. **Classification and Accuracy**: The BOSS ensemble classifier offers state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7).
+2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]] https://arxiv.org/abs/1701.07681.
 
-3. **Classification and Scalability**: The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[4]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y).
+3. **Classification and Scalability**: WEASEL follows the bag-of-pattern approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation on altogether 87 datasets, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]] https://arxiv.org/abs/1701.07681.
+The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[5]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y). 
 
-![SFA](images/classifiers.png)
+![SFA](images/classifiers2.png)
 
-Figure (center) shows the BOSS model as a histogram over SFA words. It first extracts subsequences (patterns) from a time series. Next, it applies low-pass filtering and quantization to the subsequences using SFA which reduces noise and allows for string matching algorithms to be applied. Two time series are then compared based on the differences in the histogram of SFA words.
+Figure (second from left) shows the BOSS model as a histogram over SFA words. It first extracts subsequences (patterns) from a time series. Next, it applies low-pass filtering and quantization to the subsequences using SFA which reduces noise and allows for string matching algorithms to be applied. Two time series are then compared based on the differences in the histogram of SFA words.
  
-Figure (right) illustrates the BOSS VS model. The BOSS VS model extends the BOSS model by a compact representation of classes instead of time series by using the term frequency - inverse document frequency (tf-idf) for each class. It significantly reduces the computational complexity and highlights characteristic SFA words by the use of the tf-idf weight matrix which provides an additional noise reducing effect.
+Figure (second from right) illustrates the BOSS VS model. The BOSS VS model extends the BOSS model by a compact representation of classes instead of time series by using the term frequency - inverse document frequency (tf-idf) for each class. It significantly reduces the computational complexity and highlights characteristic SFA words by the use of the tf-idf weight matrix which provides an additional noise reducing effect.
 
+Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns (BOSS) model. It derives discriminative features based on the dataset labels. WEASEL extracts subsequences at multiple lengths and also considers the order of subsequences (using bi-grams as features) instead of considering each fixed-length window as independent feature. It then builds a single model from the concatenation of feature vectors. It then applies an aggressive statistical feature selection to remove irrelevant features from each class. The resulting feature set is highly discriminative, which allows us to use fast logistic regression.
 
 # SFA: Symbolic Fourier Approximation
 
@@ -132,7 +134,7 @@ First, to train the BOSS model using a set of samples, we first have to obtain t
 ```java
 TimeSeries[] trainSamples = ...
 
-BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, normMean);              
+BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);              
 int[][] words = model.createWords(trainSamples);
 ```
 
@@ -164,7 +166,7 @@ First, to train the BOSS VS model using a set of samples, we first have to obtai
 ```java
 TimeSeries[] trainSamples = ...
 
-BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, normMean);              
+BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);              
 int[][] words = model.createWords(trainSamples);
 ```
 
@@ -184,6 +186,50 @@ ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag
 
 "Schäfer, P.: Scalable Time Series Classification. DMKD 30(6) (2016)"
 http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
+
+
+
+# WEASEL: Word ExtrAction for time SEries cLassification
+
+The Word ExtrAction for time SEries cLassification (WEASEL) model builds upon the bag-of-pattern model. The novelty of WEASEL lies in its specific method for deriving features, resulting in a much smaller yet much more discriminative feature set. WEASEL is more accurate than the best current non-ensemble algorithms at orders-of-magnitude lower classification and training times. WEASEL derives discriminative features based on the dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using bi-grams as features) instead of considering each fixed-length window as independent feature. It then builds a single model from the concatenation of feature vectors. So, instead of training O(n) different models, and picking the best one, we weigh each feature based on its relevance to predict the class. Finally, WEASEL applies an aggressive statistical feature selection to remove irrelevant features from each class, without negatively impacting accuracy and heavily reducing runtime. 
+
+**Usage:**
+
+First, to train the WEASEL model using a set of samples, we first have to obtain the supervised SFA words:
+
+```java
+TimeSeries[] trainSamples = ...
+
+WEASELModel model = new WEASELModel(maxF, maxS, windowLengths, normMean, false);
+int[][][] words = model.createWords(samples);
+```
+
+Next, we build a histogram of bi-gram frequencies (bag-of-bigrams):
+
+```java
+BagOfBigrams[] bop = model.createBagOfPatterns(words, samples, wordLength);
+```
+
+Next, we apply the chi-squared test to remove irrelevant features from each class:
+
+```java
+model.filterChiSquared(bop, chi);
+```
+
+Finally, we train the logistic regression classifier (using default parameters) to assign high weights to discriminative words of each class.
+
+```java
+final Problem problem = initLibLinearProblem(bop, model.dict, -1);
+int correct = trainLibLinear(problem, SolverType.L2R_LR_DUAL, 1, 5000, 0.1, 10, new Random(1));
+```
+
+
+**References**
+
+"Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL. (2017)"
+https://arxiv.org/abs/1701.07681
+
+
 
 # Use Cases / Tests
 
