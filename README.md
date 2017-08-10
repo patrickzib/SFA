@@ -26,7 +26,7 @@ Figure (second from left) shows the BOSS model as a histogram over SFA words. It
  
 Figure (second from right) illustrates the BOSS VS model. The BOSS VS model extends the BOSS model by a compact representation of classes instead of time series by using the term frequency - inverse document frequency (tf-idf) for each class. It significantly reduces the computational complexity and highlights characteristic SFA words by the use of the tf-idf weight matrix which provides an additional noise reducing effect.
 
-Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns model. It derives discriminative features based on dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using bi-grams as features) instead of considering each fixed-length window as independent feature (as in BOSS or BOSS VS). It then builds a single model from the concatenation of feature vectors. It finally applies an aggressive statistical feature selection to remove irrelevant features from each class. This resulting feature set is highly discriminative, which allows us to use fast logistic regression.
+Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns model. It derives discriminative features based on dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using word co-occurrencs as features) instead of considering each fixed-length window as independent feature (as in BOSS or BOSS VS). It then builds a single model from the concatenation of feature vectors. It finally applies an aggressive statistical feature selection to remove irrelevant features from each class. This resulting feature set is highly discriminative, which allows us to use fast logistic regression.
 
 # SFA: Symbolic Fourier Approximation
 
@@ -48,6 +48,9 @@ The figure illustrates the SFA transformation. The time series is first Fourier 
 First, train the SFA quantization using a set of samples.
 
 ```java
+int wordLength = 4;		// represents the length of the resulting SFA words. typically, between 4 and 16.
+int symbols = 4; 		// symbols of the discretization alphabet. 4 is the default value
+
 // Load datasets
 TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
 
@@ -71,15 +74,17 @@ short[] wordTs = sfa.quantization(dftTs);
 Similarity search using the SFA distance.
 
 ```java
+boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
+
 double distance = sfaDistance.getDistance(wordsTrain[t], wordTs, dftTs, normMean, minDistance);
   
 // check the real distance, if the lower bounding distance is smaller than the best-so-far distance
-if (distance < minDistance) {          
+if (distance < minDistance) {
   double realDistance = getEuclideanDistance(train[t], ts, minDistance);
   if (realDistance < minDistance) {
     minDistance = realDistance;
     best = t;
-  }     
+  }
 }
 ```
 
@@ -132,9 +137,14 @@ and clustering accuracy in time series literature to date.
 First, to train the BOSS model using a set of samples, we first have to obtain the SFA words:
 
 ```java
+boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
+int maxF = 4;		// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
+int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. typically, inbetween 4 and time series length n.
+
 TimeSeries[] trainSamples = ...
 
-BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);              
+BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);
 int[][] words = model.createWords(trainSamples);
 ```
 
@@ -164,9 +174,14 @@ with its good accuracy makes it unique and relevant for many practical use cases
 First, to train the BOSS VS model using a set of samples, we first have to obtain the SFA words:
 
 ```java
+boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
+int maxF = 4;		// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
+int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. typically, inbetween 4 and time series length n.
+
 TimeSeries[] trainSamples = ...
 
-BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);              
+BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);
 int[][] words = model.createWords(trainSamples);
 ```
 
@@ -191,20 +206,25 @@ http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
 
 # WEASEL: Word ExtrAction for time SEries cLassification
 
-The Word ExtrAction for time SEries cLassification (WEASEL) model builds upon the bag-of-pattern model. The novelty of WEASEL lies in its specific method for deriving features, resulting in a much smaller yet much more discriminative feature set. WEASEL is more accurate than the best current non-ensemble algorithms at orders-of-magnitude lower classification and training times. WEASEL derives discriminative features based on the dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using bi-grams as features) instead of considering each fixed-length window as independent feature. It then builds a single model from the concatenation of feature vectors. So, instead of training O(n) different models, and picking the best one, we weigh each feature based on its relevance to predict the class. Finally, WEASEL applies an aggressive statistical feature selection to remove irrelevant features from each class, without negatively impacting accuracy and heavily reducing runtime. 
+The Word ExtrAction for time SEries cLassification (WEASEL) model builds upon the bag-of-pattern model. The novelty of WEASEL lies in its specific method for deriving features, resulting in a much smaller yet much more discriminative feature set. WEASEL is more accurate than the best current non-ensemble algorithms at orders-of-magnitude lower classification and training times. WEASEL derives discriminative features based on the dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using word co-occurences as features) instead of considering each fixed-length window as independent feature. It then builds a single model from the concatenation of feature vectors. So, instead of training O(n) different models, and picking the best one, we weigh each feature based on its relevance to predict the class. Finally, WEASEL applies an aggressive statistical feature selection to remove irrelevant features from each class, without negatively impacting accuracy and heavily reducing runtime. 
 
 **Usage:**
 
 First, to train the WEASEL model using a set of samples, we first have to obtain the supervised SFA words:
 
 ```java
+boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
+int wordLength = 4;		// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
+int[] windowLengths = new int[]{...}; // range of window lengths to use for extracting SFA words from time series. typically, set to all window lengths inbetween 4 and n.
+
 TimeSeries[] trainSamples = ...
 
-WEASELModel model = new WEASELModel(maxF, maxS, windowLengths, normMean, false);
+WEASELModel model = new WEASELModel(wordLength, maxS, windowLengths, normMean, false);
 int[][][] words = model.createWords(samples);
 ```
 
-Next, we build a histogram of bi-gram frequencies (bag-of-bigrams):
+Next, we build a histogram of word co-occurrences (bi-grams) frequencies (bag-of-bigrams):
 
 ```java
 BagOfBigrams[] bop = model.createBagOfPatterns(words, samples, wordLength);
