@@ -140,8 +140,9 @@ First, to train the BOSS model using a set of samples, we first have to obtain t
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
 int maxF = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
 int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
-int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. 
-						// typically, inbetween 4 and time series length n.
+// subsequence (window) length used for extracting SFA words from time series. 
+// typically, inbetween 4 and time series length n.
+int windowLength = ...; 
 
 TimeSeries[] trainSamples = ...
 
@@ -178,8 +179,9 @@ First, to train the BOSS VS model using a set of samples, we first have to obtai
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
 int maxF = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
 int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
-int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. 
-						// typically, inbetween 4 and time series length n.
+// subsequence (window) length used for extracting SFA words from time series. 
+// typically, inbetween 4 and time series length n.
+int windowLength = ...; 
 
 TimeSeries[] trainSamples = ...
 
@@ -218,8 +220,10 @@ First, to train the WEASEL model using a set of samples, we first have to obtain
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
 int wordLength = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
 int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
-int[] windowLengths = new int[]{...}; // range of window lengths to use for extracting SFA words from time series. 
-									// typically, set to all window lengths inbetween 4 and n.
+// range of window lengths to use for extracting SFA words from time series. 
+// typically, set to all window lengths inbetween 4 and n.
+int[] windowLengths = new int[]{...}; 
+	
 
 TimeSeries[] trainSamples = ...
 
