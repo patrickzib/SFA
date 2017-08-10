@@ -48,8 +48,8 @@ The figure illustrates the SFA transformation. The time series is first Fourier 
 First, train the SFA quantization using a set of samples.
 
 ```java
-int wordLength = 4;		// represents the length of the resulting SFA words. typically, between 4 and 16.
-int symbols = 4; 		// symbols of the discretization alphabet. 4 is the default value
+int wordLength = 4;	// represents the length of the resulting SFA words. typically, between 4 and 16.
+int symbols = 4; 	// symbols of the discretization alphabet. 4 is the default value
 
 // Load datasets
 TimeSeries[] train = TimeSeriesLoader.loadDatset(new File("./datasets/CBF/CBF_TEST"));
@@ -91,9 +91,9 @@ if (distance < minDistance) {
 Similarity search using the index SFATrie.
 
 ```java
-int l = 16; // SFA word length ( & dimensionality of the index)
-int windowLength = 256; // length of the subsequences to be indexed
-int leafThreshold = 100; // number of subsequences in each leaf node
+int l = 16; 	// SFA word length ( & dimensionality of the index)
+int windowLength = 256; 	// length of the subsequences to be indexed
+int leafThreshold = 100; 	// number of subsequences in each leaf node
 int k = 10; // k-NN search
 
 // Load datasets
@@ -138,9 +138,10 @@ First, to train the BOSS model using a set of samples, we first have to obtain t
 
 ```java
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int maxF = 4;		// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
-int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
-int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. typically, inbetween 4 and time series length n.
+int maxF = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
+int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. 
+						// typically, inbetween 4 and time series length n.
 
 TimeSeries[] trainSamples = ...
 
@@ -175,9 +176,10 @@ First, to train the BOSS VS model using a set of samples, we first have to obtai
 
 ```java
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int maxF = 4;		// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
-int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
-int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. typically, inbetween 4 and time series length n.
+int maxF = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
+int windowLength = ...; // subsequence (window) length used for extracting SFA words from time series. 
+						// typically, inbetween 4 and time series length n.
 
 TimeSeries[] trainSamples = ...
 
@@ -214,9 +216,10 @@ First, to train the WEASEL model using a set of samples, we first have to obtain
 
 ```java
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int wordLength = 4;		// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int wordLength = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
 int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
-int[] windowLengths = new int[]{...}; // range of window lengths to use for extracting SFA words from time series. typically, set to all window lengths inbetween 4 and n.
+int[] windowLengths = new int[]{...}; // range of window lengths to use for extracting SFA words from time series. 
+									// typically, set to all window lengths inbetween 4 and n.
 
 TimeSeries[] trainSamples = ...
 
