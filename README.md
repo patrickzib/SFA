@@ -158,8 +158,8 @@ BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
 
 **References**
 
-"Schäfer, P.: The BOSS is concerned with time series classification in the presence of noise. DMKD 29(6) (2015) 1505–1530"
-http://link.springer.com/article/10.1007%2Fs10618-014-0377-7
+"Schäfer, P.: The BOSS is concerned with time series classification in the presence of noise. DMKD (2015)"
+[[1]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7)
 
 
 # BOSS VS: Bag-of-SFA-Symbols in Vector Space
@@ -203,10 +203,8 @@ ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag
 
 **References**
 
-"Schäfer, P.: Scalable Time Series Classification. DMKD (2016)"
-http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
-
-"Schäfer, P.: Scalable Time Series Classification. ECML/PKDD 2016"
+"Schäfer, P.: Scalable Time Series Classification. DMKD (2016) and ECML/PKDD 2016
+[[1]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y)
 
 
 # WEASEL: Word ExtrAction for time SEries cLassification
@@ -244,7 +242,7 @@ Next, we apply the chi-squared test to remove irrelevant features from each clas
 model.filterChiSquared(bop, chi);
 ```
 
-Finally, we train the logistic regression classifier (using default parameters) to assign high weights to discriminative words of each class.
+Finally, we train the logistic regression classifier (using default parameters of liblinear) to assign high weights to discriminative words of each class.
 
 ```java
 final Problem problem = initLibLinearProblem(bop, model.dict, -1);
@@ -254,11 +252,8 @@ int correct = trainLibLinear(problem, SolverType.L2R_LR_DUAL, 1, 5000, 0.1, 10, 
 
 **References**
 
-"Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL. (2017)"
-https://arxiv.org/abs/1701.07681
-
 "Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL."
-CIKM 2017, (accepted)
+CIKM 2017, (accepted), [[1]](https://arxiv.org/abs/1701.07681)
 
 
 # Use Cases / Tests
