@@ -121,7 +121,7 @@ for (int j = 0; j < result.size(); j++) {
 **References**
 
 "Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and index for similarity search in high dimensional datasets. In: EDBT, ACM (2012)"
-http://dl.acm.org/citation.cfm?doid=2247596.2247656
+[[LINK]](http://dl.acm.org/citation.cfm?doid=2247596.2247656)
 
 
 # BOSS: Bag-of-SFA-Symbols
@@ -159,7 +159,7 @@ BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
 **References**
 
 "Schäfer, P.: The BOSS is concerned with time series classification in the presence of noise. DMKD (2015)"
-[[1]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7)
+[[LINK]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7)
 
 
 # BOSS VS: Bag-of-SFA-Symbols in Vector Space
@@ -204,7 +204,7 @@ ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag
 **References**
 
 "Schäfer, P.: Scalable Time Series Classification. DMKD (2016) and ECML/PKDD 2016
-[[1]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y)
+[[LINK]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y)
 
 
 # WEASEL: Word ExtrAction for time SEries cLassification
@@ -253,7 +253,7 @@ int correct = trainLibLinear(problem, SolverType.L2R_LR_DUAL, 1, 5000, 0.1, 10, 
 **References**
 
 "Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL."
-CIKM 2017, (accepted), [[1]](https://arxiv.org/abs/1701.07681)
+CIKM 2017, (accepted), [[LINK]](https://arxiv.org/abs/1701.07681)
 
 
 # Use Cases / Tests
