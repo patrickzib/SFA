@@ -17,7 +17,7 @@ The implemented algorithms are in the context of:
 
 2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]](https://arxiv.org/abs/1701.07681).
 
-3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation on altogether 87 datasets, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]](https://arxiv.org/abs/1701.07681).
+3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]](https://arxiv.org/abs/1701.07681).
 The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[5]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y). 
 
 ![SFA](images/classifiers2.png)
@@ -203,9 +203,10 @@ ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> idf = model.createTfIdf(bag
 
 **References**
 
-"Schäfer, P.: Scalable Time Series Classification. DMKD 30(6) (2016)"
+"Schäfer, P.: Scalable Time Series Classification. DMKD (2016)"
 http://link.springer.com/article/10.1007%2Fs10618-015-0441-y
 
+"Schäfer, P.: Scalable Time Series Classification. ECML/PKDD 2016"
 
 
 # WEASEL: Word ExtrAction for time SEries cLassification
@@ -256,16 +257,16 @@ int correct = trainLibLinear(problem, SolverType.L2R_LR_DUAL, 1, 5000, 0.1, 10, 
 "Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL. (2017)"
 https://arxiv.org/abs/1701.07681
 
+"Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL."
+CIKM 2017, (accepted)
 
 
 # Use Cases / Tests
 
-There are 5 implemented use cases:
+There are 6 implemented use cases:
 
 
-
-
-1. Classification accuracy of BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassification.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/UCRClassification.java)
+1. Classification accuracy of WEASEL, BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassification.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/UCRClassification.java)
 2. SFA lower bounding distance to the Euclidean distance: 
 [SFAMinDistance.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAMinDistance.java)
 3. Generate SFA words from a set of samples: 
@@ -274,6 +275,11 @@ There are 5 implemented use cases:
 [SFAWordsVariableLength.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWordsVariableLength.java)
 5. Extract sliding windows from a time series and transform each sliding window to its SFA word: 
 [SFAWordsWindowing.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWordsWindowing.java)
+6. Time series indexing and similarity search: 
+[SFATrieTest.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFATrieTest.java)
+7. Time series bulk loading and similarity search: 
+[SFABulkLoad.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFABulkLoad.java)
+
 
 # References & Acknowledgements
 
