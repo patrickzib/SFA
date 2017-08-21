@@ -30,10 +30,9 @@ Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the b
 
 # Accuracy and Scalability
 
-![TRAIN](images/walltime_train_new3.png)
-![TEST](images/walltime_ttest_new3.png)
+![TEST](images/walltime_test_new3.png)
 
-The two figures show for state-of-the-art classifiers the total runtime on the x-axis in log scale vs the average rank on the y-axis for prediction. Runtimes include all preprocessing steps like feature extraction or selection. 
+The figure shows for state-of-the-art classifiers the total runtime on the x-axis in log scale vs the average rank on the y-axis for prediction. Runtimes include all preprocessing steps like feature extraction or selection. 
 
 There are fast time series classifiers (BOSS VS, TSBF, LS, DTW CV) that require a few ms per prediction, but have a low average rank; and there are accurate methods (ST; BOSS; EE; COTE) that require hundredths of ms to seconds per prediction. The two ensemble methods in our comparison, EE PROP and COTE, show the highest prediction times. 
 
