@@ -28,6 +28,16 @@ Figure (second from right) illustrates the BOSS VS model. The BOSS VS model exte
 
 Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns model. It derives discriminative features based on dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using word co-occurrencs as features) instead of considering each fixed-length window as independent feature (as in BOSS or BOSS VS). It then builds a single model from the concatenation of feature vectors. It finally applies an aggressive statistical feature selection to remove irrelevant features from each class. This resulting feature set is highly discriminative, which allows us to use fast logistic regression.
 
+# Accuracy and Scalability
+
+![TEST](images/walltime_predict_new3.png)
+
+The figure shows for the state-of-the-art classifiers the total runtime on the x-axis in log scale vs the average rank on the y-axis for prediction. Runtimes include all preprocessing steps like feature extraction or selection. 
+
+There are fast time series classifiers (BOSS VS, TSBF, LS, DTW CV) that require a few ms per prediction, but have a low average rank; and there are accurate methods (ST; BOSS; EE; COTE) that require hundredths of ms to seconds per prediction. The two ensemble methods in our comparison, EE PROP and COTE, show the highest prediction times. 
+
+There is always a trade-off between accuracy and prediction times.  However, WEASEL is consistently among the best and fastest predicting methods, and competitors are (a) either at the same level of quality (COTE) but much slower or (b) faster but much worse in accuracy (LS, DTW CV, TSBF, or BOSS VS).
+
 # SFA: Symbolic Fourier Approximation
 
 The symbolic time series representation Symbolic Fourier Approximation (SFA) represents each real-valued time series by a 
@@ -258,7 +268,7 @@ CIKM 2017, (accepted), [[LINK]](https://arxiv.org/abs/1701.07681)
 
 # Use Cases / Tests
 
-There are 6 implemented use cases:
+There are 7 implemented use cases:
 
 
 1. Classification accuracy of WEASEL, BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassification.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/UCRClassification.java)
