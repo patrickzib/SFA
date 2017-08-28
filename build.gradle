@@ -30,7 +30,13 @@ dependencies {
     compile 'com.carrotsearch:hppc:0.7.2'
 
     testCompile 'junit:junit:4.12'
+}
 
+test {
+  testLogging {
+    events "passed", "skipped", "failed" , "standardOut", "standardError"
+  }
+  dependsOn 'cleanTest'
 }
 
 // Define the main class for the application
