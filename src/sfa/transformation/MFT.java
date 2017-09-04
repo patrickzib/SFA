@@ -32,14 +32,14 @@ public class MFT implements Serializable {
 
   transient DoubleFFT_1D fft = null;
 
-  public MFT(int windowSize, boolean normMean, boolean lower_bounding) {
+  public MFT(int windowSize, boolean normMean, boolean lowerBounding) {
     this.normMean = normMean;
     this.windowSize = windowSize;
     this.fft = new DoubleFFT_1D(windowSize);
 
     // ignore DC value?
     this.startOffset = normMean? 2 : 0;
-    this.norm = lower_bounding? 1.0/Math.sqrt(windowSize) : 1.0;
+    this.norm = lowerBounding? 1.0/Math.sqrt(windowSize) : 1.0;
   }
 
   /**
@@ -73,10 +73,15 @@ public class MFT implements Serializable {
 
   /**
    * Transforms a time series, extracting windows and using *momentary* fourier
-   * transform for each window. Results in one Fourier transform for each window
+   * transform for each window. Results in one Fourier transform for each
+   * window. Returns only the first l/2 Fourier coefficients for each window.
    *
    * @param timeSeries
    * @param l
+   *          the number of Fourier values to use (equal to l/2 Fourier
+   *          coefficients). If l is uneven, l+1 Fourier values are returned. If
+   *          windowSize is smaller than l, only the first windowSize Fourier
+   *          values are set.
    * @return
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
