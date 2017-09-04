@@ -46,9 +46,9 @@ public class WEASELClassifier extends Classifier {
   public static double p = 0.1;
   public static int iter = 5000;
   public static double c = 1;
-  
+
   public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
-    super(train, test);    
+    super(train, test);
   }
 
   public static class WScore extends Score {
@@ -59,7 +59,7 @@ public class WEASELClassifier extends Classifier {
         WEASELModel model,
         Model linearModel
         ) {
-      super("W", testing, testing, normed, -1);
+      super("Weasel", testing, testing, normed, -1);
       this.features = features;
       this.model = model;
       this.linearModel = linearModel;
@@ -78,6 +78,7 @@ public class WEASELClassifier extends Classifier {
     }
   }
 
+  @Override
   public Score eval() throws IOException {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
@@ -91,7 +92,8 @@ public class WEASELClassifier extends Classifier {
 
       // training score
       if (DEBUG) {
-        System.out.println("W Training:\t" + bestScore.windowLength + "," + bestScore.features + "," + bestScore.normed + "," + ", chi: " + chi);
+        System.out.println("Weasel Training:\t" + bestScore.windowLength + "," + bestScore.features
+            + "," + bestScore.normed + "," + ", chi: " + chi);
         outputResult((int)bestScore.training, startTime, this.trainSamples.length);
       }
 
@@ -99,13 +101,13 @@ public class WEASELClassifier extends Classifier {
       int correctTesting = predict(exec, bestScore, this.testSamples);
 
       if (DEBUG) {
-        System.out.println("W Testing:\t");
+        System.out.println("Weasel Testing:\t");
         outputResult(correctTesting, startTime, this.testSamples.length);
         System.out.println("");
       }
 
       return new Score(
-          "W",
+          "Weasel",
           1-formatError(correctTesting, this.testSamples.length),
           1-formatError((int)bestScore.training, this.trainSamples.length),
           bestScore.normed,
@@ -214,7 +216,7 @@ public class WEASELClassifier extends Classifier {
     problem.bias = bias;
     problem.n = dict.size()+1;
     problem.y = getLabels(bob);
-    
+
     final FeatureNode[][] features = initLibLinear(bob, problem.n);
 
     problem.l = features.length;
@@ -229,7 +231,7 @@ public class WEASELClassifier extends Classifier {
       ArrayList<FeatureNode> features = new ArrayList<FeatureNode>(bop.bob.size());
       for (IntIntCursor word : bop.bob) {
         if (word.value > 0 && word.key <= max_feature) {
-          features.add(new FeatureNode(word.key, ((double)word.value)));
+          features.add(new FeatureNode(word.key, (word.value)));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});
@@ -242,7 +244,7 @@ public class WEASELClassifier extends Classifier {
     }
     return featuresTrain;
   }
-  
+
 
   @SuppressWarnings("static-access")
   public static int trainLibLinear(
@@ -316,13 +318,13 @@ public class WEASELClassifier extends Classifier {
     });
     return correct.get();
   }
-  
+
   static void swap(int[] array, int idxA, int idxB) {
     int temp = array[idxA];
     array[idxA] = array[idxB];
     array[idxB] = temp;
   }
-  
+
   public static double[] getLabels(final BagOfBigrams[] bagOfPatternsTestSamples) {
     double[] labels = new double[bagOfPatternsTestSamples.length];
     for (int i = 0; i < bagOfPatternsTestSamples.length; i++) {
@@ -330,5 +332,5 @@ public class WEASELClassifier extends Classifier {
     }
     return labels;
   }
-  
+
 }
