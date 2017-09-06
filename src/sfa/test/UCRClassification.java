@@ -5,6 +5,10 @@ package sfa.test;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.Test;
+import org.junit.runners.JUnit4;
+import org.junit.runner.RunWith;
+
 import sfa.classification.BOSSEnsembleClassifier;
 import sfa.classification.BOSSVSClassifier;
 import sfa.classification.Classifier;
@@ -15,10 +19,11 @@ import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
+@RunWith(JUnit4.class)
 public class UCRClassification {
 
   // The datasets to use
-  public static String[] datasets = new String[]{
+  public static String[] datasets = new String[] {
     "Coffee", "ECG200", "FaceFour", "OliveOil",
     "Gun_Point", "Beef",
     "DiatomSizeReduction",
@@ -31,12 +36,12 @@ public class UCRClassification {
     "SonyAIBORobot Surface",
   };
 
-  public static void main(String argv[]) throws IOException {
+  @Test
+  public void testUCRClassification() throws IOException {
     try {
       // the relative path to the datasets
-      File dir = new File("./datasets/");
-      // File dir = new
-      // File("/Users/bzcschae/workspace/similarity/datasets/classification/");
+      File dir = new File("./src/main/resources/datasets/");
+      //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification/");
 
       for (String s : datasets) {
         File d = new File(dir.getAbsolutePath()+"/"+s);
@@ -92,5 +97,4 @@ public class UCRClassification {
       ParallelFor.shutdown();
     }
   }
-
 }
