@@ -35,7 +35,7 @@ import de.bwaldvogel.liblinear.SolverType;
  */
 public class WEASELClassifier extends Classifier {
 
-  public static int maxF = 6; // TODO used to be 6
+  public static int maxF = 6;
   public static int minF = 4;
   public static int maxS = 4;
 

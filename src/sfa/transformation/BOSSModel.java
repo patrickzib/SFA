@@ -9,7 +9,7 @@ import sfa.classification.ParallelFor;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.SFA.HistogramType;
 
-import com.carrotsearch.hppc.IntIntOpenHashMap;
+import com.carrotsearch.hppc.IntIntHashMap;
 
 /**
  * The Bag-of-SFA-Symbols Model as published in
@@ -53,11 +53,11 @@ public class BOSSModel {
    * The BOSS model: a histogram of SFA word frequencies
    */
   public static class BagOfPattern {
-    public IntIntOpenHashMap bag;
+    public IntIntHashMap bag;
     public String label;
 
     public BagOfPattern(int size, String label) {
-      this.bag = new IntIntOpenHashMap(size);
+      this.bag = new IntIntHashMap(size);
       this.label = label;
     }
   }

@@ -4,9 +4,9 @@ package sfa.transformation;
 
 import java.util.HashSet;
 
-import com.carrotsearch.hppc.IntFloatOpenHashMap;
-import com.carrotsearch.hppc.IntShortOpenHashMap;
-import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
+import com.carrotsearch.hppc.IntFloatHashMap;
+import com.carrotsearch.hppc.IntShortHashMap;
+import com.carrotsearch.hppc.ObjectObjectHashMap;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntFloatCursor;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
@@ -40,7 +40,7 @@ public class BOSSVSModel extends BOSSModel {
     super(maxF, maxS, windowLength, normMean);
   }
 
-  public ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> createTfIdf(
+  public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
       final HashSet<String> uniqueLabels) {
     int[] sampleIndices = createIndices(bagOfPatterns.length);
@@ -63,26 +63,27 @@ public class BOSSVSModel extends BOSSModel {
    * @param uniqueLabels The unique class labels in the dataset
    * @return
    */
-  public ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> createTfIdf(
+  public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
       final int[] sampleIndices,
       final HashSet<String> uniqueLabels) {
 
-    ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> matrix = new ObjectObjectOpenHashMap<String, IntFloatOpenHashMap>(uniqueLabels.size());
+    ObjectObjectHashMap<String, IntFloatHashMap> matrix = new ObjectObjectHashMap<String, IntFloatHashMap>(
+        uniqueLabels.size());
     initMatrix(matrix, uniqueLabels, bagOfPatterns);
 
     for (int j : sampleIndices) {
       String label = bagOfPatterns[j] .label;
-      IntFloatOpenHashMap wordInBagFreq = matrix.get(label);
+      IntFloatHashMap wordInBagFreq = matrix.get(label);
       for (IntIntCursor key : bagOfPatterns[j].bag) {
         wordInBagFreq.putOrAdd(key.key, key.value, key.value);
       }
     }
 
     // count the number of classes where the word is present
-    IntShortOpenHashMap wordInClassFreq = new IntShortOpenHashMap(matrix.iterator().next().value.size());
+    IntShortHashMap wordInClassFreq = new IntShortHashMap(matrix.iterator().next().value.size());
 
-    for (ObjectCursor<IntFloatOpenHashMap> stat : matrix.values()) {
+    for (ObjectCursor<IntFloatHashMap> stat : matrix.values()) {
       // count the occurence of words
       for (IntFloatCursor key : stat.value) {
         wordInClassFreq.putOrAdd(key.key, (short)1, (short)1);
@@ -90,8 +91,8 @@ public class BOSSVSModel extends BOSSModel {
     }
 
     // calculate the tfIDF value for each class
-    for (ObjectObjectCursor<String, IntFloatOpenHashMap> stat : matrix) {
-      IntFloatOpenHashMap tfIDFs = stat.value;
+    for (ObjectObjectCursor<String, IntFloatHashMap> stat : matrix) {
+      IntFloatHashMap tfIDFs = stat.value;
       // calculate the tfIDF value for each word
       for (IntFloatCursor patternFrequency : tfIDFs) {
         short wordCount = wordInClassFreq.get(patternFrequency.key);
@@ -118,13 +119,13 @@ public class BOSSVSModel extends BOSSModel {
   }
 
   protected void initMatrix(
-      final ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> matrix,
+final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
       final HashSet<String> uniqueLabels,
       final BagOfPattern[] bag) {
     for (String label : uniqueLabels) {
-      IntFloatOpenHashMap stat = matrix.get(label);
+      IntFloatHashMap stat = matrix.get(label);
       if (stat == null) {
-        matrix.put(label, new IntFloatOpenHashMap(bag[0].bag.size()*bag.length));
+        matrix.put(label, new IntFloatHashMap(bag[0].bag.size() * bag.length));
       } else {
         if (stat != null) {
           stat.clear();
@@ -137,8 +138,8 @@ public class BOSSVSModel extends BOSSModel {
    * Norm the vector to length 1
    * @param classStatistics
    */
-  public void normalizeTfIdf(final ObjectObjectOpenHashMap<String, IntFloatOpenHashMap> classStatistics) {
-    for (ObjectCursor<IntFloatOpenHashMap> classStat : classStatistics.values()) {
+  public void normalizeTfIdf(final ObjectObjectHashMap<String, IntFloatHashMap> classStatistics) {
+    for (ObjectCursor<IntFloatHashMap> classStat : classStatistics.values()) {
       double squareSum = 0.0;
       for (FloatCursor entry : classStat.value.values()) {
         squareSum += entry.value*entry.value;
