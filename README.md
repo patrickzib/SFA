@@ -295,3 +295,6 @@ Read more about Scalable Time Series Data Analytics in the [Dissertation](http:/
 [The UCR Time Series Classification Archive](http://www.cs.ucr.edu/~eamonn/time_series_data/)
 
 [The Great Time Series Classification Bake Off: An Experimental Evaluation of Recently Proposed Algorithms. Extended Version](http://arxiv.org/abs/1602.01711)
+
+Many thanks to @ChristianSch for porting the project to gradle.
+
