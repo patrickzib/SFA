@@ -5,8 +5,9 @@ package sfa.transformation;
 import java.io.IOException;
 import java.io.Serializable;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+
 import sfa.timeseries.TimeSeries;
-import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
 /**
  * The Momentary Fourier Transform is alternative algorithm of

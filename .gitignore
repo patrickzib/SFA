@@ -12,5 +12,16 @@
 hs_err_pid*
 /bin/
 
-
 *.DS_Store
+
+# gradle
+*.iml
+.gradle
+gradle/
+build/
+local.properties
+
+
+# eclipse
+.classpath
+.project
