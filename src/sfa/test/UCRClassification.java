@@ -24,16 +24,16 @@ public class UCRClassification {
 
   // The datasets to use
   public static String[] datasets = new String[] {
-//    "Coffee", "ECG200", "FaceFour", "OliveOil",
-//    "Gun_Point", "Beef",
-//    "DiatomSizeReduction",
-//    "CBF",
-//    "ECGFiveDays",
-//    "TwoLeadECG",
-//    "SonyAIBORobot SurfaceII",
-//    "MoteStrain",
-//    "ItalyPowerDemand",
-//    "SonyAIBORobot Surface",
+    "Coffee", "ECG200", "FaceFour", "OliveOil",
+    "Gun_Point", "Beef",
+    "DiatomSizeReduction",
+    "CBF",
+    "ECGFiveDays",
+    "TwoLeadECG",
+    "SonyAIBORobot SurfaceII",
+    "MoteStrain",
+    "ItalyPowerDemand",
+    "SonyAIBORobot Surface",
   };
 
   @Test
@@ -96,5 +96,14 @@ public class UCRClassification {
     } finally {
       ParallelFor.shutdown();
     }
+  }
+  
+  /**
+   * Main class for gradle ...
+   * @param argv
+   */
+  public static void main(String argv[]) throws Exception {
+    UCRClassification c = new UCRClassification();
+    c.testUCRClassification();
   }
 }

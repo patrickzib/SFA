@@ -170,7 +170,7 @@ public class SFABulkLoad {
   public static void testBulkLoadSubsequenceMatching() throws IOException {
     setUpBucketDir();
 
-    int N = 80 * 100_000;
+    int N = 20 * 100_000;
     System.out.println("Loading/generating Time Series of length " + N + "...");
 
     // samples to be indexed
