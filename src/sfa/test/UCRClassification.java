@@ -24,23 +24,23 @@ public class UCRClassification {
 
   // The datasets to use
   public static String[] datasets = new String[] {
-    "Coffee", "ECG200", "FaceFour", "OliveOil",
-    "Gun_Point", "Beef",
-    "DiatomSizeReduction",
-    "CBF",
-    "ECGFiveDays",
-    "TwoLeadECG",
-    "SonyAIBORobot SurfaceII",
-    "MoteStrain",
-    "ItalyPowerDemand",
-    "SonyAIBORobot Surface",
+//    "Coffee", "ECG200", "FaceFour", "OliveOil",
+//    "Gun_Point", "Beef",
+//    "DiatomSizeReduction",
+//    "CBF",
+//    "ECGFiveDays",
+//    "TwoLeadECG",
+//    "SonyAIBORobot SurfaceII",
+//    "MoteStrain",
+//    "ItalyPowerDemand",
+//    "SonyAIBORobot Surface",
   };
 
   @Test
   public void testUCRClassification() throws IOException {
     try {
       // the relative path to the datasets
-      File dir = new File("./src/main/resources/datasets/");
+      File dir = new File("./datasets/");
       //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification/");
 
       for (String s : datasets) {

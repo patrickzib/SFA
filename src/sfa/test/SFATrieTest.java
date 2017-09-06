@@ -23,11 +23,8 @@ public class SFATrieTest {
 
   public static void testWholeMatching() throws IOException {
     int N = 100000;
-    ClassLoader classLoader = SFAWords.class.getClassLoader();
     TimeSeries[] timeSeries2 = TimeSeriesLoader
-        .readSamplesQuerySeries(new File(classLoader
-            .getResource("datasets/indexing/query_lightcurves.txt")
-            .getFile()));
+        .readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
     int n = timeSeries2[0].getLength();
     System.out.println("Queries: " + timeSeries2.length);
 
@@ -93,14 +90,9 @@ public class SFATrieTest {
   public static void testSubsequenceMatching() throws IOException {
     System.out.println("Loading Time Series");
 
-    ClassLoader classLoader = SFAWords.class.getClassLoader();
     TimeSeries[] timeSeries2 = TimeSeriesLoader
-        .readSamplesQuerySeries(new File(classLoader
-            .getResource("datasets/indexing/query_lightcurves.txt")
-            .getFile()));
-    // TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File(classLoader
-    //                                    .getResource("datasets/indexing/sample_lightcurves.txt")
-    //                                    .getFile()));
+        .readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
+    // TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 

@@ -61,9 +61,8 @@ public class SFABulkLoad {
     // int N = 100000;
     // System.out.println("Loading/generating "+N+" Time Series...");
     //
-    // ClassLoader classLoader = SFAWords.class.getClassLoader();
     // TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(
-    //                                new File(classLoader.getResource("datasets/indexing/query_lightcurves.txt")));
+    //                                new File("./datasets/indexing/query_lightcurves.txt"));
     // int n = timeSeries2[0].getLength();
     // System.out.println("Queries DS size: " + timeSeries2.length);
     //
@@ -179,11 +178,8 @@ public class SFABulkLoad {
     System.out.println("Sample DS size:\t" + N);
 
     // query subsequences
-    ClassLoader classLoader = SFAWords.class.getClassLoader();
     TimeSeries[] timeSeries2 = TimeSeriesLoader
-        .readSamplesQuerySeries(new File(classLoader
-            .getResource("datasets/indexing/query_lightcurves.txt")
-            .getFile()));
+        .readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
     int n = timeSeries2[0].getLength();
     System.out.println("Query DS size:\t" + n);
 

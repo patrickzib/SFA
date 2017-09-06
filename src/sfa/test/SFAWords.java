@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.test;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
@@ -30,13 +29,8 @@ public class SFAWords {
     SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
 
     // Load the train/test splits
-    ClassLoader classLoader = SFAWords.class.getClassLoader();
-    TimeSeries[] train = TimeSeriesLoader
-        .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TRAIN")
-            .getFile()));
-    TimeSeries[] test = TimeSeriesLoader
-        .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TEST")
-            .getFile()));
+    TimeSeries[] train = TimeSeriesLoader.loadDatset("./datasets/CBF/CBF_TRAIN");
+    TimeSeries[] test = TimeSeriesLoader.loadDatset("./datasets/CBF/CBF_TEST");
 
     // train SFA representation
     sfa.fitTransform(train, wordLength, symbols, normMean);

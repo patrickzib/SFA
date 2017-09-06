@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -32,13 +31,8 @@ public class SFAWordsVariableLength {
     SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
 
     // Load the train/test splits
-    ClassLoader classLoader = SFAWords.class.getClassLoader();
-    TimeSeries[] train = TimeSeriesLoader
-        .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TRAIN")
-            .getFile()));
-    TimeSeries[] test = TimeSeriesLoader
-        .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TEST")
-            .getFile()));
+    TimeSeries[] train = TimeSeriesLoader.loadDatset("./datasets/CBF/CBF_TRAIN");
+    TimeSeries[] test = TimeSeriesLoader.loadDatset("./datasets/CBF/CBF_TEST");
 
     // train SFA representation using wordLength
     sfa.fitTransform(train, wordLength, symbols, normMean);
@@ -51,7 +45,7 @@ public class SFAWordsVariableLength {
       short[] wordQuery = sfa.transform(test[q]);
 
       // iterate variable lengths
-      for (int length = 4; length <= wordLength; length*=2) {
+      for (int length = 4; length <= wordLength; length *= 2) {
         System.out.println("Time Series " + q + "\t" + length + "\t" + toSfaWord(Arrays.copyOf(wordQuery, length)));
       }
     }
@@ -60,7 +54,7 @@ public class SFAWordsVariableLength {
   public static String toSfaWord(short[] word) {
     StringBuffer sfaWord = new StringBuffer();
     for (short c : word) {
-      sfaWord.append((char)(Character.valueOf('a') + c));
+      sfaWord.append((char) (Character.valueOf('a') + c));
     }
     return sfaWord.toString();
   }
