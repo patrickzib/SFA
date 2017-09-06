@@ -22,9 +22,8 @@ public class SFATrieTest {
   static int k = 1; // k-NN search
 
   public static void testWholeMatching() throws IOException {
-    int N = 100000;
-    TimeSeries[] timeSeries2 = TimeSeriesLoader
-        .readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
+    int N = 100_00;
+    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries("./datasets/indexing/query_lightcurves.txt");
     int n = timeSeries2[0].getLength();
     System.out.println("Queries: " + timeSeries2.length);
 
@@ -50,19 +49,20 @@ public class SFATrieTest {
 
     System.out.println("Perform NN-queries");
     for (int i = 0; i < timeSeries2.length; i++) {
-      System.out.println((i+1) + ". Query");
+      System.out.println((i + 1) + ". Query");
       TimeSeries query = timeSeries2[i];
 
       time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
-      System.out.println("\tSFATree:" + (time/1000.0) + "s");
+      System.out.println("\tSFATree:" + (time / 1000.0) + "s");
 
       List<Double> distances = result.keys();
 
-      System.out.println("\tTS seen: " +index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)N + "%");
+      System.out
+          .println("\tTS seen: " + index.getTimeSeriesRead() + " " + index.getTimeSeriesRead() / (double) N + "%");
       System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      System.out.println("\tNodes seen " +  index.getBlockRead());
+      System.out.println("\tNodes seen " + index.getBlockRead());
 
       index.resetIoCosts();
 
@@ -74,12 +74,11 @@ public class SFATrieTest {
         resultDistance = Math.min(distance, resultDistance);
       }
       time = System.currentTimeMillis() - time;
-      System.out.println("\tEuclidean:" + (time/1000.0) + "s");
+      System.out.println("\tEuclidean:" + (time / 1000.0) + "s");
 
       if (distances.get(0) != resultDistance) {
         System.out.println("\tError! Distances do not match: " + resultDistance + "\t" + distances.get(0));
-      }
-      else {
+      } else {
         System.out.println("\tDistance is ok");
       }
     }
@@ -90,13 +89,14 @@ public class SFATrieTest {
   public static void testSubsequenceMatching() throws IOException {
     System.out.println("Loading Time Series");
 
-    TimeSeries[] timeSeries2 = TimeSeriesLoader
-        .readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
-    // TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new File("./datasets/indexing/sample_lightcurves.txt"));
+    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries("./datasets/indexing/query_lightcurves.txt");
+    // TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(new
+    // File("./datasets/indexing/sample_lightcurves.txt"));
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
-    int windowLength = timeSeries2[0].getLength(); // length of the subsequences to be indexed
+    int windowLength = timeSeries2[0].getLength(); // length of the subsequences
+                                                   // to be indexed
     System.out.println("Query DS size : " + windowLength);
 
     Runtime runtime = Runtime.getRuntime();
@@ -112,25 +112,26 @@ public class SFATrieTest {
     System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
 
     System.out.println("Perform NN-queries");
-    int size = (timeSeries.getData().length-windowLength)+1;
+    int size = (timeSeries.getData().length - windowLength) + 1;
     double[] means = new double[size];
     double[] stds = new double[size];
     TimeSeries.calcIncreamentalMeanStddev(windowLength, timeSeries.getData(), means, stds);
 
     for (int i = 0; i < timeSeries2.length; i++) {
-      System.out.println((i+1) + ". Query");
+      System.out.println((i + 1) + ". Query");
       TimeSeries query = timeSeries2[i];
 
       time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
-      System.out.println("\tSFATree:" + (time/1000.0) + "s");
+      System.out.println("\tSFATree:" + (time / 1000.0) + "s");
 
       List<Double> distances = result.keys();
 
-      System.out.println("\tTS seen: " +index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)size + "%");
+      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " + index.getTimeSeriesRead() / (double) size
+          + "%");
       System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      System.out.println("\tNodes seen " +  index.getBlockRead());
+      System.out.println("\tNodes seen " + index.getBlockRead());
 
       index.resetIoCosts();
 
@@ -142,10 +143,10 @@ public class SFATrieTest {
         resultDistance = Math.min(distance, resultDistance);
       }
       time = System.currentTimeMillis() - time;
-      System.out.println("\tEuclidean:" + (time/1000.0) + "s");
+      System.out.println("\tEuclidean:" + (time / 1000.0) + "s");
 
-      Assert.assertEquals("Distances do not match: " + resultDistance + "\t" + distances.get(0),
-          distances.get(0), resultDistance, 0.003);
+      Assert.assertEquals("Distances do not match: " + resultDistance + "\t" + distances.get(0), distances.get(0),
+          resultDistance, 0.003);
     }
 
     System.out.println("All ok...");
@@ -160,26 +161,20 @@ public class SFATrieTest {
     }
   }
 
-  public static double getEuclideanDistance(
-      TimeSeries ts,
-      TimeSeries q,
-      double meanTs,
-      double stdTs,
-      double minValue,
-      int w
-      ) {
+  public static double getEuclideanDistance(TimeSeries ts, TimeSeries q, double meanTs, double stdTs, double minValue,
+      int w) {
 
     // 1 divided by stddev for fastert calculations
-    stdTs = (stdTs>0? 1.0 / stdTs : 1.0);
+    stdTs = (stdTs > 0 ? 1.0 / stdTs : 1.0);
 
     double distance = 0.0;
     double[] tsData = ts.getData();
     double[] qData = q.getData();
 
     for (int ww = 0; ww < qData.length; ww++) {
-      double value1 = (tsData[w+ww]-meanTs) * stdTs;
+      double value1 = (tsData[w + ww] - meanTs) * stdTs;
       double value = qData[ww] - value1;
-      distance += value*value;
+      distance += value * value;
 
       // early abandoning
       if (distance >= minValue) {

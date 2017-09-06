@@ -170,7 +170,7 @@ public class SFABulkLoad {
   public static void testBulkLoadSubsequenceMatching() throws IOException {
     setUpBucketDir();
 
-    int N = 80 * 1_000_000;
+    int N = 80 * 100_000;
     System.out.println("Loading/generating Time Series of length " + N + "...");
 
     // samples to be indexed
@@ -178,8 +178,7 @@ public class SFABulkLoad {
     System.out.println("Sample DS size:\t" + N);
 
     // query subsequences
-    TimeSeries[] timeSeries2 = TimeSeriesLoader
-        .readSamplesQuerySeries(new File("./datasets/indexing/query_lightcurves.txt"));
+    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries("./datasets/indexing/query_lightcurves.txt");
     int n = timeSeries2[0].getLength();
     System.out.println("Query DS size:\t" + n);
 
@@ -191,7 +190,7 @@ public class SFABulkLoad {
     //		sfa.printBins();
 
     // process data in chunks of 'chunkSize' and create one index each
-    int chunkSize = 1_000_000;
+    int chunkSize = 100_000;
     System.out.println("Chunk size:\t" + chunkSize);
     int trieDepth = getBestDepth(N, chunkSize);
 

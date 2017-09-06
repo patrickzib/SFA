@@ -106,6 +106,10 @@ public class TimeSeriesLoader {
     }   
   }
 
+  public static TimeSeries[] readSamplesQuerySeries (String dataset) throws IOException {
+    return readSamplesQuerySeries(new File(dataset));
+  }
+  
   public static TimeSeries[] readSamplesQuerySeries (File dataset) throws IOException {
     List<TimeSeries> samples = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new FileReader(dataset))){      
