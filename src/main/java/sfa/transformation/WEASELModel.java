@@ -274,7 +274,7 @@ public class WEASELModel {
       int index;
 
       if ((index = this.dictChi.indexOf(word)) >= 0) {
-        return this.dict.indexGet(index);
+        return this.dictChi.indexGet(index);
       }
       else {
         int newWord = this.dictChi.size() + 1;
