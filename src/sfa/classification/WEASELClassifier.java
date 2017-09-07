@@ -1,3 +1,5 @@
+// Copyright (c) 2017 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
+// Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
 import java.io.IOException;
@@ -25,12 +27,12 @@ import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
 
 /**
- * Liblinear: O(n) vs Libsvm: O(n^2) to O(n^3)
- * http://de.slideshare.net/previa/py-hug20130520-21510547
+ * 
+ *  The WEASEL (Word ExtrAction for time SEries cLassification) classifier as published in
+ *  
+ *    Schäfer, P., Leser, U.: Fast and Accurate Time Series 
+ *    Classification with WEASEL." CIKM 2017
  *
- * http://cs.nyu.edu/~rostami/presentations/L1_vs_L2.pdf
- *
- * @author bzcschae
  *
  */
 public class WEASELClassifier extends Classifier {

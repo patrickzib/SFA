@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2017 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
@@ -16,7 +16,10 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 
 /**
- * The WEASEL-Model.
+ * The WEASEL-Model as published in
+ *  
+ *    Schäfer, P., Leser, U.: Fast and Accurate Time Series 
+ *    Classification with WEASEL." CIKM 2017
  *
  *
  */

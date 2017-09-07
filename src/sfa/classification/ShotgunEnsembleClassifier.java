@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
@@ -18,7 +18,6 @@ import sfa.timeseries.TimeSeries;
  *    In Machine Learning and Data Mining in Pattern Recognition, 
  *    pages 228–242. Springer, 2014.
  *  
- * @author bzcschae
  *
  */
 public class ShotgunEnsembleClassifier extends ShotgunClassifier {

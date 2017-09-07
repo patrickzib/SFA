@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
