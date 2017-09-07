@@ -443,7 +443,7 @@ public class SFABulkLoad {
     public void addToPartition(byte[] words, double[] data, int offset, int prefixLength) {
       try {
         // the bucket
-        int l = getPrefix(words, prefixLength);
+        final int l = getPrefix(words, prefixLength);
         this.wordPartitions[l].put(new SFATrie.Approximation(data, words, offset));
 
         // write to disk
