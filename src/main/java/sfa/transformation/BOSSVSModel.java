@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
@@ -68,7 +68,8 @@ public class BOSSVSModel extends BOSSModel {
       final int[] sampleIndices,
       final HashSet<String> uniqueLabels) {
 
-    ObjectObjectHashMap<String, IntFloatHashMap> matrix = new ObjectObjectHashMap<String, IntFloatHashMap>(uniqueLabels.size());
+    ObjectObjectHashMap<String, IntFloatHashMap> matrix = new ObjectObjectHashMap<String, IntFloatHashMap>(
+        uniqueLabels.size());
     initMatrix(matrix, uniqueLabels, bagOfPatterns);
 
     for (int j : sampleIndices) {
@@ -118,13 +119,13 @@ public class BOSSVSModel extends BOSSModel {
   }
 
   protected void initMatrix(
-      final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
+final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
       final HashSet<String> uniqueLabels,
       final BagOfPattern[] bag) {
     for (String label : uniqueLabels) {
       IntFloatHashMap stat = matrix.get(label);
       if (stat == null) {
-        matrix.put(label, new IntFloatHashMap(bag[0].bag.size()*bag.length));
+        matrix.put(label, new IntFloatHashMap(bag[0].bag.size() * bag.length));
       } else {
         if (stat != null) {
           stat.clear();

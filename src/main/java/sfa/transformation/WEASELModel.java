@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2017 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
@@ -16,7 +16,10 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 
 /**
- * The WEASEL-Model.
+ * The WEASEL-Model as published in
+ *  
+ *    Schäfer, P., Leser, U.: Fast and Accurate Time Series 
+ *    Classification with WEASEL." CIKM 2017
  *
  *
  */
@@ -152,16 +155,15 @@ public class WEASELModel {
 
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
-        final short factor = 1;
         for (int offset = 0; offset < words[w][j].length; offset++) {
           int word = this.dict.getWord( (long)w << 52 | (words[w][j][offset] & mask));
-          bagOfPatterns[j].bob.putOrAdd(word, factor, factor);
+          bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
           // add 2 grams
           if (offset-this.windowLengths[w] >= 0) {
             long prevWord = this.dict.getWord( (long)w << 52 | (words[w][j][offset-this.windowLengths[w]] & mask));
             int newWord = this.dict.getWord( (long)w << 52 |  prevWord << 26 | word);
-            bagOfPatterns[j].bob.putOrAdd(newWord, factor, factor);
+            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
           }
         }
       }
@@ -177,7 +179,7 @@ public class WEASELModel {
    */
   public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // class frequencies
-    LongIntHashMap classFrequencies  = new LongIntHashMap();
+    LongIntHashMap classFrequencies = new LongIntHashMap();
     for (BagOfBigrams ts : bob) {
       long label = Double.valueOf(ts.label).longValue();
       classFrequencies.putOrAdd(label, 1, 1);
@@ -257,27 +259,25 @@ public class WEASELModel {
     }
 
     public int getWord(long word) {
-      int index;
-
-      if ((index = this.dict.indexOf(word)) >= 0) {
+      int index = 0;
+      if ((index = this.dict.indexOf(word)) > -1) {
         word = this.dict.indexGet(index);
-      } else {
-        int newWord = this.dict.size() + 1;
+      }
+      else {
+        int newWord = this.dict.size()+1;
         this.dict.put(word, newWord);
         word = newWord;
       }
-
       return (int)word;
     }
 
     public int getWordChi(long word) {
-      int index;
-
-      if ((index = this.dictChi.indexOf(word)) >= 0) {
+      int index = 0;
+      if ((index = this.dictChi.indexOf(word)) > -1) {
         return this.dictChi.indexGet(index);
       }
       else {
-        int newWord = this.dictChi.size() + 1;
+        int newWord = this.dictChi.size()+1;
         this.dictChi.put(word, newWord);
         return newWord;
       }

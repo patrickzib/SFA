@@ -1,4 +1,4 @@
-package sfa.test;
+package sfa;
 
 import java.io.File;
 import java.io.IOException;

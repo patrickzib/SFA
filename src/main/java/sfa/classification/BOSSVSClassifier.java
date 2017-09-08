@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
@@ -23,10 +23,9 @@ import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 
 /**
  *  The Bag-of-SFA-Symbols in Vector Space classifier as published in
- *    Schäfer, P.: Scalable time series classification. DMKD (Preprint)
+ *  
+ *    Schäfer, P.: Scalable time series classification. DMKD (2016)
  *
- *
- * @author bzcschae
  *
  */
 public class BOSSVSClassifier extends Classifier {
@@ -52,6 +51,7 @@ public class BOSSVSClassifier extends Classifier {
     public BOSSVSModel model;
     public int features;
 
+    @Override
     public void clear() {
       super.clear();
       this.idf = null;
@@ -60,6 +60,7 @@ public class BOSSVSClassifier extends Classifier {
   }
 
 
+  @Override
   public Score eval() throws IOException {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
@@ -111,9 +112,10 @@ public class BOSSVSClassifier extends Classifier {
 
   }
 
-  public List<BossVSScore<IntFloatHashMap>> fitEnsemble(ExecutorService exec, final boolean normMean) throws FileNotFoundException {
+  public List<BossVSScore<IntFloatHashMap>> fitEnsemble(ExecutorService exec, final boolean normMean)
+      throws FileNotFoundException {
     int minWindowLength = 10;
-    int maxWindowLength = getMax(trainSamples, MAX_WINDOW_LENGTH);
+    int maxWindowLength = getMax(this.trainSamples, MAX_WINDOW_LENGTH);
 
     // equi-distance sampling of windows
     ArrayList<Integer> windows = new ArrayList<Integer>();
@@ -122,7 +124,7 @@ public class BOSSVSClassifier extends Classifier {
     for (int c = minWindowLength; c <= maxWindowLength; c += distance) {
       windows.add(c);
     }
-    return fit(windows.toArray(new Integer[]{}), normMean, trainSamples, exec);
+    return fit(windows.toArray(new Integer[]{}), normMean, this.trainSamples, exec);
   }
 
   public List<BossVSScore<IntFloatHashMap>> fit(
@@ -141,19 +143,20 @@ public class BOSSVSClassifier extends Classifier {
             BossVSScore<IntFloatHashMap> score = new BossVSScore<IntFloatHashMap>(normMean, allWindows[i]);
             try {
               BOSSVSModel model = new BOSSVSModel(maxF, maxS, score.windowLength, score.normed);
-              int[][] words = model.createWords(trainSamples);
+              int[][] words = model.createWords(BOSSVSClassifier.this.trainSamples);
 
               optimize :
                 for (int f = minF; f <= Math.min(score.windowLength,maxF); f+=2) {
-                  BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, f);
+                  BagOfPattern[] bag = model.createBagOfPattern(words, BOSSVSClassifier.this.trainSamples, f);
 
                   // cross validation using folds
                   int correct = 0;
                   for (int s = 0; s < folds; s++) {
                     // calculate the tf-idf for each class
-                     ObjectObjectHashMap<String, IntFloatHashMap> idf = model.createTfIdf(bag, trainIndices[s], uniqueLabels);
+                  ObjectObjectHashMap<String, IntFloatHashMap> idf = model.createTfIdf(bag,
+                      BOSSVSClassifier.this.trainIndices[s], this.uniqueLabels);
 
-                    correct += predict(testIndices[s], bag, idf).correct.get();
+                    correct += predict(BOSSVSClassifier.this.testIndices[s], bag, idf).correct.get();
                   }
                   if (correct > score.training) {
                     score.training = correct;
@@ -167,10 +170,10 @@ public class BOSSVSClassifier extends Classifier {
                 }
 
               // obtain the final matrix
-              BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, score.features);
+              BagOfPattern[] bag = model.createBagOfPattern(words, BOSSVSClassifier.this.trainSamples, score.features);
 
               // calculate the tf-idf for each class
-              score.idf = model.createTfIdf(bag, uniqueLabels);
+              score.idf = model.createTfIdf(bag, this.uniqueLabels);
               score.model = model;
 
             } catch (Exception e) {
@@ -218,12 +221,12 @@ public class BOSSVSClassifier extends Classifier {
 
     Predictions p = new Predictions(new String[bagOfPatternsTestSamples.length], 0);
 
-    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+    ParallelFor.withIndex(this.BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i : indices) {
-          if (i % BLOCKS == id) {
+          if (i % BOSSVSClassifier.this.BLOCKS == id) {
             double bestDistance = 0.0;
 
             // for each class
@@ -266,7 +269,7 @@ public class BOSSVSClassifier extends Classifier {
 
   public int predictEnsamble(
       ExecutorService executor,
-      final List<BossVSScore<IntFloatHashMap>> results,
+ final List<BossVSScore<IntFloatHashMap>> results,
       final TimeSeries[] testSamples,
       boolean normMean) {
     long startTime = System.currentTimeMillis();

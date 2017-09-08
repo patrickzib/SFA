@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
@@ -458,8 +458,7 @@ public class SFA implements Serializable {
   }
 
   protected static double calculateInformationGain(
-      ObjectIntHashMap<String> cIn,
-      ObjectIntHashMap<String> cOut,
+ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
       double class_entropy,
       double total_c_in,
       double total) {
@@ -533,7 +532,7 @@ public class SFA implements Serializable {
 
   protected int moveElement(
       List<ValueLabel> element,
-      ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
+ ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
       int pos) {
     cIn.putOrAdd(element.get(pos).label, 1, 1);
     cOut.putOrAdd(element.get(pos).label, -1, -1);

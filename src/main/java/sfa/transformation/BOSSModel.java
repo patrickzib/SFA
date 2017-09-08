@@ -1,4 +1,4 @@
-// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@zib.de)
+// Copyright (c) 2016 - Patrick Schäfer (patrick.schaefer@hu-berlin.de)
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
@@ -12,7 +12,7 @@ import sfa.transformation.SFA.HistogramType;
 import com.carrotsearch.hppc.IntIntHashMap;
 
 /**
- * The Bag-of-SFA-Symbols Model as published in
+ * The Bag-of-SFA-Symbols model as published in
  *    Schäfer, P.: The boss is concerned with time series classification
  *    in the presence of noise. DMKD 29(6) (2015) 1505–1530
  *
