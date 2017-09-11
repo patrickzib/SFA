@@ -20,7 +20,7 @@ import sfa.transformation.SFADistance;
  *
  */
 @RunWith(JUnit4.class)
-public class SFAMinDistance {
+public class SFAMinDistanceTest {
 
     @Test
     public void testSFAMinDistance() throws IOException {
@@ -33,7 +33,7 @@ public class SFAMinDistance {
         SFADistance sfaDistance = new SFADistance(sfa);
 
         // Load the train/test splits
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
+        ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
         TimeSeries[] train = TimeSeriesLoader
                              .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TRAIN")
                                          .getFile()));

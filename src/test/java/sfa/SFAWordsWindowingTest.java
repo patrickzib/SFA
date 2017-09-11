@@ -19,7 +19,7 @@ import sfa.transformation.SFA.HistogramType;
  *
  */
 @RunWith(JUnit4.class)
-public class SFAWordsWindowing {
+public class SFAWordsWindowingTest {
 
     @Test
     public void testSFAWordsWindowing() throws IOException {
@@ -31,7 +31,7 @@ public class SFAWordsWindowing {
         SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
 
         // Load the train/test splits
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
+        ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
         TimeSeries[] train = TimeSeriesLoader.loadDatset(
                 new File(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile()));
         TimeSeries[] test = TimeSeriesLoader.loadDatset(

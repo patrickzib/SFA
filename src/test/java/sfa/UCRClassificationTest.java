@@ -20,7 +20,7 @@ import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
 @RunWith(JUnit4.class)
-public class UCRClassification {
+public class UCRClassificationTest {
 
     // The datasets to use
     public static String[] datasets = new String[] {
@@ -40,7 +40,7 @@ public class UCRClassification {
     public void testUCRClassification() throws IOException {
         try {
             // the relative path to the datasets
-            ClassLoader classLoader = SFAWords.class.getClassLoader();
+            ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
             File dir = new File(classLoader.getResource("datasets/").getFile());
 

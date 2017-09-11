@@ -4,12 +4,10 @@ package sfa;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.junit.Test;
 import org.junit.runners.JUnit4;
 import org.junit.runner.RunWith;
-import org.junit.Assert;
 
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
@@ -21,11 +19,10 @@ import sfa.transformation.SFA.HistogramType;
  *
  */
 @RunWith(JUnit4.class)
-public class SFAWordsVariableLength {
+public class SFAWordsTest {
 
     @Test
-    public void testSFAWordsVarLength() throws IOException {
-
+    public void testSFAWords() throws IOException {
         int symbols = 8;
         int wordLength = 16;
         boolean normMean = true;
@@ -33,7 +30,7 @@ public class SFAWordsVariableLength {
         SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
 
         // Load the train/test splits
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
+        ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
         TimeSeries[] train = TimeSeriesLoader
                              .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TRAIN")
                                          .getFile()));
@@ -41,7 +38,7 @@ public class SFAWordsVariableLength {
                             .loadDatset(new File(classLoader.getResource("datasets/CBF/CBF_TEST")
                                         .getFile()));
 
-        // train SFA representation using wordLength
+        // train SFA representation
         sfa.fitTransform(train, wordLength, symbols, normMean);
 
         // bins
@@ -50,19 +47,17 @@ public class SFAWordsVariableLength {
         // transform
         for (int q = 0; q < test.length; q++) {
             short[] wordQuery = sfa.transform(test[q]);
-
-            // iterate variable lengths
-            for (int length = 4; length <= wordLength; length*=2) {
-                System.out.println("Time Series " + q + "\t" + length + "\t" + toSfaWord(Arrays.copyOf(wordQuery, length)));
-            }
+            System.out.println("Time Series " + q + "\t" + toSfaWord(wordQuery));
         }
     }
 
     public static String toSfaWord(short[] word) {
         StringBuffer sfaWord = new StringBuffer();
+
         for (short c : word) {
             sfaWord.append((char)(Character.valueOf('a') + c));
         }
+
         return sfaWord.toString();
     }
 }

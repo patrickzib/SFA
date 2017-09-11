@@ -34,7 +34,7 @@ import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
 
 @RunWith(JUnit4.class)
-public class SFABulkLoad {
+public class SFABulkLoadTest {
 
     static String bucketDir = "./tmp/";
     static ExecutorService serializerExec = Executors.newFixedThreadPool(2); // serialize access to the disk
@@ -178,7 +178,7 @@ public class SFABulkLoad {
         System.out.println("Sample DS size:\t" + N);
 
         // query subsequences
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
+        ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
 
         TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(classLoader.getResource("datasets/indexing/query_lightcurves.txt").getFile());

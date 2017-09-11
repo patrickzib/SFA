@@ -23,7 +23,7 @@ public class SFATrieTest {
 
     public static void testWholeMatching() throws IOException {
         int N = 10_000;
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
+        ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
         TimeSeries[] timeSeries2 = TimeSeriesLoader
                                    .readSamplesQuerySeries(new File(classLoader
                                            .getResource("datasets/indexing/query_lightcurves.txt")
@@ -93,7 +93,7 @@ public class SFATrieTest {
     public static void testSubsequenceMatching() throws IOException {
         System.out.println("Loading Time Series");
 
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
+        ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
         TimeSeries[] timeSeries2 = TimeSeriesLoader
                                    .readSamplesQuerySeries(new File(classLoader
                                            .getResource("datasets/indexing/query_lightcurves.txt")
