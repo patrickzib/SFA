@@ -6,8 +6,8 @@ import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
-import org.junit.runners.JUnit4;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import sfa.classification.BOSSEnsembleClassifier;
 import sfa.classification.BOSSVSClassifier;
@@ -22,80 +22,80 @@ import sfa.timeseries.TimeSeriesLoader;
 @RunWith(JUnit4.class)
 public class UCRClassificationTest {
 
-    // The datasets to use
-    public static String[] datasets = new String[] {
-        "Coffee", "ECG200", "FaceFour", "OliveOil",
-        "Gun_Point", "Beef",
-        "DiatomSizeReduction",
-        "CBF",
-        "ECGFiveDays",
-        "TwoLeadECG",
-        "SonyAIBORobot SurfaceII",
-        "MoteStrain",
-        "ItalyPowerDemand",
-        "SonyAIBORobot Surface",
-    };
+  // The datasets to use
+  public static String[] datasets = new String[] {
+    "Coffee", "ECG200", "FaceFour", "OliveOil",
+    "Gun_Point", "Beef",
+    "DiatomSizeReduction",
+    "CBF",
+    "ECGFiveDays",
+    "TwoLeadECG",
+    "SonyAIBORobot SurfaceII",
+    "MoteStrain",
+    "ItalyPowerDemand",
+    "SonyAIBORobot Surface",
+  };
 
-    @Test
-    public void testUCRClassification() throws IOException {
-        try {
-            // the relative path to the datasets
-            ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
+  @Test
+  public void testUCRClassification() throws IOException {
+    try {
+      // the relative path to the datasets
+      ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-            File dir = new File(classLoader.getResource("datasets/").getFile());
+      File dir = new File(classLoader.getResource("datasets/").getFile());
 
-            for (String s : datasets) {
-                File d = new File(dir.getAbsolutePath()+"/"+s);
-                if (d.exists() && d.isDirectory()) {
-                    for (File f : d.listFiles()) {
-                        if (f.getName().toUpperCase().endsWith("TRAIN")) {
-                            File train = f;
-                            File test = new File(f.getAbsolutePath().replaceFirst("TRAIN", "TEST"));
+      for (String s : datasets) {
+        File d = new File(dir.getAbsolutePath()+"/"+s);
+        if (d.exists() && d.isDirectory()) {
+          for (File f : d.listFiles()) {
+            if (f.getName().toUpperCase().endsWith("TRAIN")) {
+              File train = f;
+              File test = new File(f.getAbsolutePath().replaceFirst("TRAIN", "TEST"));
 
-                            if (!test.exists()) {
-                                System.err.println("File " + test.getName() + " does not exist");
-                                test = null;
-                            }
+              if (!test.exists()) {
+                System.err.println("File " + test.getName() + " does not exist");
+                test = null;
+              }
 
-                            Classifier.DEBUG = false;
+              Classifier.DEBUG = false;
 
-                            // Load the train/test splits
-                            TimeSeries[] testSamples = TimeSeriesLoader.loadDatset(test);
-                            TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
+              // Load the train/test splits
+              TimeSeries[] testSamples = TimeSeriesLoader.loadDatset(test);
+              TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
 
-                            // The W-classifier
-                            Classifier w = new WEASELClassifier(trainSamples, testSamples);
-                            Classifier.Score scoreW = w.eval();
-                            System.out.println(s + ";" + scoreW.toString());
+              // The W-classifier
+              Classifier w = new WEASELClassifier(trainSamples, testSamples);
+              Classifier.Score scoreW = w.eval();
+              System.out.println(s + ";" + scoreW.toString());
 
-                            // The BOSS ensemble classifier
-                            Classifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
-                            Classifier.Score scoreBOSS = boss.eval();
-                            System.out.println(s + ";" + scoreBOSS.toString());
+              // The BOSS ensemble classifier
+              Classifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
+              Classifier.Score scoreBOSS = boss.eval();
+              System.out.println(s + ";" + scoreBOSS.toString());
 
-                            // The BOSS VS classifier
-                            Classifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
-                            Classifier.Score scoreBOSSVS = bossVS.eval();
-                            System.out.println(s + ";" + scoreBOSSVS.toString());
+              // The BOSS VS classifier
+              Classifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
+              Classifier.Score scoreBOSSVS = bossVS.eval();
+              System.out.println(s + ";" + scoreBOSSVS.toString());
 
-                            // The Shotgun ensemble classifier
-                            Classifier shotgunEnsemble = new ShotgunEnsembleClassifier(trainSamples, testSamples);
-                            Classifier.Score scoreShotgunEnsemble = shotgunEnsemble.eval();
-                            System.out.println(s + ";" + scoreShotgunEnsemble.toString());
+              // The Shotgun ensemble classifier
+              Classifier shotgunEnsemble = new ShotgunEnsembleClassifier(trainSamples, testSamples);
+              Classifier.Score scoreShotgunEnsemble = shotgunEnsemble.eval();
+              System.out.println(s + ";" + scoreShotgunEnsemble.toString());
 
-                            // The Shotgun classifier
-                            Classifier shotgun = new ShotgunClassifier(trainSamples, testSamples);
-                            Classifier.Score scoreShotgun = shotgun.eval();
-                            System.out.println(s + ";" + scoreShotgun.toString());
-                        }
-                    }
-                }
-                else {
-                    System.err.println("Does not exist!" + d.getAbsolutePath());
-                }
+              // The Shotgun classifier
+              Classifier shotgun = new ShotgunClassifier(trainSamples, testSamples);
+              Classifier.Score scoreShotgun = shotgun.eval();
+              System.out.println(s + ";" + scoreShotgun.toString());
             }
-        } finally {
-            ParallelFor.shutdown();
+          }
         }
+        else {
+          System.err.println("Does not exist!" + d.getAbsolutePath());
+        }
+      }
+    } finally {
+      ParallelFor.shutdown();
     }
+  }
 }
