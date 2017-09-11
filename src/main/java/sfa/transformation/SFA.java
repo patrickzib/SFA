@@ -253,8 +253,6 @@ public class SFA implements Serializable {
    * short corresponds to one character.
    *
    * @param ts
-   * @param windowLength
-   *          The length of each sliding window
    * @param wordLength
    *          the SFA word-length
    * @return
@@ -277,7 +275,6 @@ public class SFA implements Serializable {
    * Returns the Fourier transformed windows.
    *
    * @param ts
-   * @param windowLength
    * @param wordLength
    * @return
    */
@@ -293,7 +290,6 @@ public class SFA implements Serializable {
    * int).
    *
    * @param ts
-   * @param windowLength
    * @param wordLength
    * @return
    */
