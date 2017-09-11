@@ -22,7 +22,7 @@ public class SFATrieTest {
     static int k = 1; // k-NN search
 
     public static void testWholeMatching() throws IOException {
-        int N = 100000;
+        int N = 10_000;
         ClassLoader classLoader = SFAWords.class.getClassLoader();
         TimeSeries[] timeSeries2 = TimeSeriesLoader
                                    .readSamplesQuerySeries(new File(classLoader
