@@ -24,7 +24,7 @@ public class TimeSeriesLoader {
   public static TimeSeries[] loadDatset(String dataset) throws IOException {
     return loadDatset(new File(dataset));
   }
-  
+
   /**
    * Loads the time series from a csv-file of the UCR time series archive.
    * @param dataset
@@ -109,7 +109,7 @@ public class TimeSeriesLoader {
   public static TimeSeries[] readSamplesQuerySeries (String dataset) throws IOException {
     return readSamplesQuerySeries(new File(dataset));
   }
-  
+
   public static TimeSeries[] readSamplesQuerySeries (File dataset) throws IOException {
     List<TimeSeries> samples = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new FileReader(dataset))){
