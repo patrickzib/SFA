@@ -40,7 +40,9 @@ public class UCRClassification {
     public void testUCRClassification() throws IOException {
         try {
             // the relative path to the datasets
-            File dir = new File("./src/main/resources/datasets/");
+            ClassLoader classLoader = SFAWords.class.getClassLoader();
+
+            File dir = new File(classLoader.getResource("datasets/").getFile());
 
             for (String s : datasets) {
                 File d = new File(dir.getAbsolutePath()+"/"+s);

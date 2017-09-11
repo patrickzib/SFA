@@ -178,7 +178,10 @@ public class SFABulkLoad {
         System.out.println("Sample DS size:\t" + N);
 
         // query subsequences
-        TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries("./src/main/resources/datasets/indexing/query_lightcurves.txt");
+        ClassLoader classLoader = SFAWords.class.getClassLoader();
+
+
+        TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(classLoader.getResource("datasets/indexing/query_lightcurves.txt").getFile());
         int n = timeSeries2[0].getLength();
         System.out.println("Query DS size:\t" + n);
 
