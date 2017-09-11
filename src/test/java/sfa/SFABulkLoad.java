@@ -2,25 +2,36 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa;
 
-import org.junit.Test;
-import org.junit.runners.JUnit4;
-import org.junit.runner.RunWith;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import sfa.classification.ParallelFor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import sfa.index.SFATrie;
 import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(JUnit4.class)
 public class SFABulkLoad {
@@ -50,9 +61,8 @@ public class SFABulkLoad {
         // int N = 100000;
         // System.out.println("Loading/generating "+N+" Time Series...");
         //
-        // ClassLoader classLoader = SFAWords.class.getClassLoader();
         // TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(
-        //                                new File(classLoader.getResource("datasets/indexing/query_lightcurves.txt")));
+        //                                new File("./datasets/indexing/query_lightcurves.txt"));
         // int n = timeSeries2[0].getLength();
         // System.out.println("Queries DS size: " + timeSeries2.length);
         //
@@ -160,7 +170,7 @@ public class SFABulkLoad {
     public static void testBulkLoadSubsequenceMatching() throws IOException {
         setUpBucketDir();
 
-        int N = 80 * 1_000_000;
+        int N = 20 * 100_000;
         System.out.println("Loading/generating Time Series of length " + N + "...");
 
         // samples to be indexed
@@ -168,11 +178,7 @@ public class SFABulkLoad {
         System.out.println("Sample DS size:\t" + N);
 
         // query subsequences
-        ClassLoader classLoader = SFAWords.class.getClassLoader();
-        TimeSeries[] timeSeries2 = TimeSeriesLoader
-                                   .readSamplesQuerySeries(new File(classLoader
-                                           .getResource("datasets/indexing/query_lightcurves.txt")
-                                           .getFile()));
+        TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries("./src/main/resources/datasets/indexing/query_lightcurves.txt");
         int n = timeSeries2[0].getLength();
         System.out.println("Query DS size:\t" + n);
 
@@ -184,7 +190,7 @@ public class SFABulkLoad {
         //		sfa.printBins();
 
         // process data in chunks of 'chunkSize' and create one index each
-        int chunkSize = 1_000_000;
+        int chunkSize = 100_000;
         System.out.println("Chunk size:\t" + chunkSize);
         int trieDepth = getBestDepth(N, chunkSize);
 
@@ -284,7 +290,7 @@ public class SFABulkLoad {
      * @return
      */
     protected static SFATrie buildSFATrie(
-        int l, int leafThreshold, int windowLength, int trieDepth, SFA sfa) {
+            int l, int leafThreshold, int windowLength, int trieDepth, SFA sfa) {
         long time;// now, process each bucket on disk
         SFATrie index = null;
 
@@ -308,9 +314,9 @@ public class SFABulkLoad {
                     }
 
                     System.out.println("Merging done in "
-                                       + (System.currentTimeMillis() - time) + " ms. "
-                                       + "\t Elements: " + index.getSize()
-                                       + "\t Height: " + index.getHeight());
+                            + (System.currentTimeMillis() - time) + " ms. "
+                            + "\t Elements: " + index.getSize()
+                            + "\t Height: " + index.getHeight());
                 }
             }
         }
@@ -319,10 +325,10 @@ public class SFABulkLoad {
         index.compress(true);
 
         // write index to disk?
-//    System.out.println("Writing index to disk...");
-//    File location = new File("./tmp/sfatrie.idx");
-//    location.deleteOnExit();
-//    index.writeToDisk(location);
+        //    System.out.println("Writing index to disk...");
+        //    File location = new File("./tmp/sfatrie.idx");
+        //    location.deleteOnExit();
+        //    index.writeToDisk(location);
 
         return index;
     }
@@ -437,7 +443,7 @@ public class SFABulkLoad {
         public void addToPartition(byte[] words, double[] data, int offset, int prefixLength) {
             try {
                 // the bucket
-                int l = getPrefix(words, prefixLength);
+                final int l = getPrefix(words, prefixLength);
                 this.wordPartitions[l].put(new SFATrie.Approximation(data, words, offset));
 
                 // write to disk
@@ -493,7 +499,7 @@ public class SFABulkLoad {
                     File file = new File(fileName);
                     file.deleteOnExit();
                     partitionsStream[letter]
-                        = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8mb */));
+                            = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false), 1048576*8 /* 8mb */));
                 }
 
                 partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[] {}));
