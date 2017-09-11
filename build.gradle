@@ -11,6 +11,9 @@ apply plugin: 'java'
 
 // apply plugin: 'checkstyle'
 
+// add support for eclipse
+apply plugin : 'eclipse'
+
 // Apply the application plugin to add support for building an application
 apply plugin: 'application'
 
