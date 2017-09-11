@@ -56,7 +56,7 @@ public class WEASELModel {
    *          length of the SFA words
    * @param maxS
    *          alphabet size
-   * @param windowLength
+   * @param windowLengths
    *          the set of window lengths to use for extracting SFA words from
    *          time series.
    * @param normMean
