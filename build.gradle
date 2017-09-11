@@ -14,8 +14,6 @@ apply plugin: 'java'
 // Apply the application plugin to add support for building an application
 apply plugin: 'application'
 
-apply plugin : 'eclipse'
-
 // In this section you declare where to find the dependencies of your project
 repositories {
     // Use jcenter for resolving your dependencies.
@@ -31,23 +29,8 @@ dependencies {
     // efficient collection implementation without "object boxing"
     compile 'com.carrotsearch:hppc:0.7.2'
 
-    compile 'junit:junit:4.12'
-
     testCompile 'junit:junit:4.12'
 }
-
-sourceSets {
-    test {
-        java {
-            srcDir 'src'
-        }
-    }
-    main {
-        java {
-            srcDir 'src'
-        }
-    }
- }
 
 test {
   testLogging {
@@ -57,5 +40,5 @@ test {
 }
 
 // Define the main class for the application
-mainClassName = 'sfa.test.UCRClassification'
+mainClassName = 'src/sfa/test/UCRClassification'
 

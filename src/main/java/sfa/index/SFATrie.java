@@ -25,8 +25,8 @@ import com.carrotsearch.hppc.cursors.IntCursor;
  * using SFA.
  *
  * See publication:
- *    Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and 
- *    index for similarity search in high dimensional datasets. 
+ *    Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and
+ *    index for similarity search in high dimensional datasets.
  *    In: EDBT, ACM (2012)
  *
  */
@@ -45,9 +45,9 @@ public class SFATrie implements Serializable {
   // the minimal prefix length where all nodes start.
   protected int minimalDepth = -1;
 
-  // Alphabet size of the SFA representation 
+  // Alphabet size of the SFA representation
   // equal to (fanout of the SFA Trie)
-  public final static int symbols  = 8; 
+  public final static int symbols  = 8;
 
   // Compressed SFA trie
   protected boolean compressed = false;
@@ -64,14 +64,14 @@ public class SFATrie implements Serializable {
 
   // The type of the SFA trie
   public MatchingType type = MatchingType.Subsequences;
-  
+
   // the raw TS
   public double[][] timeSeries;
   // TODO change to HashMap<String, List<double[]>>
 
   public double[] means;
   public double[] stddev;
-  
+
   // the SFA approximations of the time series
   private List<Approximation> approximations;
 
@@ -85,7 +85,7 @@ public class SFATrie implements Serializable {
   public SFATrie(int l, int leafThreshold) {
     this(l, leafThreshold, new SFA(HistogramType.EQUI_FREQUENCY));
   }
-    
+
   public SFATrie(int l, int leafThreshold, SFA quantization) {
     this.quantization = quantization;
 
@@ -98,7 +98,7 @@ public class SFATrie implements Serializable {
 
     resetIoCosts();
   }
-  
+
   /**
    * Build an index for whole matching
    */
@@ -106,29 +106,29 @@ public class SFATrie implements Serializable {
     // Train the SFA quantization histogram
     // and transform the time series
     double[][] transformed = this.quantization.fitTransformDouble(samples, this.wordLength, symbols, true);
-    
+
 //    this.quantization.printBins();
-    
+
     // calculates means and stddev
     initializeWholeMatching(samples);
-    
+
     // Transform the time series to SFA words
     for (int i = 0; i < samples.length; i++) {
       // insert each timeseries window
       Approximation window = new Approximation(
-          transformed[i], 
+          transformed[i],
           this.quantization.quantizationByte(transformed[i]),
           i);
 
       addApproximation(window);
-        
+
       insert(window, 0, this.root);
     }
 
     compress(true);
     printStats();
   }
-  
+
   /**
    * Build an index for subsequence matching.
    */
@@ -138,19 +138,19 @@ public class SFATrie implements Serializable {
 
     // calculates means and stddev
     initializeSubsequenceMatching(ts, windowLength);
-    
+
     // Transform the time series to SFA words
     double[][] transformed = this.quantization.transformWindowingDouble(ts, this.wordLength);
-        
+
     // insert each timeseries window
     for (int offset = 0; offset < transformed.length; offset++) {
       Approximation window = new Approximation(
-          transformed[offset], 
+          transformed[offset],
           this.quantization.quantizationByte(transformed[offset]),
           offset);
-      
-      addApproximation(window);  
-      
+
+      addApproximation(window);
+
       insert(window, 0, this.root);
     }
 
@@ -167,15 +167,15 @@ public class SFATrie implements Serializable {
    */
   public void buildIndex(List<SFATrie.Approximation[]> approximations, int minDepth, int windowLength) {
     this.minimalDepth = minDepth;
-    
+
     // insert each timeseries window
     for (SFATrie.Approximation[] w : approximations) {
       for (SFATrie.Approximation window : w) {
-        addApproximation(window); 
+        addApproximation(window);
         insert(window, 0, this.root);
       }
     }
-    
+
     compress(false);
     printStats();
   }
@@ -187,11 +187,11 @@ public class SFATrie implements Serializable {
   private void addApproximation(SFATrie.Approximation approximation) {
     // the position within the approximations-cache
     approximation.cacheId = this.approximations.size();
-    
+
     // add the approximation
     this.approximations.add(approximation);
   }
-  
+
   /**
    * Get an approximation based on the pointer in the leaf node.
    * @return
@@ -203,7 +203,7 @@ public class SFATrie implements Serializable {
   public void printStats() {
     if (!compressed) {
       System.out.println("\tLeaves (not path-compressed): " + getLeafCount());
-    }    
+    }
     else if (compressed) {
       System.out.println("\tLeaves (path-compressed): " + getLeafCount());
     }
@@ -212,9 +212,9 @@ public class SFATrie implements Serializable {
     System.out.println("\tElements " + getSize());
 
   }
-  
+
   /**
-   * Re-insert a node at the given prefix 
+   * Re-insert a node at the given prefix
    * and at node 'node'
    * @param nodeToInsert
    * @param path
@@ -354,10 +354,10 @@ public class SFATrie implements Serializable {
 
   /**
    * Merge two trees
-   * 
-   * Used for bulk loading. Tries at disjoint prefices are 
+   *
+   * Used for bulk loading. Tries at disjoint prefices are
    * constructured and merged
-   * 
+   *
    * @param tree
    */
   public void mergeTrees(SFATrie tree) {
@@ -372,18 +372,18 @@ public class SFATrie implements Serializable {
       throw new RuntimeException("error");
     }
     tree.root = null;
-    
+
     this.compressed = false;
   }
-    
+
   public double calculateMean(int offset) {
-    double mean=0.0;    
+    double mean=0.0;
     for (double value : timeSeries[offset]) {
       mean += value;
     }
     return mean / (double)timeSeries[offset].length;
   }
-  
+
   public double calculateStddev(int offset, double mean) {
     double var = 0;
     for (double value : timeSeries[offset]) {
@@ -396,7 +396,7 @@ public class SFATrie implements Serializable {
     }
     return buf;
   }
-  
+
   /**
    * Set the raw time series data in the SFA trie for Subesequence Matching.
    * @param ts
@@ -406,13 +406,13 @@ public class SFATrie implements Serializable {
     this.type = MatchingType.Subsequences;
     this.timeSeries = new double[1][];
     this.timeSeries[0] = ts.getData();
-    
+
     int size = (ts.getLength()-windowLength)+1;
     this.means = new double[size];
     this.stddev = new double[size];
     TimeSeries.calcIncreamentalMeanStddev(windowLength, ts.getData(), this.means, this.stddev);
   }
-  
+
   /**
    * Set the raw time series data in the SFA trie for Whole Matching.
    * @param ts
@@ -430,7 +430,7 @@ public class SFATrie implements Serializable {
       this.stddev[offset] = 1;
     }
   }
-  
+
   /**
    * Applies path-compression
    * @param compact
@@ -445,8 +445,8 @@ public class SFATrie implements Serializable {
   protected void compress(SFANode m, boolean compact) {
     // we don't need the approximations cache anymore.
     this.approximations = null;
-    
-    SFANode node = (SFANode) m;    
+
+    SFANode node = (SFANode) m;
     // join adjacent nodes
     if (node.type == NodeType.Internal) {
       SFANode previousNode = null;
@@ -458,7 +458,7 @@ public class SFATrie implements Serializable {
           if (currentNode.type == NodeType.Leaf) {
             // clean up currentNode's ts
             currentNode.approximationIds = null;
-            
+
             if (previousNode != null
                 && previousNode != currentNode
                 && (previousNode.getSize()
@@ -562,7 +562,7 @@ public class SFATrie implements Serializable {
    * Returns the total number of time series
    * in the trie
    * @return
-   */  
+   */
   public int getSize() {
     return this.root.getTotalSize();
   }
@@ -586,13 +586,13 @@ public class SFATrie implements Serializable {
   public SortedListMap<Double, Integer> searchNearestNeighbor(TimeSeries query, int k) {
     // approximation
     double[] dftQuery = quantization.transformation.transform(query, wordLength);
-    
+
     // quantization
     byte[] wordQuery = quantization.quantizationByte(dftQuery);
-    
+
     return searchKNN(dftQuery, wordQuery, query, k);
   }
-  
+
   public SortedListMap<Double, Integer> searchKNN(
       double[] dftQuery, byte[] wordQuery, TimeSeries query, int k) {
 
@@ -723,7 +723,7 @@ public class SFATrie implements Serializable {
     double value = (d - sax);
     return 2 * value * value;
   }
-  
+
   /**
    * Check the correctness of the index
    */
@@ -749,7 +749,7 @@ public class SFATrie implements Serializable {
   }
 
   /**
-   * Sets the minimal prefix length to use. 
+   * Sets the minimal prefix length to use.
    * @param minimalHeight
    */
   public void setMinimalDepth(int minimalHeight) {
@@ -851,7 +851,7 @@ public class SFATrie implements Serializable {
   public long getTimeSeriesRead() {
     return this.timeSeriesRead;
   }
-  
+
   protected <E> E removeFromMultiMap(TreeMap<Double, List<E>> queue, double distance) {
     List<E> elements = queue.get(distance);
     E top = elements.remove(0);
@@ -892,7 +892,7 @@ public class SFATrie implements Serializable {
    * @return
    */
   public static SFATrie loadFromDisk(File path) {
-    try (ObjectInputStream in 
+    try (ObjectInputStream in
         = new ObjectInputStream((new GZIPInputStream(new FileInputStream(path))))) {
       return (SFATrie) in.readObject();
     }
@@ -901,16 +901,16 @@ public class SFATrie implements Serializable {
     }
     return null;
   }
-  
+
   static public class Approximation implements Serializable {
     private static final long serialVersionUID = -6192378071620042008L;
 
     byte[] word;
     double[] fourierValues;
-    
+
     int pos;
     transient int cacheId;
-    
+
     public Approximation(
         double[] fourierValues,
         byte[] word,
@@ -919,7 +919,7 @@ public class SFATrie implements Serializable {
       this.pos = pos;
       this.fourierValues = fourierValues;
     }
-    
+
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
       this.word = (byte[])in.readUnshared();
       this.fourierValues = (double[])in.readUnshared();
@@ -943,14 +943,14 @@ public class SFATrie implements Serializable {
 
     // the offset in the time series of the elements stored in a leaf-node
     private transient IntArrayList elementIds;
-    
+
     // the position in the approximations cache.
     private transient IntArrayList approximationIds;
 
     // path to the leaf node
     protected byte[] word;
 
-    // bounding box  
+    // bounding box
     protected double[] minValues;
     protected double[] maxValues;
 
@@ -977,7 +977,7 @@ public class SFATrie implements Serializable {
      */
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
       in.defaultReadObject();
-      
+
       if (isLeaf()) {
         int[] elem = (int[]) in.readUnshared();
         this.elementIds = new IntArrayList(elem.length);
@@ -992,7 +992,7 @@ public class SFATrie implements Serializable {
      */
     private void writeObject(ObjectOutputStream o) throws IOException {
       o.defaultWriteObject();
-      
+
       if (isLeaf()) {
         o.writeUnshared(elementIds.toArray());
       }
@@ -1077,11 +1077,11 @@ public class SFATrie implements Serializable {
     public IntArrayList getElementIds() {
       return this.elementIds;
     }
-    
+
     public IntArrayList getApproximationIds() {
       return this.approximationIds;
     }
-    
+
     @Override
     public String toString() {
       StringBuffer output = new StringBuffer();

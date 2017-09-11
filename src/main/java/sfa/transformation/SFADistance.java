@@ -5,23 +5,23 @@ package sfa.transformation;
 
 /**
  * SFA lower bounding distance of the Euclidean distance as published in
- *    Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and 
- *    index for similarity search in high dimensional datasets. 
+ *    Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and
+ *    index for similarity search in high dimensional datasets.
  *    In: EDBT, ACM (2012) *
  */
 public class SFADistance {
   private SFA sfa;
-  
+
   public SFADistance(SFA transform) {
     this.sfa = transform;
   }
-  
+
   /**
    * The SFA-distance lower bounds the Euclidean Distance
    */
   public double getDistance(short[] wordsTs, short[] wordsQuery, double[] dftQuery, boolean normed, double minValue) {
     double distance = 0.0;
-    
+
     // mean (DC) value
     int i = 0;
     if (!normed) {
@@ -42,7 +42,7 @@ public class SFADistance {
           wordsQuery[i],
           dftQuery[i],
           i);
-          
+
       distance += 2*value*value;
 
       // pruning if distance threshold is exceeded
@@ -53,7 +53,7 @@ public class SFADistance {
 
     return distance;
   }
-  
+
   /**
    * Distance between a symbol and a Fourier value based on bins
    */
