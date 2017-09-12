@@ -44,7 +44,7 @@ public class SFAWordsWindowingTest {
 
     // transform
     for (int q = 0; q < test.length; q++) {
-      short[][] wordsQuery = sfa.transformWindowing(test[q], wordLength);
+      short[][] wordsQuery = sfa.transformWindowing(test[q]);
       System.out.print("Time Series " + q + "\t");
 
       for (short[] word : wordsQuery) {
