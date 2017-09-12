@@ -16,7 +16,7 @@ import sfa.transformation.SFA.HistogramType;
 import sfa.transformation.SFADistance;
 
 /**
- * Performs a 1-NN search
+ * Performs a 1-NN search using the SFA lower bounding distance
  *
  */
 @RunWith(JUnit4.class)
@@ -75,7 +75,7 @@ public class SFAMinDistanceTest {
       }
     }
 
-    System.out.println("Accuracy: "+ (Math.round(100.0*(accuracy / test.length))/100.0));
+    System.out.println("Accuracy: "+ String.format("%.3f", accuracy / test.length));
   }
 
   private static double getEuclideanDistance (TimeSeries t1, TimeSeries t2, double minValue) {
