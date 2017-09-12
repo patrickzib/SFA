@@ -46,7 +46,7 @@ public class MFT implements Serializable {
    *
    * @param timeSeries the time series to be transformed
    * @param l the number of Fourier values to keep
-   * @return
+   * @return the first l Fourier values
    */
   public double[] transform(TimeSeries timeSeries, int l) {
     double[] data = new double[this.windowSize];
@@ -79,7 +79,7 @@ public class MFT implements Serializable {
    *                   coefficients). If l is uneven, l+1 Fourier values are returned. If
    *                   windowSize is smaller than l, only the first windowSize Fourier
    *                   values are set.
-   * @return
+   * @return           returns only the first l/2 Fourier coefficients for each window.
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
     int wordLength = l + l % 2 + this.startOffset; // make it even
