@@ -56,7 +56,7 @@ public class BOSSVSModel extends BOSSModel {
    * @param bagOfPatterns The BOSS (bag-of-patterns) representation of the time series
    * @param sampleIndices The indices to use
    * @param uniqueLabels  The unique class labels in the data set
-   * @return
+   * @return              returns the tf-idf model for the time series
    */
   public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,

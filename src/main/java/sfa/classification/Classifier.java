@@ -105,6 +105,8 @@ public abstract class Classifier {
      * Returns a long containing the values in bytes.
      *
      * @param bytes
+     * @param to
+     * @param usedBits
      * @return
      */
     public static long fromByteArrayOne(short[] bytes, int to, byte usedBits) {

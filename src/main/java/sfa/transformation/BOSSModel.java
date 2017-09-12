@@ -59,8 +59,8 @@ public class BOSSModel {
   /**
    * Create SFA words for all samples
    *
-   * @param samples the time series
-   * @return
+   * @param samples the time series to be transformed
+   * @return returns an array of words for each time series
    */
   public int[][] createWords(final TimeSeries[] samples) {
 
@@ -94,9 +94,9 @@ public class BOSSModel {
    * Create the BOSS model for a fixed window-length and SFA word length
    *
    * @param words      the SFA words of the time series
-   * @param samples
+   * @param samples    the samples to be transformed
    * @param wordLength the SFA word length
-   * @return
+   * @return returns a BOSS model for each time series in samples
    */
   public BagOfPattern[] createBagOfPattern(
       final int[][] words,

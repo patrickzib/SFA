@@ -26,7 +26,7 @@ Figure (second from left) shows the BOSS model as a histogram over SFA words. It
  
 Figure (second from right) illustrates the BOSS VS model. The BOSS VS model extends the BOSS model by a compact representation of classes instead of time series by using the term frequency - inverse document frequency (tf-idf) for each class. It significantly reduces the computational complexity and highlights characteristic SFA words by the use of the tf-idf weight matrix which provides an additional noise reducing effect.
 
-Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns model. It derives discriminative features based on dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using word co-occurrencs as features) instead of considering each fixed-length window as independent feature (as in BOSS or BOSS VS). It then builds a single model from the concatenation of feature vectors. It finally applies an aggressive statistical feature selection to remove irrelevant features from each class. This resulting feature set is highly discriminative, which allows us to use fast logistic regression.
+Figure (right) illustrates the WEASEL model. WEASEL conceptually builds on the bag-of-patterns model. It derives discriminative features based on dataset labels. WEASEL extracts windows at multiple lengths and also considers the order of windows (using word co-occurrences as features) instead of considering each fixed-length window as independent feature (as in BOSS or BOSS VS). It then builds a single model from the concatenation of feature vectors. It finally applies an aggressive statistical feature selection to remove irrelevant features from each class. This resulting feature set is highly discriminative, which allows us to use fast logistic regression.
 
 # Accuracy and Scalability
 
@@ -148,10 +148,10 @@ First, to train the BOSS model using a set of samples, we first have to obtain t
 
 ```java
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int maxF = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxF = 4;	// represents the length of the resulting SFA words. typically, in-between 4 and 16.
 int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
 // subsequence (window) length used for extracting SFA words from time series. 
-// typically, inbetween 4 and time series length n.
+// typically, in-between 4 and time series length n.
 int windowLength = ...; 
 
 TimeSeries[] trainSamples = ...
@@ -187,10 +187,10 @@ First, to train the BOSS VS model using a set of samples, we first have to obtai
 
 ```java
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int maxF = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int maxF = 4;	// represents the length of the resulting SFA words. typically, in-between 4 and 16.
 int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
 // subsequence (window) length used for extracting SFA words from time series. 
-// typically, inbetween 4 and time series length n.
+// typically, in-between 4 and time series length n.
 int windowLength = ...; 
 
 TimeSeries[] trainSamples = ...
@@ -227,10 +227,10 @@ First, to train the WEASEL model using a set of samples, we first have to obtain
 
 ```java
 boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int wordLength = 4;	// represents the length of the resulting SFA words. typically, inbetween 4 and 16.
+int wordLength = 4;	// represents the length of the resulting SFA words. typically, in-between 4 and 16.
 int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
 // range of window lengths to use for extracting SFA words from time series. 
-// typically, set to all window lengths inbetween 4 and n.
+// typically, set to all window lengths in-between 4 and n.
 int[] windowLengths = new int[]{...}; 
 	
 

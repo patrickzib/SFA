@@ -44,8 +44,8 @@ public class MFT implements Serializable {
    * Transforms a time series using the *discrete* fourier transform. Results in
    * a single Fourier transform of the time series.
    *
-   * @param timeSeries
-   * @param l
+   * @param timeSeries the time series to be transformed
+   * @param l the number of Fourier values to keep
    * @return
    */
   public double[] transform(TimeSeries timeSeries, int l) {
@@ -74,7 +74,7 @@ public class MFT implements Serializable {
    * transform for each window. Results in one Fourier transform for each
    * window. Returns only the first l/2 Fourier coefficients for each window.
    *
-   * @param timeSeries
+   * @param timeSeries the time series to be transformed
    * @param l          the number of Fourier values to use (equal to l/2 Fourier
    *                   coefficients). If l is uneven, l+1 Fourier values are returned. If
    *                   windowSize is smaller than l, only the first windowSize Fourier
