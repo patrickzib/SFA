@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -280,11 +281,8 @@ public class SFABulkLoadTest {
       time = System.currentTimeMillis() - time;
       System.out.println("\tEuclidean:" + (time / 1000.0) + "s");
 
-      if (distances.get(0) != resultDistance) {
-        System.out.println("\tError! Distances do not match: " + resultDistance + "\t" + distances.get(0));
-      } else {
-        System.out.println("\tDistance is ok");
-      }
+      Assert.assertEquals("Distances do not match: " + resultDistance + "\t" + distances.get(0),
+          distances.get(0), resultDistance, 0.003);
     }
 
     System.out.println("All ok...");

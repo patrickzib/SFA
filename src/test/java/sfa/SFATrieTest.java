@@ -14,11 +14,14 @@ import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
+/**
+ * Performs a 1-NN search using the SFA trie
+ */
 @RunWith(JUnit4.class)
 public class SFATrieTest {
-  static int l = 20; // SFA word length ( & dimensionality of the index)
-  static int leafThreshold = 10; // number of subsequences in each leaf node
-  static int k = 1; // k-NN search
+  final static int l = 20; // SFA word length ( & dimensionality of the index)
+  final static int leafThreshold = 10; // number of subsequences in each leaf node
+  final static int k = 1; // k-NN search
 
   public static void testWholeMatching() throws IOException {
     int N = 10_000;
@@ -40,7 +43,6 @@ public class SFATrieTest {
 
     Runtime runtime = Runtime.getRuntime();
     long mem = runtime.totalMemory();
-    long time = System.currentTimeMillis();
 
     SFATrie index = new SFATrie(l, leafThreshold);
     index.buildIndexWholeMatching(timeSeries);
@@ -55,14 +57,14 @@ public class SFATrieTest {
       System.out.println((i+1) + ". Query");
       TimeSeries query = timeSeries2[i];
 
-      time = System.currentTimeMillis();
+      long time = System.currentTimeMillis();
       SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
       time = System.currentTimeMillis() - time;
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
 
       List<Double> distances = result.keys();
 
-      System.out.println("\tTS seen: " +index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)N + "%");
+      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)N + "%");
       System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
       System.out.println("\tNodes seen " +  index.getBlockRead());
 
@@ -78,12 +80,10 @@ public class SFATrieTest {
       time = System.currentTimeMillis() - time;
       System.out.println("\tEuclidean:" + (time/1000.0) + "s");
 
-      if (distances.get(0) != resultDistance) {
-        System.out.println("\tError! Distances do not match: " + resultDistance + "\t" + distances.get(0));
-      }
-      else {
-        System.out.println("\tDistance is ok");
-      }
+      Assert.assertEquals("Distances do not match: " + resultDistance + "\t" + distances.get(0),
+          distances.get(0), resultDistance, 0.003);
+
+      System.out.println("\tDistance is ok");
     }
 
     System.out.println("All ok...");
@@ -99,6 +99,7 @@ public class SFATrieTest {
     // TimeSeries timeSeries = TimeSeriesLoader.readSampleSubsequence(classLoader
     //                                    .getResource("datasets/indexing/sample_lightcurves.txt")
     //                                    .getFile());
+
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
@@ -134,7 +135,8 @@ public class SFATrieTest {
 
       List<Double> distances = result.keys();
 
-      System.out.println("\tTS seen: " +index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)size + "%");
+      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
+          String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
       System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
       System.out.println("\tNodes seen " +  index.getBlockRead());
 
