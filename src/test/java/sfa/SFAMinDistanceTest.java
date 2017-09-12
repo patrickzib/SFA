@@ -4,6 +4,7 @@ package sfa;
 
 import java.io.IOException;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -63,10 +64,9 @@ public class SFAMinDistanceTest {
             minDistance = realDistance;
             best = t;
           }
+
           // plausibility check
-          if (realDistance < distance) {
-            System.err.println("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance);
-          }
+          Assert.assertTrue("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance, realDistance < distance);
         }
       }
 
@@ -78,7 +78,7 @@ public class SFAMinDistanceTest {
     System.out.println("Accuracy: "+ (Math.round(100.0*(accuracy / test.length))/100.0));
   }
 
-  public static double getEuclideanDistance (TimeSeries t1, TimeSeries t2, double minValue) {
+  private static double getEuclideanDistance (TimeSeries t1, TimeSeries t2, double minValue) {
     double distance = 0;
     double[] t1Values = t1.getData();
     double[] t2Values = t2.getData();

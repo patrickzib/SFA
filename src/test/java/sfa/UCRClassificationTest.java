@@ -90,7 +90,8 @@ public class UCRClassificationTest {
           }
         }
         else {
-          System.err.println("Does not exist!" + d.getAbsolutePath());
+          System.err.println("Dataset could not be found: " + d.getAbsolutePath() ". " +
+              "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
         }
       }
     } finally {
