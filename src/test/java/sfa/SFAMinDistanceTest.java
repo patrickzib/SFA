@@ -66,7 +66,7 @@ public class SFAMinDistanceTest {
           }
 
           // plausibility check
-          Assert.assertTrue("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance, realDistance < distance);
+          Assert.assertTrue("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance, realDistance > distance);
         }
       }
 
