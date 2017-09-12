@@ -7,7 +7,6 @@ import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -245,7 +244,7 @@ public class SFABulkLoadTest {
 
     // GC
     performGC();
-    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
+    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1_048_576L)) + " MB (rough estimate)");
 
     // k-NN search
     int k = 1;
@@ -330,7 +329,9 @@ public class SFABulkLoadTest {
     }
 
     // path compression
-    index.compress(true);
+    if (index != null) {
+      index.compress(true);
+    }
 
     // write index to disk?
     // System.out.println("Writing index to disk...");
@@ -366,7 +367,6 @@ public class SFABulkLoadTest {
         data.add(d);
         count += d.length;
       }
-    } catch (EOFException e) {
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -499,11 +499,9 @@ public class SFABulkLoadTest {
      * 
      * @param current
      * @param letter
-     * @throws FileNotFoundException
      * @throws IOException
      */
-    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws FileNotFoundException,
-        IOException {
+    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws IOException {
       if (!current.isEmpty()) {
         if (partitionsStream[letter] == null) {
           String fileName = bucketDir + letter + ".bucket";

@@ -12,27 +12,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import sfa.timeseries.TimeSeries;
 
 /**
- *  The Shotgun Ensemble Classifier as published in:
- *  
- *    Schäfer, P.: Towards time series classification without human preprocessing. 
- *    In Machine Learning and Data Mining in Pattern Recognition, 
- *    pages 228–242. Springer, 2014.
- *  
- *
+ * The Shotgun Ensemble Classifier as published in:
+ * <p>
+ * Schäfer, P.: Towards time series classification without human preprocessing.
+ * In Machine Learning and Data Mining in Pattern Recognition,
+ * pages 228–242. Springer, 2014.
  */
 public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
   public static double factor = 0.92;
 
   public ShotgunEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
-    super(train,test);
+    super(train, test);
   }
 
   @Override
   public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
-      Score totalBestScore = null;
+      Score totalBestScore = new Score("not initialized", -1, -1, false, -1);
       int bestCorrectTesting = 0;
       int bestCorrectTraining = 0;
 
@@ -51,7 +49,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
         }
 
         // Classify: testing score
-        int correctTesting = predictEnsamble(exec, scores, this.testSamples, this.trainSamples);
+        int correctTesting = predictEnsemble(exec, scores, this.testSamples, this.trainSamples);
 
         if (bestCorrectTraining < bestScore.training) {
           bestCorrectTesting = correctTesting;
@@ -65,17 +63,16 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
       return new Score(
           "Shotgun Ensemble",
-          1-formatError(bestCorrectTesting, this.testSamples.length),
-          1-formatError(bestCorrectTraining, this.trainSamples.length),
+          1 - formatError(bestCorrectTesting, this.testSamples.length),
+          1 - formatError(bestCorrectTraining, this.trainSamples.length),
           totalBestScore.normed,
           totalBestScore.windowLength);
-    }
-    finally {
+    } finally {
       exec.shutdown();
     }
   }
 
-  public int predictEnsamble(
+  public int predictEnsemble(
       final ExecutorService executor,
       final List<Score> results,
       final TimeSeries[] testSamples,
@@ -85,18 +82,15 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     @SuppressWarnings("unchecked")
     final List<Pair<String, Double>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
-      testLabels[i] = new ArrayList<Pair<String, Double>>();
+      testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = new ArrayList<Integer>(results.size());
+    final List<Integer> usedLengths = new ArrayList<>(results.size());
 
     // parallel execution
     ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        predictEnsambleLabel(id, processed);
-      }
-      public void predictEnsambleLabel(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i = 0; i < results.size(); i++) {
           if (i % threads == id) {
@@ -106,7 +100,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
               Predictions p = predict(score.windowLength, score.normed, testSamples, trainSamples, factor);
               for (int a = 0; a < p.labels.length; a++) {
-                testLabels[a].add(new Pair<String, Double>(p.labels[a], score.training));
+                testLabels[a].add(new Pair<>(p.labels[a], score.training));
               }
             }
           }

@@ -22,9 +22,9 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 
 /**
  * Symbolic Fourier Approximation as published in
- *    Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and
- *    index for similarity search in high dimensional datasets.
- *    In: EDBT, ACM (2012)
+ * Schäfer, P., Högqvist, M.: SFA: a symbolic fourier approximation and
+ * index for similarity search in high dimensional datasets.
+ * In: EDBT, ACM (2012)
  */
 public class SFA implements Serializable {
   private static final long serialVersionUID = -3903361341617350743L;
@@ -35,7 +35,7 @@ public class SFA implements Serializable {
   public HistogramType histogramType = HistogramType.EQUI_DEPTH;
 
   public int alphabetSize = 256;
-  public byte neededBits = (byte)Words.binlog(this.alphabetSize);
+  public byte neededBits = (byte) Words.binlog(this.alphabetSize);
   public int wordLength = 0;
   public boolean initialized = false;
   public boolean lowerBounding = true;
@@ -57,19 +57,21 @@ public class SFA implements Serializable {
 
     public double value;
     public String label;
-    public ValueLabel(double key, String  label) {
+
+    public ValueLabel(double key, String label) {
       this.value = key;
       this.label = label;
     }
+
     @Override
     public String toString() {
       return "" + this.value + ":" + this.label;
     }
   }
 
-  public SFA(HistogramType historgramType) {
+  public SFA(HistogramType histogramType) {
     reset();
-    this.histogramType = historgramType;
+    this.histogramType = histogramType;
   }
 
   public void reset() {
@@ -87,16 +89,16 @@ public class SFA implements Serializable {
 
     // l-dimensional bins
     this.alphabetSize = alphabetSize;
-    this.neededBits = (byte)Words.binlog(alphabetSize);
+    this.neededBits = (byte) Words.binlog(alphabetSize);
 
-    this.bins = new double[l][alphabetSize-1];
-    for (double[] row : this.bins ) {
+    this.bins = new double[l][alphabetSize - 1];
+    for (double[] row : this.bins) {
       Arrays.fill(row, Double.MAX_VALUE);
     }
 
     this.orderLine = new ArrayList[l];
     for (int i = 0; i < this.orderLine.length; i++) {
-      this.orderLine[i] = new ArrayList<ValueLabel>();
+      this.orderLine[i] = new ArrayList<>();
     }
   }
 
@@ -112,13 +114,14 @@ public class SFA implements Serializable {
 
   /**
    * Transforms a single time series to its SFA word
+   *
    * @param timeSeries
    * @param approximation the DFT approximation, if available, else pass 'null'
    * @return
    */
   public short[] transform(TimeSeries timeSeries, double[] approximation) {
     if (!this.initialized) {
-      throw new RuntimeException("Plase call fitTransform() first.");
+      throw new RuntimeException("Please call fitTransform() first.");
     }
     if (approximation == null) {
       // get approximation of the time series
@@ -132,13 +135,12 @@ public class SFA implements Serializable {
   /**
    * Transforms a set of samples to SFA words
    *
-   * @param samples
-   *          a set of samples
+   * @param samples a set of samples
    * @return
    */
   public short[][] transform(TimeSeries[] samples) {
     if (!this.initialized) {
-      throw new RuntimeException("Plase call fitTransform() first.");
+      throw new RuntimeException("Please call fitTransform() first.");
     }
     short[][] transform = new short[samples.length][];
     for (int i = 0; i < transform.length; i++) {
@@ -150,13 +152,14 @@ public class SFA implements Serializable {
 
   /**
    * Transforms a set of time series to SFA words.
+   *
    * @param samples
    * @param approximation the DFT approximations, if available, else pass 'null'
    * @return
    */
   public short[][] transform(TimeSeries[] samples, double[][] approximation) {
     if (!this.initialized) {
-      throw new RuntimeException("Plase call fitTransform() first.");
+      throw new RuntimeException("Please call fitTransform() first.");
     }
     short[][] transform = new short[samples.length][];
     for (int i = 0; i < transform.length; i++) {
@@ -168,6 +171,7 @@ public class SFA implements Serializable {
 
   /**
    * Quantization of a DFT approximation to its SFA word
+   *
    * @param approximation the DFT approximation of a time series
    * @return
    */
@@ -177,7 +181,7 @@ public class SFA implements Serializable {
     for (double value : approximation) {
       // lookup character:
       short c = 0;
-      for (c = 0; c < this.bins[i].length; c++) {
+      for (; c < this.bins[i].length; c++) {
         if (value < this.bins[i][c]) {
           break;
         }
@@ -191,8 +195,7 @@ public class SFA implements Serializable {
    * Quantization of a DFT approximation to its SFA word (using bytes for each
    * character)
    *
-   * @param approximation
-   *          the DFT approximation of a time series
+   * @param approximation the DFT approximation of a time series
    * @return
    */
   public byte[] quantizationByte(double[] approximation) {
@@ -201,7 +204,7 @@ public class SFA implements Serializable {
     for (double value : approximation) {
       // lookup character:
       byte c = 0;
-      for (c = 0; c < this.bins[i].length; c++) {
+      for (; c < this.bins[i].length; c++) {
         if (value < this.bins[i][c]) {
           break;
         }
@@ -229,16 +232,17 @@ public class SFA implements Serializable {
   /**
    * Extracts sliding windows from the time series and trains SFA based on the sliding windows.
    * At the end of this call, the quantization bins are set.
+   *
    * @param timeSeries
    * @param windowLength The length of each sliding window
-   * @param wordLength the SFA word-length
-   * @param symbols the SFA alphabet size
-   * @param normMean if set, the mean is subtracted from each sliding window
+   * @param wordLength   the SFA word-length
+   * @param symbols      the SFA alphabet size
+   * @param normMean     if set, the mean is subtracted from each sliding window
    */
   public void fitWindowing(TimeSeries[] timeSeries, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
     this.transformation = new MFT(windowLength, normMean, lowerBounding);
 
-    ArrayList<TimeSeries> sa = new ArrayList<TimeSeries>(timeSeries.length * timeSeries[0].getLength() / windowLength);
+    ArrayList<TimeSeries> sa = new ArrayList<>(timeSeries.length * timeSeries[0].getLength() / windowLength);
     for (TimeSeries t : timeSeries) {
       sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
     }
@@ -248,13 +252,12 @@ public class SFA implements Serializable {
   /**
    * Extracts sliding windows from a time series and transforms it to its SFA
    * word.
-   *
+   * <p>
    * Returns the SFA words as short[] (from Fourier transformed windows). Each
    * short corresponds to one character.
    *
    * @param ts
-   * @param wordLength
-   *          the SFA word-length
+   * @param wordLength the SFA word-length
    * @return
    */
   public short[][] transformWindowing(TimeSeries ts, int wordLength) {
@@ -271,7 +274,7 @@ public class SFA implements Serializable {
   /**
    * Extracts sliding windows from a time series and applies the Fourier
    * Transform.
-   *
+   * <p>
    * Returns the Fourier transformed windows.
    *
    * @param ts
@@ -285,7 +288,7 @@ public class SFA implements Serializable {
   /**
    * Extracts sliding windows from a time series and transforms it to its SFA
    * word.
-   *
+   * <p>
    * Returns the SFA words as a single int (compacts the characters into one
    * int).
    *
@@ -295,9 +298,9 @@ public class SFA implements Serializable {
    */
   public int[] transformWindowingInt(TimeSeries ts, int wordLength) {
     short[][] words = transformWindowing(ts, wordLength);
-    int[] intWords = new int[words .length];
-    for (int i = 0; i < words .length; i++) {
-      intWords[i] = (int)Words.createWord(words[i], wordLength, this.neededBits);
+    int[] intWords = new int[words.length];
+    for (int i = 0; i < words.length; i++) {
+      intWords[i] = (int) Words.createWord(words[i], wordLength, this.neededBits);
     }
     return intWords;
   }
@@ -306,21 +309,17 @@ public class SFA implements Serializable {
    * Trains the SFA model based on a set of samples. At the end of this call,
    * the quantization bins are set.
    *
-   * @param samples
-   *          the samples to use for training.
-   * @param wordLength
-   *          Length of the resuting SFA words. Each character of a word
-   *          corresponds to one Fourier value. Even characters (starting with
-   *          0) are real values and uneven characters are imaginary values. A
-   *          shorter word length corresponds to a stronger low-pass filtering
-   *          of the time series.
-   * @param symbols
-   *          the alphabet size, i.e. number of quantization bins to use
-   * @param normMean
-   *          true: sets mean to 0 for each time series.
+   * @param samples    the samples to use for training.
+   * @param wordLength Length of the resulting SFA words. Each character of a word
+   *                   corresponds to one Fourier value. Even characters (starting with
+   *                   0) are real values and uneven characters are imaginary values. A
+   *                   shorter word length corresponds to a stronger low-pass filtering
+   *                   of the time series.
+   * @param symbols    the alphabet size, i.e. number of quantization bins to use
+   * @param normMean   true: sets mean to 0 for each time series.
    * @return the Fourier transformation of the time series.
    */
-  public double[][] fitTransformDouble (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
+  public double[][] fitTransformDouble(TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
     if (!this.initialized) {
       init(wordLength, symbols);
 
@@ -346,7 +345,7 @@ public class SFA implements Serializable {
    * Same as fitTransformDouble but returns the SFA words instead of the Fourier
    * transformed time series.
    */
-  public short[][] fitTransform (TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
+  public short[][] fitTransform(TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
     return transform(samples, fitTransformDouble(samples, wordLength, symbols, normMean));
   }
 
@@ -355,7 +354,7 @@ public class SFA implements Serializable {
    *
    * @param samples
    */
-  protected double[][] fillOrderline (TimeSeries[] samples, int l, int symbols) {
+  protected double[][] fillOrderline(TimeSeries[] samples, int l, int symbols) {
     double[][] transformedSamples = new double[samples.length][];
 
     for (int i = 0; i < samples.length; i++) {
@@ -365,9 +364,9 @@ public class SFA implements Serializable {
       // approximation
       transformedSamples[i] = this.transformation.transform(samples[i], l);
 
-      for (int j=0; j < transformedSamples[i].length; j++) {
+      for (int j = 0; j < transformedSamples[i].length; j++) {
         // round to 2 decimal places to reduce noise
-        double value = Math.round(transformedSamples[i][j]*100.0)/100.0;
+        double value = Math.round(transformedSamples[i][j] * 100.0) / 100.0;
         this.orderLine[j].add(new ValueLabel(value, samples[i].getLabel()));
       }
     }
@@ -381,17 +380,17 @@ public class SFA implements Serializable {
   /**
    * Use equi-width binning to divide the orderline
    */
-  protected void divideEquiWidthHistogram () {
+  protected void divideEquiWidthHistogram() {
     int i = 0;
     for (List<ValueLabel> elements : this.orderLine) {
       if (!elements.isEmpty()) {
         // apply the split
         double first = elements.get(0).value;
-        double last = elements.get(elements.size()-1).value;
-        double intervalWidth = (last-first) / (this.alphabetSize);
+        double last = elements.get(elements.size() - 1).value;
+        double intervalWidth = (last - first) / (this.alphabetSize);
 
-        for (int c = 0; c < this.alphabetSize-1; c++) {
-          this.bins[i][c] = intervalWidth*(c+1)+first;
+        for (int c = 0; c < this.alphabetSize - 1; c++) {
+          this.bins[i][c] = intervalWidth * (c + 1) + first;
         }
       }
       i++;
@@ -401,17 +400,17 @@ public class SFA implements Serializable {
   /**
    * Use equi-depth binning to divide the orderline
    */
-  protected void divideEquiDepthHistogram () {
+  protected void divideEquiDepthHistogram() {
     // For each real and imaginary part
     for (int i = 0; i < this.bins.length; i++) {
-      // Divide into equi-depth intevals
-      double depth = this.orderLine[i].size() / (double)(this.alphabetSize);
+      // Divide into equi-depth intervals
+      double depth = this.orderLine[i].size() / (double) (this.alphabetSize);
 
       int pos = 0;
       long count = 0;
       for (ValueLabel value : this.orderLine[i]) {
-        if (++count > Math.ceil(depth*(pos+1))
-            && (pos==0 || this.bins[i][pos-1] != value.value)) {
+        if (++count > Math.ceil(depth * (pos + 1))
+            && (pos == 0 || this.bins[i][pos - 1] != value.value)) {
           this.bins[i][pos++] = value.value;
         }
       }
@@ -426,14 +425,14 @@ public class SFA implements Serializable {
     for (int i = 0; i < this.orderLine.length; i++) {
       List<ValueLabel> element = this.orderLine[i];
       if (!element.isEmpty()) {
-        ArrayList<Integer> splitPoints = new ArrayList<Integer>();
+        ArrayList<Integer> splitPoints = new ArrayList<>();
         findBestSplit(element, 0, element.size(), this.alphabetSize, splitPoints);
 
         Collections.sort(splitPoints);
 
         // apply the split
         for (int j = 0; j < splitPoints.size(); j++) {
-          double value = element.get(splitPoints.get(j)+1).value;
+          double value = element.get(splitPoints.get(j) + 1).value;
           //          double value = (element.get(splitPoints.get(j)).value + element.get(splitPoints.get(j)+1).value)/2.0;
           this.bins[i][j] = value;
         }
@@ -454,7 +453,7 @@ public class SFA implements Serializable {
   }
 
   protected static double calculateInformationGain(
-ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
+      ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
       double class_entropy,
       double total_c_in,
       double total) {
@@ -470,15 +469,15 @@ ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
       int end,
       int remainingSymbols,
       List<Integer> splitPoints
-      ) {
+  ) {
 
     double bestGain = -1;
     int bestPos = -1;
 
     // class entropy
-    int total = end-start;
-    ObjectIntHashMap<String> cIn = new ObjectIntHashMap<String>();
-    ObjectIntHashMap<String> cOut = new ObjectIntHashMap<String>();
+    int total = end - start;
+    ObjectIntHashMap<String> cIn = new ObjectIntHashMap<>();
+    ObjectIntHashMap<String> cOut = new ObjectIntHashMap<>();
     for (int pos = start; pos < end; pos++) {
       cOut.putOrAdd(element.get(pos).label, 1, 1);
     }
@@ -488,7 +487,7 @@ ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
     String lastLabel = element.get(i).label;
     i += moveElement(element, cIn, cOut, start);
 
-    for (int split = start+1; split < end-1; split++) {
+    for (int split = start + 1; split < end - 1; split++) {
       String label = element.get(i).label;
       i += moveElement(element, cIn, cOut, split);
 
@@ -513,14 +512,12 @@ ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
         if (bestPos - start > 2 && end - bestPos > 2) { // enough data points?
           findBestSplit(element, start, bestPos, remainingSymbols, splitPoints);
           findBestSplit(element, bestPos, end, remainingSymbols, splitPoints);
-        }
-        else if (end - bestPos > 4) { // enough data points?
-          findBestSplit(element, bestPos, (end-bestPos)/2, remainingSymbols, splitPoints);
-          findBestSplit(element, (end-bestPos)/2, end, remainingSymbols, splitPoints);
-        }
-        else if (bestPos - start > 4) { // enough data points?
-          findBestSplit(element, start, (bestPos-start)/2, remainingSymbols, splitPoints);
-          findBestSplit(element, (bestPos-start)/2, end, remainingSymbols, splitPoints);
+        } else if (end - bestPos > 4) { // enough data points?
+          findBestSplit(element, bestPos, (end - bestPos) / 2, remainingSymbols, splitPoints);
+          findBestSplit(element, (end - bestPos) / 2, end, remainingSymbols, splitPoints);
+        } else if (bestPos - start > 4) { // enough data points?
+          findBestSplit(element, start, (bestPos - start) / 2, remainingSymbols, splitPoints);
+          findBestSplit(element, (bestPos - start) / 2, end, remainingSymbols, splitPoints);
         }
       }
     }
@@ -528,19 +525,19 @@ ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
 
   protected int moveElement(
       List<ValueLabel> element,
- ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
+      ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
       int pos) {
     cIn.putOrAdd(element.get(pos).label, 1, 1);
     cOut.putOrAdd(element.get(pos).label, -1, -1);
     return 1;
   }
 
-  public void printBins () {
+  public void printBins() {
     System.out.print("[");
     for (double[] element : this.bins) {
-      System.out.print("-Inf\t" );
+      System.out.print("-Inf\t");
       for (double element2 : element) {
-        String e = element2 != Double.MAX_VALUE? (""+element2) : "Inf";
+        String e = element2 != Double.MAX_VALUE ? ("" + element2) : "Inf";
         System.out.print("," + e + "\t");
       }
       System.out.println(";");
@@ -549,10 +546,9 @@ ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
   }
 
   public static SFA loadFromDisk(String path) {
-    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path));) {
+    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
       return (SFA) in.readObject();
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return null;

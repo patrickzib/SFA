@@ -48,7 +48,7 @@ public class SFATrieTest {
 
     // GC
     performGC();
-    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
+    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1_048_576L)) + " MB (rough estimate)");
 
     System.out.println("Perform NN-queries");
     for (int i = 0; i < timeSeries2.length; i++) {
@@ -115,13 +115,13 @@ public class SFATrieTest {
 
     // GC
     performGC();
-    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
+    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1_048_576L)) + " MB (rough estimate)");
 
     System.out.println("Perform NN-queries");
     int size = (timeSeries.getData().length-windowLength)+1;
     double[] means = new double[size];
     double[] stds = new double[size];
-    TimeSeries.calcIncreamentalMeanStddev(windowLength, timeSeries.getData(), means, stds);
+    TimeSeries.calcIncrementalMeanStddev(windowLength, timeSeries.getData(), means, stds);
 
     for (int i = 0; i < timeSeries2.length; i++) {
       System.out.println((i+1) + ". Query");
@@ -175,7 +175,7 @@ public class SFATrieTest {
       int w
       ) {
 
-    // 1 divided by stddev for fastert calculations
+    // 1 divided by stddev for faster calculations
     stdTs = (stdTs>0? 1.0 / stdTs : 1.0);
 
     double distance = 0.0;

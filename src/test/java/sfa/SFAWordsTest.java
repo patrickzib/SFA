@@ -31,9 +31,9 @@ public class SFAWordsTest {
     // Load the train/test splits
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
     TimeSeries[] train = TimeSeriesLoader
-        .loadDatset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
+        .loadDataset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
     TimeSeries[] test = TimeSeriesLoader
-        .loadDatset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
+        .loadDataset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
 
     // train SFA representation
     sfa.fitTransform(train, wordLength, symbols, normMean);
@@ -49,7 +49,7 @@ public class SFAWordsTest {
   }
 
   public static String toSfaWord(short[] word) {
-    StringBuffer sfaWord = new StringBuffer();
+    StringBuilder sfaWord = new StringBuilder();
 
     for (short c : word) {
       sfaWord.append((char)(Character.valueOf('a') + c));

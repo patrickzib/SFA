@@ -14,33 +14,30 @@ import sfa.timeseries.TimeSeries;
  * the Discrete Fourier Transform for overlapping windows. It has
  * a constant computational complexity for in the window length n as
  * opposed to O(n log n) for the Fast Fourier Transform algorithm.
- *
+ * <p>
  * It was first published in:
- *    Albrecht, S., Cumming, I., Dudas, J.: The momentary fourier transformation
- *    derived from recursive matrix transformations. In: Digital Signal Processing
- *    Proceedings, 1997., IEEE (1997)
+ * Albrecht, S., Cumming, I., Dudas, J.: The momentary fourier transformation
+ * derived from recursive matrix transformations. In: Digital Signal Processing
+ * Proceedings, 1997., IEEE (1997)
  *
  * @author bzcschae
- *
  */
 public class MFT implements Serializable {
   private static final long serialVersionUID = 8508604292241736378L;
 
-  boolean normMean = false;
-  public int windowSize = 0;
-  int startOffset = 0;
-  double norm = 0;
+  private int windowSize = 0;
+  private int startOffset = 0;
+  private double norm = 0;
 
-  transient DoubleFFT_1D fft = null;
+  private transient DoubleFFT_1D fft = null;
 
   public MFT(int windowSize, boolean normMean, boolean lowerBounding) {
-    this.normMean = normMean;
     this.windowSize = windowSize;
     this.fft = new DoubleFFT_1D(windowSize);
 
     // ignore DC value?
-    this.startOffset = normMean? 2 : 0;
-    this.norm = lowerBounding? 1.0/Math.sqrt(windowSize) : 1.0;
+    this.startOffset = normMean ? 2 : 0;
+    this.norm = lowerBounding ? 1.0 / Math.sqrt(windowSize) : 1.0;
   }
 
   /**
@@ -60,7 +57,7 @@ public class MFT implements Serializable {
     data[1] = 0; // DC-coefficient imag part
 
     // norming
-    double[] copy = new double[Math.min(windowSize-this.startOffset, l)];
+    double[] copy = new double[Math.min(windowSize - this.startOffset, l)];
     System.arraycopy(data, this.startOffset, copy, 0, copy.length);
 
     int sign = 1;
@@ -78,28 +75,27 @@ public class MFT implements Serializable {
    * window. Returns only the first l/2 Fourier coefficients for each window.
    *
    * @param timeSeries
-   * @param l
-   *          the number of Fourier values to use (equal to l/2 Fourier
-   *          coefficients). If l is uneven, l+1 Fourier values are returned. If
-   *          windowSize is smaller than l, only the first windowSize Fourier
-   *          values are set.
+   * @param l          the number of Fourier values to use (equal to l/2 Fourier
+   *                   coefficients). If l is uneven, l+1 Fourier values are returned. If
+   *                   windowSize is smaller than l, only the first windowSize Fourier
+   *                   values are set.
    * @return
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
     int wordLength = l + l % 2 + this.startOffset; // make it even
     double[] phis = new double[wordLength];
 
-    for (int u = 0; u < phis.length; u+=2) {
-      double uHalve = -u/2;
+    for (int u = 0; u < phis.length; u += 2) {
+      double uHalve = -u / 2;
       phis[u] = realephi(uHalve, this.windowSize);
-      phis[u+1] = complexephi(uHalve, this.windowSize);
+      phis[u + 1] = complexephi(uHalve, this.windowSize);
     }
 
     // means and stddev for each sliding window
-    int end = Math.max(1,timeSeries.getLength()-this.windowSize+1);
+    int end = Math.max(1, timeSeries.getLength() - this.windowSize + 1);
     double[] means = new double[end];
     double[] stds = new double[end];
-    TimeSeries.calcIncreamentalMeanStddev(this.windowSize, timeSeries.getData(), means, stds);
+    TimeSeries.calcIncrementalMeanStddev(this.windowSize, timeSeries.getData(), means, stds);
 
     double[][] transformed = new double[end][];
 
@@ -110,15 +106,15 @@ public class MFT implements Serializable {
     for (int t = 0; t < end; t++) {
       // use the MFT
       if (t > 0) {
-        for (int k = 0; k < wordLength; k+=2) {
-          double real1 = (mftData[k] + data[t+this.windowSize-1] - data[t-1]);
-          double imag1 = (mftData[k+1]);
+        for (int k = 0; k < wordLength; k += 2) {
+          double real1 = (mftData[k] + data[t + this.windowSize - 1] - data[t - 1]);
+          double imag1 = (mftData[k + 1]);
 
-          double real = complexMulReal(real1, imag1, phis[k], phis[k+1]);
-          double imag = complexMulImag(real1, imag1, phis[k], phis[k+1]);
+          double real = complexMulReal(real1, imag1, phis[k], phis[k + 1]);
+          double imag = complexMulImag(real1, imag1, phis[k], phis[k + 1]);
 
           mftData[k] = real;
-          mftData[k+1] = imag;
+          mftData[k + 1] = imag;
         }
       }
       // use the DFT for the first offset
@@ -144,23 +140,23 @@ public class MFT implements Serializable {
   }
 
   public static double complexMulReal(double r1, double im1, double r2, double im2) {
-    return r1*r2 - im1*im2;
+    return r1 * r2 - im1 * im2;
   }
 
   public static double complexMulImag(double r1, double im1, double r2, double im2) {
-    return r1*im2 + r2*im1;
+    return r1 * im2 + r2 * im1;
   }
 
   public static double realephi(double u, double M) {
-    return Math.cos(2*Math.PI*u/M);
+    return Math.cos(2 * Math.PI * u / M);
   }
 
   public static double complexephi(double u, double M) {
-    return -Math.sin(2*Math.PI*u/M);
+    return -Math.sin(2 * Math.PI * u / M);
   }
 
   public double[] normalizeFT(double[] copy, double std) {
-    double normalisingFactor = (std>0? 1.0 / std : 1.0) * this.norm;
+    double normalisingFactor = (std > 0 ? 1.0 / std : 1.0) * this.norm;
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
       copy[i] *= sign * normalisingFactor;

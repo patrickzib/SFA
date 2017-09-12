@@ -4,7 +4,7 @@ Working with time series is difficult due to the high dimensionality of the data
 and large datasets. At the core of time series data analytics there are (a) a time series representation and (b) 
 a similarity measure to compare two time series. There are many desirable properties of similarity measures. 
 Common similarity measures in the context of time series are Dynamic Time Warping (DTW) or the Euclidean Distance (ED). 
-However, these are decades old and do not meet today’s requirements. The over-dependance of research on 
+However, these are decades old and do not meet today’s requirements. The over-dependence of research on
 the UCR time series classification benchmark has led to two pitfalls, namely: (a) they focus mostly on accuracy and (b) 
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.

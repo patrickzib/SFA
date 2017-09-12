@@ -26,15 +26,15 @@ public class SFAMinDistanceTest {
 
     int symbols = 8;
     int wordLength = 16;
-    boolean normMean = true;
+    final boolean normMean = true;
 
     SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
     SFADistance sfaDistance = new SFADistance(sfa);
 
     // Load the train/test splits
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-    TimeSeries[] train = TimeSeriesLoader.loadDatset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
-    TimeSeries[] test = TimeSeriesLoader.loadDatset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
+    TimeSeries[] train = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
+    TimeSeries[] test = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
 
     // train SFA representation
     short[][] wordsTrain = sfa.fitTransform(train, wordLength, symbols, normMean);
@@ -63,7 +63,7 @@ public class SFAMinDistanceTest {
             minDistance = realDistance;
             best = t;
           }
-          // plausability check
+          // plausibility check
           if (realDistance < distance) {
             System.err.println("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance);
           }
