@@ -595,7 +595,7 @@ public class SFATrie implements Serializable {
     double[] dftQuery = quantization.transformation.transform(query, wordLength);
 
     // quantization
-    byte[] wordQuery = quantization.quantizationByte(dftQuery);
+    // byte[] wordQuery = quantization.quantizationByte(dftQuery);
 
     return searchKNN(dftQuery, query, k);
   }

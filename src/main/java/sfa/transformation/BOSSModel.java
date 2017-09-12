@@ -77,7 +77,7 @@ public class BOSSModel {
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < samples.length; i++) {
           if (i % BLOCKS == id) {
-            short[][] sfaWords = BOSSModel.this.signature.transformWindowing(samples[i], BOSSModel.this.maxF);
+            short[][] sfaWords = BOSSModel.this.signature.transformWindowing(samples[i]);
             words[i] = new int[sfaWords.length];
             for (int j = 0; j < sfaWords.length; j++) {
               words[i][j] = (int) Words.createWord(sfaWords[j], BOSSModel.this.maxF, (byte) Words.binlog(BOSSModel.this.symbols));
