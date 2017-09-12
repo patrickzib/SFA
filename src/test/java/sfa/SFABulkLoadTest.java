@@ -367,6 +367,8 @@ public class SFABulkLoadTest {
         data.add(d);
         count += d.length;
       }
+    } catch (EOFException e) {
+      // ignore EOFException
     } catch (Exception e) {
       e.printStackTrace();
     }
