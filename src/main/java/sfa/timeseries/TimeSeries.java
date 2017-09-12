@@ -192,7 +192,7 @@ public class TimeSeries implements Serializable {
    */
   public TimeSeries[] getSubsequences(int windowSize, boolean normMean) {
     // Window offset
-    final int offset = 1;
+    int offset = 1;
 
     // extract subsequences
     int size = (this.data.length - windowSize) / offset + 1;
