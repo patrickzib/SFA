@@ -94,7 +94,7 @@ public class SFATrie implements Serializable {
 
     this.wordLength = l;
 
-    this.root = new SFANode(new byte[0], symbols, this.wordLength);
+    this.root = new SFANode(new byte[0], this.wordLength);
     this.leafThreshold = leafThreshold;
 
     this.approximations = new ArrayList<>();
@@ -143,7 +143,7 @@ public class SFATrie implements Serializable {
     initializeSubsequenceMatching(ts, windowLength);
 
     // Transform the time series to SFA words
-    double[][] transformed = this.quantization.transformWindowingDouble(ts, this.wordLength);
+    double[][] transformed = this.quantization.transformWindowingDouble(ts);
 
     // insert each time series window
     for (int offset = 0; offset < transformed.length; offset++) {
@@ -167,9 +167,8 @@ public class SFATrie implements Serializable {
    * @param approximations The approximations to insert
    * @param minDepth       The minimal depth of the trie (i.e. all nodes start with this prefix length)
    *                       This is needed for bulk loading.
-   * @param windowLength   (the window length to use)
    */
-  public void buildIndex(List<SFATrie.Approximation[]> approximations, int minDepth, int windowLength) {
+  public void buildIndex(List<SFATrie.Approximation[]> approximations, int minDepth) {
     this.minimalDepth = minDepth;
 
     // insert each time series window
@@ -310,7 +309,7 @@ public class SFATrie implements Serializable {
 
     if (childNode == null) {
       // add a new child node
-      childNode = node.addChild(key, symbols, this.wordLength);
+      childNode = node.addChild(key, this.wordLength);
 
       // if needed, guarantee a minimal height (used for bulk loading)
       if (this.minimalDepth - 1 > index) {
@@ -402,7 +401,7 @@ public class SFATrie implements Serializable {
   }
 
   /**
-   * Set the raw time series data in the SFA trie for Subesequence Matching.
+   * Set the raw time series data in the SFA trie for subsequence matching.
    *
    * @param ts
    * @param windowLength
@@ -531,8 +530,7 @@ public class SFATrie implements Serializable {
   /**
    * Approximate search for the query.
    */
-  public SortedListMap<Double, Integer> search(
-      double[] dftQuery, byte[] wordQuery, TimeSeries query, int k) {
+  public SortedListMap<Double, Integer> search(byte[] wordQuery, TimeSeries query, int k) {
     SortedListMap<Double, Integer> result = new SortedListMap<>(k);
 
     // search for the exact path
@@ -599,11 +597,11 @@ public class SFATrie implements Serializable {
     // quantization
     byte[] wordQuery = quantization.quantizationByte(dftQuery);
 
-    return searchKNN(dftQuery, wordQuery, query, k);
+    return searchKNN(dftQuery, query, k);
   }
 
   public SortedListMap<Double, Integer> searchKNN(
-      double[] dftQuery, byte[] wordQuery, TimeSeries query, int k) {
+      double[] dftQuery, TimeSeries query, int k) {
 
     // priority queues ordered by ascending distances
     TreeMap<Double, List<SFANode>> queue = new TreeMap<>();
@@ -627,7 +625,6 @@ public class SFATrie implements Serializable {
           for (SFANode child : currentNode.getChildren()) {
             double distance = getLowerBoundingDistance(
                 dftQuery,
-                wordQuery,
                 child.minValues,
                 child.maxValues);
             if (distance < kthBestDistance) {
@@ -698,14 +695,12 @@ public class SFATrie implements Serializable {
    * The Euclidean lower bounding distance
    *
    * @param dftQuery
-   * @param wordQuery
    * @param minValues
    * @param maxValues
    * @return
    */
   protected double getLowerBoundingDistance(
       double[] dftQuery,
-      byte[] wordQuery,
       double[] minValues,
       double[] maxValues) {
 
@@ -971,7 +966,7 @@ public class SFATrie implements Serializable {
 
     protected NodeType type = NodeType.Internal;
 
-    public SFANode(byte[] word, int symbols, int length) {
+    public SFANode(byte[] word, int length) {
       this.type = NodeType.Leaf;
       this.word = word;
 
@@ -1027,10 +1022,10 @@ public class SFATrie implements Serializable {
       this.approximationIds.clear();
     }
 
-    public SFANode addChild(byte key, int symbols, int dimensionality) {
+    public SFANode addChild(byte key, int dimensionality) {
       byte[] newWord = Arrays.copyOf(this.word, this.word.length + 1);
       newWord[newWord.length - 1] = key;
-      return addChild(key, new SFANode(newWord, symbols, dimensionality));
+      return addChild(key, new SFANode(newWord, dimensionality));
     }
 
     public SFANode addChild(byte key, SFANode childNode) {

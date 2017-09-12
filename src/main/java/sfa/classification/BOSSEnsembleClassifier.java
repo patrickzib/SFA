@@ -30,7 +30,7 @@ public class BOSSEnsembleClassifier extends Classifier {
   public static int minF = 6;  // 4
   public static int maxS = 4;  // 8
 
-  public BOSSEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public BOSSEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
   }
 
@@ -50,7 +50,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     }
   }
 
-  public Score eval() throws IOException {
+  public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
       BossScore totalBestScore = null;

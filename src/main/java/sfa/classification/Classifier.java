@@ -3,7 +3,6 @@
 package sfa.classification;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,7 +61,7 @@ public abstract class Classifier {
     this.testSamples = test;
   }
 
-  public Classifier(File train, File test) throws IOException {
+  public Classifier(File train, File test) {
     this.train = train;
     this.test = test;
 
@@ -74,7 +73,7 @@ public abstract class Classifier {
     }
   }
 
-  public abstract Score eval() throws IOException;
+  public abstract Score eval();
 
   public static class Words {
     public static int binlog(int bits) {

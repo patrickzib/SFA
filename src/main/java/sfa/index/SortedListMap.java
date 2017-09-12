@@ -77,7 +77,7 @@ public class SortedListMap<K extends Comparable<K>, V> {
     throw new NoSuchElementException("Element with " + key + " not present.");
   }
 
-  public V put(K key, V value) {
+  public void put(K key, V value) {
     int pos = findFirstOccurrence(key);
 
     if (pos >= 0 && this.values.get(pos) != value) {
@@ -94,8 +94,6 @@ public class SortedListMap<K extends Comparable<K>, V> {
       this.keys.remove(this.keys.size() - 1);
       this.values.remove(this.values.size() - 1);
     }
-
-    return value;
   }
 
   /**

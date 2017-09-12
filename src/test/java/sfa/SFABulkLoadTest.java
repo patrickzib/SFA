@@ -214,7 +214,7 @@ public class SFABulkLoadTest {
     for (int i = 0, a = 0; i < timeSeries.getLength(); i += chunkSize, a++) {
       System.out.println("Transforming Chunk: " + (a + 1));
       TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize + n - 1);
-      double[][] words = sfa.transformWindowingDouble(subsequence, l);
+      double[][] words = sfa.transformWindowingDouble(subsequence);
       for (int pos = 0; pos < words.length; pos++) {
         byte[] w = sfa.quantizationByte(words[pos]);
         dataStream.addToPartition(w, words[pos], i + pos, trieDepth);
@@ -314,7 +314,7 @@ public class SFABulkLoadTest {
         List<SFATrie.Approximation[]> windows = readFromFile(bucket);
         if (!windows.isEmpty()) {
           SFATrie trie = new SFATrie(l, leafThreshold, sfa);
-          trie.buildIndex(windows, trieDepth, windowLength);
+          trie.buildIndex(windows, trieDepth);
 
           if (index == null) {
             index = trie;

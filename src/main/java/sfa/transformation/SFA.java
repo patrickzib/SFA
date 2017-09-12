@@ -257,10 +257,9 @@ public class SFA implements Serializable {
    * short corresponds to one character.
    *
    * @param ts
-   * @param wordLength the SFA word-length
    * @return
    */
-  public short[][] transformWindowing(TimeSeries ts, int wordLength) {
+  public short[][] transformWindowing(TimeSeries ts) {
     double[][] mft = this.transformation.transformWindowing(ts, this.maxWordLength);
 
     short[][] words = new short[mft.length][];
@@ -278,10 +277,9 @@ public class SFA implements Serializable {
    * Returns the Fourier transformed windows.
    *
    * @param ts
-   * @param wordLength
    * @return
    */
-  public double[][] transformWindowingDouble(TimeSeries ts, int wordLength) {
+  public double[][] transformWindowingDouble(TimeSeries ts) {
     return this.transformation.transformWindowing(ts, this.maxWordLength);
   }
 
@@ -297,7 +295,7 @@ public class SFA implements Serializable {
    * @return
    */
   public int[] transformWindowingInt(TimeSeries ts, int wordLength) {
-    short[][] words = transformWindowing(ts, wordLength);
+    short[][] words = transformWindowing(ts);
     int[] intWords = new int[words.length];
     for (int i = 0; i < words.length; i++) {
       intWords[i] = (int) Words.createWord(words[i], wordLength, this.neededBits);
@@ -328,7 +326,7 @@ public class SFA implements Serializable {
       }
     }
 
-    double[][] transformedSamples = fillOrderline(samples, wordLength, symbols);
+    double[][] transformedSamples = fillOrderline(samples, wordLength);
 
     if (this.histogramType == HistogramType.EQUI_DEPTH) {
       divideEquiDepthHistogram();
@@ -354,7 +352,7 @@ public class SFA implements Serializable {
    *
    * @param samples
    */
-  protected double[][] fillOrderline(TimeSeries[] samples, int l, int symbols) {
+  protected double[][] fillOrderline(TimeSeries[] samples, int l) {
     double[][] transformedSamples = new double[samples.length][];
 
     for (int i = 0; i < samples.length; i++) {

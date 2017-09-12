@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,7 +34,7 @@ public class BOSSVSClassifier extends Classifier {
 
   public static boolean normMagnitudes = false;
 
-  public BOSSVSClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public BOSSVSClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
   }
 
@@ -58,7 +57,7 @@ public class BOSSVSClassifier extends Classifier {
 
 
   @Override
-  public Score eval() throws IOException {
+  public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
       // BOSS Distance
@@ -84,7 +83,7 @@ public class BOSSVSClassifier extends Classifier {
         }
 
         // determine labels based on the majority of predictions
-        int correctTesting = predictEnsemble(exec, scores, this.testSamples, normMean);
+        int correctTesting = predictEnsemble(exec, scores, this.testSamples);
 
         if (bestCorrectTraining <= this.correctTraining.get()) {
           bestCorrectTesting = correctTesting;
@@ -264,8 +263,7 @@ public class BOSSVSClassifier extends Classifier {
   public int predictEnsemble(
       ExecutorService executor,
       final List<BossVSScore<IntFloatHashMap>> results,
-      final TimeSeries[] testSamples,
-      boolean normMean) {
+      final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")

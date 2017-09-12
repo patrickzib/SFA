@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +21,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
   public static double factor = 0.92;
 
-  public ShotgunEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public ShotgunEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
   }
 
@@ -98,7 +97,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
             if (score.training >= ShotgunEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
               usedLengths.add(score.windowLength);
 
-              Predictions p = predict(score.windowLength, score.normed, testSamples, trainSamples, factor);
+              Predictions p = predict(score.windowLength, score.normed, testSamples, trainSamples);
               for (int a = 0; a < p.labels.length; a++) {
                 testLabels[a].add(new Pair<>(p.labels[a], score.training));
               }

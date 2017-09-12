@@ -27,7 +27,6 @@ public class WEASELModel {
   public int maxF;
 
   public int[] windowLengths;
-  public boolean norm;
   public boolean normMean;
   public boolean lowerBounding;
   public SFA[] signature;
@@ -54,7 +53,7 @@ public class WEASELModel {
    * @param windowLengths the set of window lengths to use for extracting SFA words from
    *                      time series.
    * @param normMean      set to true, if mean should be set to 0 for a window
-   * @param normMean      set to true, if the Fourier transform should be normed (typically
+   * @param lowerBounding set to true, if the Fourier transform should be normed (typically
    *                      used to lower bound / mimic Euclidean distance).
    */
   public WEASELModel(

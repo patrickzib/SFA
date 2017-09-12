@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,11 +20,11 @@ import sfa.timeseries.TimeSeries;
  */
 public class ShotgunClassifier extends Classifier {
 
-  public ShotgunClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public ShotgunClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
   }
 
-  public Score eval() throws IOException {
+  public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
 
@@ -49,7 +48,7 @@ public class ShotgunClassifier extends Classifier {
         }
 
         // Classify: testing score
-        int correctTesting = predict(bestScore.windowLength, normMean, this.testSamples, this.trainSamples, 1.0).correct.get();
+        int correctTesting = predict(bestScore.windowLength, normMean, this.testSamples, this.trainSamples).correct.get();
 
         if (bestCorrectTraining < bestScore.training) {
           bestCorrectTesting = correctTesting;
@@ -110,8 +109,7 @@ public class ShotgunClassifier extends Classifier {
                 allWindows[i],
                 normMean,
                 samples,
-                samples,
-                1.0
+                samples
             );
 
             Score score = new Score("Shotgun", p.correct.get(), p.correct.get(), normMean, allWindows[i]);
@@ -144,8 +142,7 @@ public class ShotgunClassifier extends Classifier {
       final int windowLength,
       final boolean normMean,
       final TimeSeries[] testSamples,
-      final TimeSeries[] trainSamples,
-      final double factor) {
+      final TimeSeries[] trainSamples) {
 
     final Predictions p = new Predictions(new String[testSamples.length], 0);
 

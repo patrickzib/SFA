@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -46,7 +45,7 @@ public class WEASELClassifier extends Classifier {
   public static int iterations = 5000;
   public static double c = 1;
 
-  public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
   }
 
@@ -78,7 +77,7 @@ public class WEASELClassifier extends Classifier {
   }
 
   @Override
-  public Score eval() throws IOException {
+  public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
       // generate test train/split for cross-validation
@@ -87,7 +86,7 @@ public class WEASELClassifier extends Classifier {
       long startTime = System.currentTimeMillis();
       this.correctTraining = new AtomicInteger(0);
 
-      WScore bestScore = fit(this.trainSamples, exec);
+      WScore bestScore = fit(this.trainSamples);
 
       // training score
       if (DEBUG) {
@@ -97,7 +96,7 @@ public class WEASELClassifier extends Classifier {
       }
 
       // determine label based on the majority of predictions
-      int correctTesting = predict(exec, bestScore, this.testSamples);
+      int correctTesting = predict(bestScore, this.testSamples);
 
       if (DEBUG) {
         System.out.println("Weasel Testing:\t");
@@ -119,8 +118,7 @@ public class WEASELClassifier extends Classifier {
   }
 
   public WScore fit(
-      final TimeSeries[] samples,
-      final ExecutorService exec) {
+      final TimeSeries[] samples) {
     try {
       int maxCorrect = -1;
       int bestF = -1;
@@ -182,7 +180,6 @@ public class WEASELClassifier extends Classifier {
   }
 
   public int predict(
-      final ExecutorService exec,
       final WScore score,
       final TimeSeries[] testSamples) {
     // iterate each sample to classify
