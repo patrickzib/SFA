@@ -42,7 +42,8 @@ public class UCRClassificationTest {
       // the relative path to the datasets
       ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-      File dir = new File(classLoader.getResource("datasets/").getFile());
+      //File dir = new File(classLoader.getResource("datasets/").getFile());
+      File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
 
       for (String s : datasets) {
         File d = new File(dir.getAbsolutePath()+"/"+s);
@@ -62,7 +63,7 @@ public class UCRClassificationTest {
               TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 
-              // The W-classifier
+              // The WEASEL-classifier
               Classifier w = new WEASELClassifier(trainSamples, testSamples);
               Classifier.Score scoreW = w.eval();
               System.out.println(s + ";" + scoreW.toString());

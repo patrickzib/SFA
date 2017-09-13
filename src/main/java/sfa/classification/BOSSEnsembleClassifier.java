@@ -14,6 +14,7 @@ import sfa.transformation.BOSSModel;
 import sfa.transformation.BOSSModel.BagOfPattern;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
+import sfa.transformation.EnsembleModel;
 
 /**
  * The Bag-of-SFA-Symbols Ensemble Classifier as published in

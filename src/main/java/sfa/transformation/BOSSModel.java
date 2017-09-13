@@ -25,7 +25,19 @@ public class BOSSModel {
   public int windowLength;
   public boolean normMean;
   public SFA signature;
-  public final static int BLOCKS = 8;
+
+  public final static int BLOCKS;
+
+  static {
+    Runtime runtime = Runtime.getRuntime();
+    if (runtime.availableProcessors() <= 4) {
+      BLOCKS = 8;
+    } else {
+      BLOCKS = runtime.availableProcessors();
+    }
+
+    //    BLOCKS = 1; // for testing purposes
+  }
 
   /**
    * Create a BOSS model.

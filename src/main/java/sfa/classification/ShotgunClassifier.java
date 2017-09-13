@@ -10,6 +10,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
+import sfa.transformation.EnsembleModel;
+import sfa.transformation.ShotgunModel;
 
 /**
  * The Shotgun Classifier as published in:
@@ -29,7 +31,7 @@ public class ShotgunClassifier extends Classifier {
     try {
 
       // Shotgun Distance
-      Score totalBestScore = new Score("not initialized", -1, -1, false, -1);
+      ShotgunModel bestModel = new ShotgunModel(0, false);
       int bestCorrectTesting = 0;
       int bestCorrectTraining = 0;
 
@@ -38,22 +40,25 @@ public class ShotgunClassifier extends Classifier {
 
         this.correctTraining = new AtomicInteger(0);
 
-        List<Score> scores = fitEnsemble(exec, this.trainSamples, normMean, 1.0);
+        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, normMean, 1.0);
 
         // training score
-        Score bestScore = scores.get(0);
+        ShotgunModel model = models.getHighestScoringModel();
         if (DEBUG) {
-          System.out.println("Shotgun Training:\t" + bestScore.windowLength + "\tnormed: \t" + normMean);
+          System.out.println("Shotgun Training:\t" + model.length + "\tnormed: \t" + normMean);
           outputResult(this.correctTraining.get(), startTime, this.trainSamples.length);
         }
 
         // Classify: testing score
-        int correctTesting = predict(bestScore.windowLength, normMean, this.testSamples, this.trainSamples).correct.get();
+        int correctTesting = predict(
+                model,
+                this.testSamples,
+                this.trainSamples).correct.get();
 
-        if (bestCorrectTraining < bestScore.training) {
+        if (bestCorrectTraining < models.getHighestAccuracy()) {
           bestCorrectTesting = correctTesting;
           bestCorrectTraining = this.correctTraining.get();
-          totalBestScore = bestScore;
+          bestModel = model;
         }
         if (DEBUG) {
           System.out.println("");
@@ -63,22 +68,21 @@ public class ShotgunClassifier extends Classifier {
           "Shotgun",
           1 - formatError(bestCorrectTesting, this.testSamples.length),
           1 - formatError(bestCorrectTraining, this.trainSamples.length),
-          totalBestScore.normed,
-          totalBestScore.windowLength);
+          bestModel.normMean,
+          bestModel.length);
     } finally {
       exec.shutdown();
     }
   }
 
 
-  public List<Score> fitEnsemble(
+  public EnsembleModel fitEnsemble(
       final ExecutorService exec,
-      final TimeSeries[] trainSamples,
       final boolean normMean,
       final double factor) {
     int minWindowLength = 5;
     int maxWindowLength = MAX_WINDOW_LENGTH;
-    for (TimeSeries ts : trainSamples) {
+    for (TimeSeries ts : this.trainSamples) {
       maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
     }
 
@@ -87,10 +91,10 @@ public class ShotgunClassifier extends Classifier {
       windows.add(windowLength);
     }
 
-    return fit(windows.toArray(new Integer[]{}), normMean, trainSamples, factor, exec);
+    return fit(windows.toArray(new Integer[]{}), normMean, this.trainSamples, factor, exec);
   }
 
-  public List<Score> fit(
+  public EnsembleModel fit(
       final Integer[] allWindows,
       final boolean normMean,
       final TimeSeries[] samples,
@@ -106,8 +110,7 @@ public class ShotgunClassifier extends Classifier {
         for (int i = 0; i < allWindows.length; i++) {
           if (i % threads == id) {
             Predictions p = predict(
-                allWindows[i],
-                normMean,
+                new ShotgunModel(allWindows[i], normMean),
                 samples,
                 samples
             );
@@ -135,12 +138,24 @@ public class ShotgunClassifier extends Classifier {
 
     // sort descending
     Collections.sort(results, Collections.reverseOrder());
-    return results;
+
+    // only keep best scores
+    List<ShotgunModel> model = new ArrayList<>();
+    List<Double> accuracy = new ArrayList<>();
+
+    for (int i = 0; i < results.size(); i++) {
+      final Score score = results.get(i);
+      if (score.training >= this.correctTraining.get() * factor) { // all with same score
+        model.add(new ShotgunModel(score.windowLength, score.normed));
+        accuracy.add(score.training);
+      }
+    }
+
+    return new EnsembleModel<ShotgunModel>(model, accuracy);
   }
 
   public Predictions predict(
-      final int windowLength,
-      final boolean normMean,
+      final ShotgunModel model,
       final TimeSeries[] testSamples,
       final TimeSeries[] trainSamples) {
 
@@ -149,7 +164,7 @@ public class ShotgunClassifier extends Classifier {
     // calculate means and stds for each sample
     final double[][] means = new double[trainSamples.length][];
     final double[][] stds = new double[trainSamples.length][];
-    calcMeansStds(windowLength, trainSamples, means, stds, normMean);
+    calcMeansStds(model.length, trainSamples, means, stds, model.normMean);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -162,8 +177,8 @@ public class ShotgunClassifier extends Classifier {
             double distanceTo1NN = Double.MAX_VALUE;
             String predictedLabel = "";
 
-            int wQueryLen = Math.min(query.getLength(), windowLength);
-            TimeSeries[] disjointWindows = query.getDisjointSequences(wQueryLen, normMean); // possible without copying!?
+            int wQueryLen = Math.min(query.getLength(), model.length);
+            TimeSeries[] disjointWindows = query.getDisjointSequences(wQueryLen, model.normMean); // possible without copying!?
 
             // perform a 1-NN search
             for (int j = 0; j < trainSamples.length; j++) {
@@ -177,7 +192,7 @@ public class ShotgunClassifier extends Classifier {
                   double resultDistance = distanceTo1NN;
 
                   // calculate euclidean distances for each sliding window
-                  for (int ww = 0, end = ts.getLength() - windowLength + 1; ww < end; ww++) { // faster than reevaluation in for loop
+                  for (int ww = 0, end = ts.getLength() - model.length + 1; ww < end; ww++) { // faster than reevaluation in for loop
                     double distance = getEuclideanDistance(ts, q, means[j][ww], stds[j][ww], resultDistance, ww);
                     resultDistance = Math.min(distance, resultDistance);
                   }
