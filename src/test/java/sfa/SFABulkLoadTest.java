@@ -7,10 +7,12 @@ import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,12 +39,12 @@ import sfa.transformation.SFA.HistogramType;
 @RunWith(JUnit4.class)
 public class SFABulkLoadTest {
 
-  static String bucketDir = "./tmp/";
+  static File tempDir = null;
   static ExecutorService serializerExec = Executors.newFixedThreadPool(2); // serialize
-                                                                           // access
-                                                                           // to
-                                                                           // the
-                                                                           // disk
+  // access
+  // to
+  // the
+  // disk
   static ExecutorService transformExec = Executors.newFixedThreadPool(4); // parallel
                                                                           // SFA
                                                                           // transformation
@@ -54,14 +57,17 @@ public class SFABulkLoadTest {
 
   static Runtime runtime = Runtime.getRuntime();
 
-  public static void setUpBucketDir() {
-    if (!new File(bucketDir).exists()) {
-      System.out.println("Creating temp directory...");
-      new File(bucketDir).mkdir();
+  public void setUpBucketDir() {
+    try {
+      tempDir = Files.createTempDirectory("tmp").toFile();
+      System.out.println("Created temp directory at "+tempDir.getAbsolutePath());
+    } catch (IOException e) {
+      Assert.fail("Unable to create temp directory");
     }
   }
 
-  public static void testBulkLoadWholeMatching() throws IOException {
+  @Test
+  public void testBulkLoadWholeMatching() throws IOException {
     // setUpBucketDir();
     //
     // int N = 100000;
@@ -151,12 +157,12 @@ public class SFABulkLoadTest {
 
   /**
    * Gets the i-th time series of length n
-   * 
+   *
    * @param i
    * @param n
    * @return
    */
-  private static TimeSeries getTimeSeries(int i, int n) {
+  private TimeSeries getTimeSeries(int i, int n) {
     return TimeSeriesLoader.generateRandomWalkData(n, new Random(i));
   }
 
@@ -168,13 +174,14 @@ public class SFABulkLoadTest {
    * @param chunkSize
    * @return
    */
-  private static int getBestDepth(int count, int chunkSize) {
+  private int getBestDepth(int count, int chunkSize) {
     int trieDepth = (int) (Math.round(Math.log(count / chunkSize) / Math.log(8)));
     System.out.println("Using trie depth:\t" + trieDepth + " (" + (int) Math.pow(8, trieDepth) + " buckets)");
     return trieDepth;
   }
 
-  public static void testBulkLoadSubsequenceMatching() throws IOException {
+  @Test
+  public void testBulkLoadSubsequenceMatching() throws IOException {
     setUpBucketDir();
 
     int N = 20 * 100_000;
@@ -187,8 +194,8 @@ public class SFABulkLoadTest {
     // query subsequences
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(classLoader.getResource(
-        "datasets/indexing/query_lightcurves.txt").getFile());
+    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(
+            classLoader.getResource("datasets/indexing/query_lightcurves.txt").getFile());
     int n = timeSeries2[0].getLength();
     System.out.println("Query DS size:\t" + n);
 
@@ -196,7 +203,7 @@ public class SFABulkLoadTest {
 
     // train SFA quantization bins on the whole time series
     SFA sfa = new SFA(HistogramType.EQUI_FREQUENCY);
-    sfa.fitWindowing(new TimeSeries[] { timeSeries }, n, l, symbols, true, true);
+    sfa.fitWindowing(new TimeSeries[]{timeSeries}, n, l, symbols, true, true);
     // sfa.printBins();
 
     // process data in chunks of 'chunkSize' and create one index each
@@ -227,7 +234,7 @@ public class SFABulkLoadTest {
         try {
           bytesWritten = futures.remove().get();
         } catch (Exception e) {
-          e.printStackTrace();
+          Assert.fail();
         }
       }
       System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time)) + " kb/s");
@@ -298,12 +305,12 @@ public class SFABulkLoadTest {
    * @param sfa
    * @return
    */
-  protected static SFATrie buildSFATrie(int l, int leafThreshold, int windowLength, int trieDepth, SFA sfa) {
+  protected SFATrie buildSFATrie(int l, int leafThreshold, int windowLength, int trieDepth, SFA sfa) {
     long time;// now, process each bucket on disk
     SFATrie index = null;
 
     System.out.println("Building and merging Trees:");
-    File directory = new File(bucketDir);
+    File directory = tempDir;
 
     // create an index for each bucket and merge the indices
     for (File bucket : directory.listFiles()) {
@@ -321,7 +328,7 @@ public class SFABulkLoadTest {
           }
 
           System.out.println("Merging done in " + (System.currentTimeMillis() - time) + " ms. " + "\t Elements: "
-              + index.getSize() + "\t Height: " + index.getHeight());
+                  + index.getSize() + "\t Height: " + index.getHeight());
         }
       }
     }
@@ -340,7 +347,7 @@ public class SFABulkLoadTest {
     return index;
   }
 
-  public static void performGC() {
+  public void performGC() {
     try {
       System.gc();
       Thread.sleep(10);
@@ -355,7 +362,7 @@ public class SFABulkLoadTest {
    * @param name
    * @return
    */
-  protected static List<SFATrie.Approximation[]> readFromFile(File name) {
+  protected List<SFATrie.Approximation[]> readFromFile(File name) {
     System.out.println("Reading from : " + name.toString());
     long count = 0;
     List<SFATrie.Approximation[]> data = new ArrayList<>();
@@ -368,7 +375,7 @@ public class SFABulkLoadTest {
     } catch (EOFException e) {
       // ignore EOFException
     } catch (Exception e) {
-      e.printStackTrace();
+      Assert.fail();
     }
     System.out.println("\t" + count + " time series read.");
 
@@ -418,7 +425,7 @@ public class SFABulkLoadTest {
           this.wordPartitions[i].drainTo(current);
           writeToDisk(current, i);
         } catch (Exception e) {
-          e.printStackTrace();
+          Assert.fail();
         }
       }
       // wait for all futures/threads to finish
@@ -426,7 +433,7 @@ public class SFABulkLoadTest {
         try {
           futures.remove().get();
         } catch (Exception e) {
-          e.printStackTrace();
+          Assert.fail();
         }
       }
       // close all streams
@@ -438,7 +445,7 @@ public class SFABulkLoadTest {
             totalTSwritten += writtenSamples[i];
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          Assert.fail();
         }
       }
       System.out.println("Time series written:" + totalTSwritten);
@@ -472,13 +479,13 @@ public class SFABulkLoadTest {
 
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        Assert.fail();
       }
     }
 
     /**
      * Gets a prefix of length useLetters from the word, encoded as int.
-     * 
+     *
      * @param word
      * @param useLetters
      * @return
@@ -496,22 +503,23 @@ public class SFABulkLoadTest {
 
     /**
      * Serializes the bucket to disk
-     * 
+     *
      * @param current
      * @param letter
+     * @throws FileNotFoundException
      * @throws IOException
      */
     protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws IOException {
       if (!current.isEmpty()) {
         if (partitionsStream[letter] == null) {
-          String fileName = bucketDir + letter + ".bucket";
+          String fileName = tempDir.getAbsolutePath() + File.separator + letter + ".bucket";
           File file = new File(fileName);
           file.deleteOnExit();
           partitionsStream[letter] = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false),
-              1048576 * 8 /* 8mb */));
+                  1048576 * 8 /* 8mb */));
         }
 
-        partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[] {}));
+        partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[]{}));
 
         // reset the references to the objects to allow
         // the garbage collector to write the objects
@@ -520,7 +528,7 @@ public class SFABulkLoadTest {
         try {
           Thread.sleep(100);
         } catch (InterruptedException e) {
-          e.printStackTrace();
+          Assert.fail();
         }
 
         this.writtenSamples[letter] += current.size();
@@ -528,15 +536,9 @@ public class SFABulkLoadTest {
     }
   }
 
-  @Test
-  public void testSFABulkLoad() throws IOException {
-    try {
-      testBulkLoadWholeMatching();
-
-      testBulkLoadSubsequenceMatching();
-    } finally {
-      serializerExec.shutdown();
-      transformExec.shutdown();
-    }
+  @After
+  public void tearDown() throws Exception {
+    serializerExec.shutdown();
+    transformExec.shutdown();
   }
 }
