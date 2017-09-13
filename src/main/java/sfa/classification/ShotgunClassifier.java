@@ -31,7 +31,7 @@ public class ShotgunClassifier extends Classifier {
     try {
 
       // Shotgun Distance
-      ShotgunModel bestModel = new ShotgunModel(0, false);
+      ShotgunModel bestModel = new ShotgunModel(0, false, trainSamples);
       int bestCorrectTesting = 0;
       int bestCorrectTraining = 0;
 
@@ -46,14 +46,13 @@ public class ShotgunClassifier extends Classifier {
         ShotgunModel model = models.getHighestScoringModel();
         if (DEBUG) {
           System.out.println("Shotgun Training:\t" + model.length + "\tnormed: \t" + normMean);
-          outputResult(this.correctTraining.get(), startTime, this.trainSamples.length);
+          outputResult(this.correctTraining.get(), startTime, model.samples.length);
         }
 
         // Classify: testing score
         int correctTesting = predict(
                 model,
-                this.testSamples,
-                this.trainSamples).correct.get();
+                this.testSamples).correct.get();
 
         if (bestCorrectTraining < models.getHighestAccuracy()) {
           bestCorrectTesting = correctTesting;
@@ -111,8 +110,7 @@ public class ShotgunClassifier extends Classifier {
         for (int i = 0; i < allWindows.length; i++) {
           if (i % threads == id) {
             Predictions p = predict(
-                new ShotgunModel(allWindows[i], normMean),
-                samples,
+                new ShotgunModel(allWindows[i], normMean, samples),
                 samples
             );
 
@@ -147,7 +145,7 @@ public class ShotgunClassifier extends Classifier {
     for (int i = 0; i < results.size(); i++) {
       final Score score = results.get(i);
       if (score.training >= this.correctTraining.get() * factor) { // all with same score
-        model.add(new ShotgunModel(score.windowLength, score.normed));
+        model.add(new ShotgunModel(score.windowLength, score.normed, samples));
         accuracy.add(score.training);
       }
     }
@@ -157,15 +155,14 @@ public class ShotgunClassifier extends Classifier {
 
   public Predictions predict(
       final ShotgunModel model,
-      final TimeSeries[] testSamples,
-      final TimeSeries[] trainSamples) {
+      final TimeSeries[] testSamples) {
 
     final Predictions p = new Predictions(new String[testSamples.length], 0);
 
     // calculate means and stds for each sample
-    final double[][] means = new double[trainSamples.length][];
-    final double[][] stds = new double[trainSamples.length][];
-    calcMeansStds(model.length, trainSamples, means, stds, model.normMean);
+    final double[][] means = new double[model.samples.length][];
+    final double[][] stds = new double[model.samples.length][];
+    calcMeansStds(model.length, model.samples, means, stds, model.normMean);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -182,8 +179,8 @@ public class ShotgunClassifier extends Classifier {
             TimeSeries[] disjointWindows = query.getDisjointSequences(wQueryLen, model.normMean); // possible without copying!?
 
             // perform a 1-NN search
-            for (int j = 0; j < trainSamples.length; j++) {
-              TimeSeries ts = trainSamples[j];
+            for (int j = 0; j < model.samples.length; j++) {
+              TimeSeries ts = model.samples[j];
 
               // Shotgun Distance
               if (ts != query) {

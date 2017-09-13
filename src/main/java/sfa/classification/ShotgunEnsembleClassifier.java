@@ -105,9 +105,9 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
             usedLengths.add(m.length);
 
             Predictions p = predict(
-                new ShotgunModel(m.length, m.normMean),
-                testSamples,
-                trainSamples);
+                new ShotgunModel(m.length, m.normMean, m.samples),
+                testSamples
+            );
             for (int a = 0; a < p.labels.length; a++) {
               testLabels[a].add(new Pair<>(p.labels[a], accuracy));
             }

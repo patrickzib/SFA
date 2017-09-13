@@ -14,7 +14,6 @@ import sfa.transformation.BOSSModel;
 import sfa.transformation.BOSSModel.BagOfPattern;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
-import sfa.transformation.EnsembleModel;
 
 /**
  * The Bag-of-SFA-Symbols Ensemble Classifier as published in
@@ -34,8 +33,8 @@ public class BOSSEnsembleClassifier extends Classifier {
     super(train, test);
   }
 
-  public static class BossScore extends Score {
-    public BossScore(boolean normed, int windowLength) {
+  public static class BOSSScore extends Score {
+    public BOSSScore(boolean normed, int windowLength) {
       super("BOSS", 0, 0, normed, windowLength);
     }
 
@@ -53,7 +52,7 @@ public class BOSSEnsembleClassifier extends Classifier {
   public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
-      BossScore totalBestScore = null;
+      BOSSScore totalBestScore = null;
       int bestCorrectTesting = 0;
       int bestCorrectTraining = 0;
 
@@ -62,10 +61,10 @@ public class BOSSEnsembleClassifier extends Classifier {
 
         this.correctTraining = new AtomicInteger(0);
 
-        List<BossScore> scores = fitEnsemble(exec, trainSamples, norm);
+        List<BOSSScore> scores = fitEnsemble(exec, trainSamples, norm);
 
         // training score
-        BossScore bestScore = scores.get(0);
+        BOSSScore bestScore = scores.get(0);
         if (DEBUG) {
           System.out.println("BOSS Training:\t" + bestScore.windowLength + " " + bestScore.features + "\tnormed: \t" + norm);
           outputResult(this.correctTraining.get(), startTime, this.trainSamples.length);
@@ -95,7 +94,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     }
   }
 
-  public List<BossScore> fitEnsemble(
+  public List<BOSSScore> fitEnsemble(
       ExecutorService exec,
       final TimeSeries[] samples,
       final boolean normMean) {
@@ -111,22 +110,22 @@ public class BOSSEnsembleClassifier extends Classifier {
     return fit(windows.toArray(new Integer[]{}), normMean, samples, exec);
   }
 
-  public ArrayList<BossScore> fit(
+  public ArrayList<BOSSScore> fit(
       Integer[] allWindows,
       boolean normMean,
       TimeSeries[] samples,
       ExecutorService exec) {
 
-    final ArrayList<BossScore> results = new ArrayList<>(allWindows.length);
+    final ArrayList<BOSSScore> results = new ArrayList<>(allWindows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      BossScore bestScore = new BossScore(normMean, 0);
+      BOSSScore bestScore = new BOSSScore(normMean, 0);
       final Object sync = new Object();
 
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < allWindows.length; i++) {
           if (i % threads == id) {
-            BossScore score = new BossScore(normMean, allWindows[i]);
+            BOSSScore score = new BOSSScore(normMean, allWindows[i]);
             try {
               BOSSModel boss = new BOSSModel(maxF, maxS, allWindows[i], score.normed);
               int[][] words = boss.createWords(samples);
@@ -174,7 +173,7 @@ public class BOSSEnsembleClassifier extends Classifier {
 
 
     // cleanup unused scores
-    for (BossScore s : results) {
+    for (BOSSScore s : results) {
       if (s.bag != null
           && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) {
         s.clear();
@@ -244,7 +243,7 @@ public class BOSSEnsembleClassifier extends Classifier {
 
   public int predictEnsemble(
       final ExecutorService executor,
-      final List<BossScore> results,
+      final List<BOSSScore> results,
       final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
@@ -263,7 +262,7 @@ public class BOSSEnsembleClassifier extends Classifier {
         // iterate each sample to classify
         for (int i = 0; i < results.size(); i++) {
           if (i % threads == id) {
-            final BossScore score = results.get(i);
+            final BOSSScore score = results.get(i);
             if (score.training >= BOSSEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
               usedLengths.add(score.windowLength);
 
