@@ -49,8 +49,8 @@ public class WEASELClassifier extends Classifier {
     super(train, test);
   }
 
-  public static class WScore extends Score {
-    public WScore(
+  public static class WEASELScore extends Score {
+    public WEASELScore(
         double testing,
         boolean normed,
         int features,
@@ -86,7 +86,7 @@ public class WEASELClassifier extends Classifier {
       long startTime = System.currentTimeMillis();
       this.correctTraining = new AtomicInteger(0);
 
-      WScore bestScore = fit(this.trainSamples);
+      WEASELScore bestScore = fit(this.trainSamples);
 
       // training score
       if (DEBUG) {
@@ -117,8 +117,7 @@ public class WEASELClassifier extends Classifier {
 
   }
 
-  public WScore fit(
-      final TimeSeries[] samples) {
+  public WEASELScore fit(final TimeSeries[] samples) {
     try {
       int maxCorrect = -1;
       int bestF = -1;
@@ -166,7 +165,7 @@ public class WEASELClassifier extends Classifier {
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
       Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
-      return new WScore(
+      return new WEASELScore(
           maxCorrect,
           bestNorm,
           bestF,
@@ -180,7 +179,7 @@ public class WEASELClassifier extends Classifier {
   }
 
   public int predict(
-      final WScore score,
+      final WEASELScore score,
       final TimeSeries[] testSamples) {
     // iterate each sample to classify
     final int[][][] wordsTest = score.model.createWords(testSamples);

@@ -40,7 +40,7 @@ public class ShotgunClassifier extends Classifier {
 
         this.correctTraining = new AtomicInteger(0);
 
-        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, normMean, 1.0);
+        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, this.trainSamples, normMean, 1.0);
 
         // training score
         ShotgunModel model = models.getHighestScoringModel();
@@ -78,11 +78,12 @@ public class ShotgunClassifier extends Classifier {
 
   public EnsembleModel fitEnsemble(
       final ExecutorService exec,
+      final TimeSeries[] samples,
       final boolean normMean,
       final double factor) {
     int minWindowLength = 5;
     int maxWindowLength = MAX_WINDOW_LENGTH;
-    for (TimeSeries ts : this.trainSamples) {
+    for (TimeSeries ts : samples) {
       maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
     }
 
@@ -91,7 +92,7 @@ public class ShotgunClassifier extends Classifier {
       windows.add(windowLength);
     }
 
-    return fit(windows.toArray(new Integer[]{}), normMean, this.trainSamples, factor, exec);
+    return fit(windows.toArray(new Integer[]{}), normMean, samples, factor, exec);
   }
 
   public EnsembleModel fit(

@@ -62,7 +62,7 @@ public class BOSSEnsembleClassifier extends Classifier {
 
         this.correctTraining = new AtomicInteger(0);
 
-        List<BossScore> scores = fitEnsemble(exec, norm);
+        List<BossScore> scores = fitEnsemble(exec, trainSamples, norm);
 
         // training score
         BossScore bestScore = scores.get(0);
@@ -97,17 +97,18 @@ public class BOSSEnsembleClassifier extends Classifier {
 
   public List<BossScore> fitEnsemble(
       ExecutorService exec,
+      final TimeSeries[] samples,
       final boolean normMean) {
     int minWindowLength = 10;
     int maxWindowLength = MAX_WINDOW_LENGTH;
-    for (TimeSeries ts : this.trainSamples) {
+    for (TimeSeries ts : samples) {
       maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
     }
     ArrayList<Integer> windows = new ArrayList<>();
     for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
       windows.add(windowLength);
     }
-    return fit(windows.toArray(new Integer[]{}), normMean, trainSamples, exec);
+    return fit(windows.toArray(new Integer[]{}), normMean, samples, exec);
   }
 
   public ArrayList<BossScore> fit(

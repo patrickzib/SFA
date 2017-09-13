@@ -40,7 +40,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
         this.correctTraining = new AtomicInteger(0);
 
-        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, normMean, factor);
+        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, this.trainSamples, normMean, factor);
 
         // training score
         ShotgunModel model = models.getHighestScoringModel();
