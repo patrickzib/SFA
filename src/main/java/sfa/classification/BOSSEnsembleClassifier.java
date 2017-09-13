@@ -2,8 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,23 +16,20 @@ import sfa.transformation.BOSSModel.BagOfPattern;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
 /**
- * 
  * The Bag-of-SFA-Symbols Ensemble Classifier as published in
- * 
- *    Schäfer, P.: The boss is concerned with time series classification 
- *    in the presence of noise. DMKD (2015)
- *   
- *
+ * <p>
+ * Schäfer, P.: The boss is concerned with time series classification
+ * in the presence of noise. DMKD (2015)
  */
 public class BOSSEnsembleClassifier extends Classifier {
-  
+
   public static double factor = 0.92;
 
   public static int maxF = 16; // 12
   public static int minF = 6;  // 4
   public static int maxS = 4;  // 8
 
-  public BOSSEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) throws IOException {
+  public BOSSEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
   }
 
@@ -44,7 +39,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     }
 
     public BagOfPattern[] bag;
-    public BOSSModel model;    
+    public BOSSModel model;
     public int features;
 
     public void clear() {
@@ -54,7 +49,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     }
   }
 
-  public Score eval() throws IOException {
+  public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
       BossScore totalBestScore = null;
@@ -76,11 +71,11 @@ public class BOSSEnsembleClassifier extends Classifier {
         }
 
         // determine labels based on the majority of predictions
-        int correctTesting = predictEnsamble(exec, scores, this.testSamples, norm);
+        int correctTesting = predictEnsemble(exec, scores, this.testSamples);
 
         if (bestCorrectTraining < bestScore.training) {
           bestCorrectTesting = correctTesting;
-          bestCorrectTraining = (int)bestScore.training;
+          bestCorrectTraining = (int) bestScore.training;
           totalBestScore = bestScore;
         }
         if (DEBUG) {
@@ -90,25 +85,24 @@ public class BOSSEnsembleClassifier extends Classifier {
 
       return new Score(
           "BOSS ensemble",
-          1-formatError(bestCorrectTesting, this.testSamples.length),
-          1-formatError(bestCorrectTraining, this.trainSamples.length),
+          1 - formatError(bestCorrectTesting, this.testSamples.length),
+          1 - formatError(bestCorrectTraining, this.trainSamples.length),
           totalBestScore.normed,
           totalBestScore.windowLength);
-    }
-    finally {
+    } finally {
       exec.shutdown();
     }
   }
 
   public List<BossScore> fitEnsemble(
       ExecutorService exec,
-      final boolean normMean) throws FileNotFoundException {
+      final boolean normMean) {
     int minWindowLength = 10;
     int maxWindowLength = MAX_WINDOW_LENGTH;
     for (TimeSeries ts : this.trainSamples) {
       maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
     }
-    ArrayList<Integer> windows = new ArrayList<Integer>();
+    ArrayList<Integer> windows = new ArrayList<>();
     for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
       windows.add(windowLength);
     }
@@ -120,54 +114,54 @@ public class BOSSEnsembleClassifier extends Classifier {
       boolean normMean,
       TimeSeries[] samples,
       ExecutorService exec) {
-    final ArrayList<BossScore> results = new ArrayList<BossScore>(allWindows.length);
+
+    final ArrayList<BossScore> results = new ArrayList<>(allWindows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       BossScore bestScore = new BossScore(normMean, 0);
+      final Object sync = new Object();
+
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < allWindows.length; i++) {
-          if (i % threads == id) {         
+          if (i % threads == id) {
             BossScore score = new BossScore(normMean, allWindows[i]);
             try {
-              BOSSModel boss = new BOSSModel(maxF, maxS, allWindows[i], score.normed);              
+              BOSSModel boss = new BOSSModel(maxF, maxS, allWindows[i], score.normed);
               int[][] words = boss.createWords(samples);
-              
-              optimize :
-                for (int f = minF; f <= maxF; f+=2) {
-                  
-                  BagOfPattern[] bag = boss.createBagOfPattern(words, samples, f);
-                  
-                  Predictions p = predict(score.windowLength, bag, bag);
 
-                  if (p.correct.get() > score.training) {
-                    score.training = p.correct.get();
-                    score.testing = p.correct.get();
-                    score.features = f;
-                    score.model = boss;
-                    score.bag = bag;
-                    
-                    if (p.correct.get() == samples.length) {
-                      break optimize;
-                    }
+              for (int f = minF; f <= maxF; f += 2) {
+
+                BagOfPattern[] bag = boss.createBagOfPattern(words, samples, f);
+
+                Predictions p = predict(bag, bag);
+
+                if (p.correct.get() > score.training) {
+                  score.training = p.correct.get();
+                  score.testing = p.correct.get();
+                  score.features = f;
+                  score.model = boss;
+                  score.bag = bag;
+
+                  if (p.correct.get() == samples.length) {
+                    break;
                   }
                 }
+              }
             } catch (Exception e) {
               e.printStackTrace();
             }
-            
+
             // keep best scores
-            if (this.bestScore.compareTo(score)<0) {
-              synchronized(this.bestScore) {
-                if (this.bestScore.compareTo(score)<0) {
-                  BOSSEnsembleClassifier.this.correctTraining.set((int)score.training);
-                  this.bestScore = score;
-                }
-              }              
+            synchronized (sync) {
+              if (this.bestScore.compareTo(score) < 0) {
+                BOSSEnsembleClassifier.this.correctTraining.set((int) score.training);
+                this.bestScore = score;
+              }
             }
-            
+
             // add to ensemble
             if (score.training >= BOSSEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
-              synchronized(results) {
+              synchronized (results) {
                 results.add(score);
               }
             }
@@ -176,11 +170,11 @@ public class BOSSEnsembleClassifier extends Classifier {
       }
     });
 
-    
+
     // cleanup unused scores
     for (BossScore s : results) {
       if (s.bag != null
-          && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) { 
+          && s.training < BOSSEnsembleClassifier.this.correctTraining.get() * factor) {
         s.clear();
       }
     }
@@ -191,7 +185,6 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
   public Predictions predict(
-      final int windowLength,
       final BagOfPattern[] bagOfPatternsTestSamples,
       final BagOfPattern[] bagOfPatternsTrainSamples) {
 
@@ -211,31 +204,31 @@ public class BOSSEnsembleClassifier extends Classifier {
             for (IntIntCursor key : bagOfPatternsTestSamples[i].bag) {
               noMatchDistance += key.value * key.value;
             }
-            
+
             nnSearch:
-              for (int j = 0; j < bagOfPatternsTrainSamples.length; j++) {
-                if (bagOfPatternsTestSamples[i] != bagOfPatternsTrainSamples[j]) {
-                  // determine distance
-                  long distance = 0;
-                  for (IntIntCursor key : bagOfPatternsTestSamples[i].bag) {
-                    long buf = key.value - bagOfPatternsTrainSamples[j].bag.get(key.key);
-                    distance += buf * buf;
+            for (int j = 0; j < bagOfPatternsTrainSamples.length; j++) {
+              if (bagOfPatternsTestSamples[i] != bagOfPatternsTrainSamples[j]) {
+                // determine distance
+                long distance = 0;
+                for (IntIntCursor key : bagOfPatternsTestSamples[i].bag) {
+                  long buf = key.value - bagOfPatternsTrainSamples[j].bag.get(key.key);
+                  distance += buf * buf;
 
-                    if (distance >= minDistance) {
-                      continue nnSearch;
-                    }
-                  }
-
-                  // update nearest neighbor
-                  if (distance != noMatchDistance && distance < minDistance) {
-                    minDistance = distance;
-                    bestMatch = j;
+                  if (distance >= minDistance) {
+                    continue nnSearch;
                   }
                 }
+
+                // update nearest neighbor
+                if (distance != noMatchDistance && distance < minDistance) {
+                  minDistance = distance;
+                  bestMatch = j;
+                }
               }
+            }
 
             // check if the prediction is correct
-            p.labels[i] = bestMatch > -1? bagOfPatternsTrainSamples[bestMatch].label : null;
+            p.labels[i] = bestMatch > -1 ? bagOfPatternsTrainSamples[bestMatch].label : null;
             if (bagOfPatternsTestSamples[i].label.equals(p.labels[i])) {
               p.correct.incrementAndGet();
             }
@@ -247,20 +240,19 @@ public class BOSSEnsembleClassifier extends Classifier {
     return p;
   }
 
-  public int predictEnsamble(
+  public int predictEnsemble(
       final ExecutorService executor,
       final List<BossScore> results,
-      final TimeSeries[] testSamples,
-      boolean normMean) {
+      final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
     final List<Pair<String, Double>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
-      testLabels[i] = new ArrayList<Pair<String, Double>>();
+      testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = new ArrayList<Integer>(results.size());
+    final List<Integer> usedLengths = new ArrayList<>(results.size());
 
     // parallel execution
     ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
@@ -271,23 +263,22 @@ public class BOSSEnsembleClassifier extends Classifier {
           if (i % threads == id) {
             final BossScore score = results.get(i);
             if (score.training >= BOSSEnsembleClassifier.this.correctTraining.get() * factor) { // all with same score
-              usedLengths.add(score.windowLength);                
+              usedLengths.add(score.windowLength);
 
               BOSSModel model = score.model;
-              
+
               // create words and BOSS model for test samples
-              int[][] wordsTest = model.createWords(testSamples);                
+              int[][] wordsTest = model.createWords(testSamples);
               BagOfPattern[] bagTest = model.createBagOfPattern(wordsTest, testSamples, score.features);
-              
-              Predictions p = predict(score.windowLength, bagTest, score.bag);
+
+              Predictions p = predict(bagTest, score.bag);
 
               for (int j = 0; j < p.labels.length; j++) {
                 synchronized (testLabels[j]) {
-                  testLabels[j].add(new Pair<String, Double>(p.labels[j], score.training));
+                  testLabels[j].add(new Pair<>(p.labels[j], score.training));
                 }
               }
-            }
-            else {
+            } else {
               score.clear();
             }
           }

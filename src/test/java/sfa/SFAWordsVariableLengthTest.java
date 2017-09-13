@@ -15,8 +15,9 @@ import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
 
 /**
- * Performs a 1-NN search
+ * Tests the SFA transformation
  *
+ * This is more of a demonstration use case
  */
 @RunWith(JUnit4.class)
 public class SFAWordsVariableLengthTest {
@@ -32,16 +33,11 @@ public class SFAWordsVariableLengthTest {
 
     // Load the train/test splits
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-    TimeSeries[] train = TimeSeriesLoader
-        .loadDatset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
-    TimeSeries[] test = TimeSeriesLoader
-        .loadDatset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
+    TimeSeries[] train = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
+    TimeSeries[] test = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
 
     // train SFA representation using wordLength
     sfa.fitTransform(train, wordLength, symbols, normMean);
-
-    // bins
-    sfa.printBins();
 
     // transform
     for (int q = 0; q < test.length; q++) {
@@ -55,7 +51,7 @@ public class SFAWordsVariableLengthTest {
   }
 
   public static String toSfaWord(short[] word) {
-    StringBuffer sfaWord = new StringBuffer();
+    StringBuilder sfaWord = new StringBuilder();
     for (short c : word) {
       sfaWord.append((char)(Character.valueOf('a') + c));
     }

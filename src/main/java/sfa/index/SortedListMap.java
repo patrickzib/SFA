@@ -10,75 +10,75 @@ import java.util.NoSuchElementException;
 /**
  * Ordered List of Tuples with a maximum of <code>maxSize</code> Elements
  */
-public class SortedListMap<K extends Comparable<K>, V>{
+public class SortedListMap<K extends Comparable<K>, V> {
 
-  List<K> keys = new ArrayList<K>();
-  List<V> values = new ArrayList<V>();
-  int maxSize = 0;
+  private List<K> keys = new ArrayList<>();
+  private List<V> values = new ArrayList<>();
+  private int maxSize = 0;
   private final static int UNDEFINED = -1;
 
-  public SortedListMap (final int maxSize){
+  public SortedListMap(final int maxSize) {
     this.maxSize = maxSize;
   }
 
-  public SortedListMap (){
+  public SortedListMap() {
     this.maxSize = UNDEFINED;
   }
 
   public void clear() {
-    this.keys = new ArrayList<K>();
-    this.values = new ArrayList<V>();
+    this.keys = new ArrayList<>();
+    this.values = new ArrayList<>();
   }
 
   public boolean containsKey(K key) {
     return Collections.binarySearch(this.keys, key) >= 0;
   }
 
-  public void replaceValue (K key, V value) {
-    int pos = findFirstOccurence(key);
+  public void replaceValue(K key, V value) {
+    int pos = findFirstOccurrence(key);
     if (pos >= 0) {
       this.values.set(pos, value);
     }
   }
 
-  private int findFirstOccurence (K key) {
+  private int findFirstOccurrence(K key) {
     int pos = Collections.binarySearch(this.keys, key);
     if (pos > 0) {
-      while (pos > 0 && this.keys.get(pos -1).equals(key)) {
+      while (pos > 0 && this.keys.get(pos - 1).equals(key)) {
         pos--;
       }
     }
     return pos;
   }
 
-  private int findLastOccurence (K key) {
+  private int findLastOccurrence(K key) {
     int pos = Collections.binarySearch(this.keys, key);
     if (pos > 0) {
-      while (pos < this.keys.size()-1 && this.keys.get(pos+1).equals(key)) {
+      while (pos < this.keys.size() - 1 && this.keys.get(pos + 1).equals(key)) {
         pos++;
       }
     }
     return pos;
   }
 
-  public V getFirstOccurence(K key) {
-    int pos = findFirstOccurence(key);
+  public V getFirstOccurrence(K key) {
+    int pos = findFirstOccurrence(key);
     if (pos >= 0) {
       return this.values.get(pos);
     }
     throw new NoSuchElementException("Element with " + key + " not present.");
   }
 
-  public V getLastOccurence(K key) {
-    int pos = findLastOccurence(key);
+  public V getLastOccurrence(K key) {
+    int pos = findLastOccurrence(key);
     if (pos >= 0) {
       return this.values.get(pos);
     }
     throw new NoSuchElementException("Element with " + key + " not present.");
   }
 
-  public V put(K key, V value) {
-    int pos = findFirstOccurence(key);
+  public void put(K key, V value) {
+    int pos = findFirstOccurrence(key);
 
     if (pos >= 0 && this.values.get(pos) != value) {
       this.keys.add(pos, key);
@@ -86,25 +86,24 @@ public class SortedListMap<K extends Comparable<K>, V>{
     }
 
     if (pos < 0) {
-      this.keys.add(-pos-1, key);
-      this.values.add(-pos-1, value);
+      this.keys.add(-pos - 1, key);
+      this.values.add(-pos - 1, value);
     }
 
     if (size() > this.maxSize && this.maxSize != UNDEFINED) {
-      this.keys.remove(this.keys.size()-1);
-      this.values.remove(this.values.size()-1);
+      this.keys.remove(this.keys.size() - 1);
+      this.values.remove(this.values.size() - 1);
     }
-
-    return value;
   }
 
   /**
-   * Removes the first occurence of 'key'
+   * Removes the first occurrence of 'key'
+   *
    * @param key
    * @return
    */
   public V removeFirst(K key) {
-    int pos = findFirstOccurence(key);
+    int pos = findFirstOccurrence(key);
     if (pos >= 0) {
       this.keys.remove(pos);
       return this.values.remove(pos);
@@ -129,7 +128,7 @@ public class SortedListMap<K extends Comparable<K>, V>{
   }
 
   public K lastKey() {
-    return this.keys.get(this.keys.size()-1);
+    return this.keys.get(this.keys.size() - 1);
   }
 
   public boolean isEmpty() {

@@ -15,26 +15,20 @@ import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 
 /**
  * The Bag-of-SFA-Symbols in Vector Space model as published in
- *    Schäfer, P.: Scalable time series classification. DMKD (Preprint)
+ * Schäfer, P.: Scalable time series classification. DMKD (Preprint)
  *
  * @author bzcschae
- *
  */
 public class BOSSVSModel extends BOSSModel {
 
   /**
    * Create a BOSS VS model.
    *
-   *
-   * @param maxF
-   *          length of the SFA words
-   * @param maxS
-   *          alphabet size
-   * @param windowLength
-   *          subsequence (window) length used for extracting SFA words from
-   *          time series.
-   * @param normMean
-   *          set to true, if mean should be set to 0 for a window
+   * @param maxF         length of the SFA words
+   * @param maxS         alphabet size
+   * @param windowLength subsequence (window) length used for extracting SFA words from
+   *                     time series.
+   * @param normMean     set to true, if mean should be set to 0 for a window
    */
   public BOSSVSModel(int maxF, int maxS, int windowLength, boolean normMean) {
     super(maxF, maxS, windowLength, normMean);
@@ -56,24 +50,25 @@ public class BOSSVSModel extends BOSSModel {
   }
 
   /**
-   * Obtains the TF-IDF representation based on the BOSS represenation. Only those elements
-   * in sampleIndices are used (usefull for cross-validation).
+   * Obtains the TF-IDF representation based on the BOSS representation. Only those elements
+   * in sampleIndices are used (useful for cross-validation).
+   *
    * @param bagOfPatterns The BOSS (bag-of-patterns) representation of the time series
    * @param sampleIndices The indices to use
-   * @param uniqueLabels The unique class labels in the dataset
-   * @return
+   * @param uniqueLabels  The unique class labels in the data set
+   * @return              returns the tf-idf model for the time series
    */
   public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
       final int[] sampleIndices,
       final HashSet<String> uniqueLabels) {
 
-    ObjectObjectHashMap<String, IntFloatHashMap> matrix = new ObjectObjectHashMap<String, IntFloatHashMap>(
+    ObjectObjectHashMap<String, IntFloatHashMap> matrix = new ObjectObjectHashMap<>(
         uniqueLabels.size());
     initMatrix(matrix, uniqueLabels, bagOfPatterns);
 
     for (int j : sampleIndices) {
-      String label = bagOfPatterns[j] .label;
+      String label = bagOfPatterns[j].label;
       IntFloatHashMap wordInBagFreq = matrix.get(label);
       for (IntIntCursor key : bagOfPatterns[j].bag) {
         wordInBagFreq.putOrAdd(key.key, key.value, key.value);
@@ -84,9 +79,9 @@ public class BOSSVSModel extends BOSSModel {
     IntShortHashMap wordInClassFreq = new IntShortHashMap(matrix.iterator().next().value.size());
 
     for (ObjectCursor<IntFloatHashMap> stat : matrix.values()) {
-      // count the occurence of words
+      // count the occurrence of words
       for (IntFloatCursor key : stat.value) {
-        wordInClassFreq.putOrAdd(key.key, (short)1, (short)1);
+        wordInClassFreq.putOrAdd(key.key, (short) 1, (short) 1);
       }
     }
 
@@ -99,14 +94,13 @@ public class BOSSVSModel extends BOSSModel {
         if (patternFrequency.value > 0
             && uniqueLabels.size() != wordCount // avoid Math.log(1)
             ) {
-          double tfValue = 1.0+Math.log10(patternFrequency.value); // smoothing
-          double idfValue = Math.log10(1.0+uniqueLabels.size() / (double)wordCount); // smoothing
+          double tfValue = 1.0 + Math.log10(patternFrequency.value); // smoothing
+          double idfValue = Math.log10(1.0 + uniqueLabels.size() / (double) wordCount); // smoothing
           double tfIdf = tfValue / idfValue;
 
           // update the tfIDF vector
           tfIDFs.values[patternFrequency.index] = (float) tfIdf;
-        }
-        else {
+        } else {
           tfIDFs.values[patternFrequency.index] = 0;
         }
       }
@@ -119,7 +113,7 @@ public class BOSSVSModel extends BOSSModel {
   }
 
   protected void initMatrix(
-final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
+      final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
       final HashSet<String> uniqueLabels,
       final BagOfPattern[] bag) {
     for (String label : uniqueLabels) {
@@ -127,22 +121,21 @@ final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
       if (stat == null) {
         matrix.put(label, new IntFloatHashMap(bag[0].bag.size() * bag.length));
       } else {
-        if (stat != null) {
-          stat.clear();
-        }
+        stat.clear();
       }
     }
   }
 
   /**
    * Norm the vector to length 1
+   *
    * @param classStatistics
    */
   public void normalizeTfIdf(final ObjectObjectHashMap<String, IntFloatHashMap> classStatistics) {
     for (ObjectCursor<IntFloatHashMap> classStat : classStatistics.values()) {
       double squareSum = 0.0;
       for (FloatCursor entry : classStat.value.values()) {
-        squareSum += entry.value*entry.value;
+        squareSum += entry.value * entry.value;
       }
       double squareRoot = Math.sqrt(squareSum);
       if (squareRoot > 0) {

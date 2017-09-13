@@ -12,19 +12,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ParallelFor {
 
-  public static int CPUs = Runtime.getRuntime().availableProcessors();
-  static ExecutorService executor = Executors.newFixedThreadPool(CPUs);
+  private static int CPUs = Runtime.getRuntime().availableProcessors();
+  private static ExecutorService executor = Executors.newFixedThreadPool(CPUs);
 
   public interface Each {
     void run(int i, AtomicInteger processed);
   }
 
-  public static int withIndex(ExecutorService executor, int stop, final Each body) {
-    int chunksize = stop;
+  public static int withIndex(ExecutorService executor, final int chunksize, final Each body) {
     final CountDownLatch latch = new CountDownLatch(chunksize);
     final AtomicInteger processed = new AtomicInteger(0);
 
-    for (int i=0; i<stop; i++) {
+    for (int i = 0; i < chunksize; i++) {
       final int ii = i;
       executor.submit(new Runnable() {
         public void run() {
@@ -44,9 +43,9 @@ public class ParallelFor {
       e.printStackTrace();
       executor.shutdownNow();
     }
-    finally {
+//    finally {
 //      executor.shutdown();
-    }
+//    }
     return processed.get();
   }
 
@@ -54,7 +53,7 @@ public class ParallelFor {
     return withIndex(executor, stop, body);
   }
 
-  public static void shutdown()  {
+  public static void shutdown() {
     executor.shutdown();
   }
 }

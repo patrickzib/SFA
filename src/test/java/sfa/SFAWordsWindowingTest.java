@@ -4,6 +4,7 @@ package sfa;
 
 import java.io.IOException;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -14,7 +15,7 @@ import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
 
 /**
- * Performs a 1-NN search
+ * Extracts windows from a time series and transforms each window using SFA.
  *
  */
 @RunWith(JUnit4.class)
@@ -31,10 +32,8 @@ public class SFAWordsWindowingTest {
 
     // Load the train/test splits
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-    TimeSeries[] train = TimeSeriesLoader.loadDatset(
-        classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
-    TimeSeries[] test = TimeSeriesLoader.loadDatset(
-        classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
+    TimeSeries[] train = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
+    TimeSeries[] test = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
 
     // train SFA representation
     sfa.fitWindowing(train, windowLength, wordLength, symbols, normMean, true);
@@ -44,22 +43,26 @@ public class SFAWordsWindowingTest {
 
     // transform
     for (int q = 0; q < test.length; q++) {
-      short[][] wordsQuery = sfa.transformWindowing(test[q], wordLength);
-      System.out.print("Time Series " + q + "\t");
+      short[][] wordsQuery = sfa.transformWindowing(test[q]);
+      System.out.print(q + "-th time Series " + "\t");
+      Assert.assertTrue("SFA word length does not match actual length.",
+          wordsQuery.length == test[q].getLength()-windowLength+1);
 
       for (short[] word : wordsQuery) {
-        System.out.print(toSfaWord(word) + ";");
+        Assert.assertTrue("SFA word length does not match actual length.", word.length == wordLength);
+        System.out.print(toSfaWord(word, symbols) + ";");
       }
 
       System.out.println("");
     }
   }
 
-  public static String toSfaWord(short[] word) {
-    StringBuffer sfaWord = new StringBuffer();
+  public static String toSfaWord(short[] word, int symbols) {
+    StringBuilder sfaWord = new StringBuilder();
 
     for (short c : word) {
-      sfaWord.append((char)(Character.valueOf('a') + c));
+      sfaWord.append((char) (Character.valueOf('a') + c));
+      Assert.assertTrue("Wrong symbols used ", c < symbols && c >= 0);
     }
 
     return sfaWord.toString();

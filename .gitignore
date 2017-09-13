@@ -61,6 +61,7 @@ gradle-app.setting
 
 ## File-based project format:
 *.iws
+*.ipr
 
 ## Plugin-specific files:
 

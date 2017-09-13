@@ -12,7 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,8 +22,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -46,8 +43,8 @@ public class SFABulkLoadTest {
   // the
   // disk
   static ExecutorService transformExec = Executors.newFixedThreadPool(4); // parallel
-  // SFA
-  // transformation
+                                                                          // SFA
+                                                                          // transformation
 
   static LinkedList<Future<Long>> futures = new LinkedList<>();
 
@@ -222,7 +219,7 @@ public class SFABulkLoadTest {
     for (int i = 0, a = 0; i < timeSeries.getLength(); i += chunkSize, a++) {
       System.out.println("Transforming Chunk: " + (a + 1));
       TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize + n - 1);
-      double[][] words = sfa.transformWindowingDouble(subsequence, l);
+      double[][] words = sfa.transformWindowingDouble(subsequence);
       for (int pos = 0; pos < words.length; pos++) {
         byte[] w = sfa.quantizationByte(words[pos]);
         dataStream.addToPartition(w, words[pos], i + pos, trieDepth);
@@ -252,7 +249,7 @@ public class SFABulkLoadTest {
 
     // GC
     performGC();
-    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1048576l)) + " MB (rough estimate)");
+    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1_048_576L)) + " MB (rough estimate)");
 
     // k-NN search
     int k = 1;
@@ -281,18 +278,15 @@ public class SFABulkLoadTest {
       time = System.currentTimeMillis();
       double resultDistance = Double.MAX_VALUE;
       for (int ww = 0; ww < size; ww++) { // faster than reevaluation in for
-        // loop
+                                          // loop
         double distance = SFATrieTest.getEuclideanDistance(timeSeries, query, means[ww], stds[ww], resultDistance, ww);
         resultDistance = Math.min(distance, resultDistance);
       }
       time = System.currentTimeMillis() - time;
       System.out.println("\tEuclidean:" + (time / 1000.0) + "s");
 
-      if (distances.get(0) != resultDistance) {
-        Assert.fail("\tError! Distances do not match: " + resultDistance + "\t" + distances.get(0));
-      } else {
-        System.out.println("\tDistance is ok");
-      }
+      Assert.assertEquals("Distances do not match: " + resultDistance + "\t" + distances.get(0),
+          distances.get(0), resultDistance, 0.003);
     }
 
     System.out.println("All ok...");
@@ -300,7 +294,7 @@ public class SFABulkLoadTest {
 
   /**
    * Builds one SFA trie for each bucket and merges these to one SFA trie.
-   *
+   * 
    * @param l
    * @param leafThreshold
    * @param windowLength
@@ -322,7 +316,7 @@ public class SFABulkLoadTest {
         List<SFATrie.Approximation[]> windows = readFromFile(bucket);
         if (!windows.isEmpty()) {
           SFATrie trie = new SFATrie(l, leafThreshold, sfa);
-          trie.buildIndex(windows, trieDepth, windowLength);
+          trie.buildIndex(windows, trieDepth);
 
           if (index == null) {
             index = trie;
@@ -337,7 +331,9 @@ public class SFABulkLoadTest {
     }
 
     // path compression
-    index.compress(true);
+    if (index != null) {
+      index.compress(true);
+    }
 
     // write index to disk?
     // System.out.println("Writing index to disk...");
@@ -374,6 +370,7 @@ public class SFABulkLoadTest {
         count += d.length;
       }
     } catch (EOFException e) {
+      // ignore EOFException
     } catch (Exception e) {
       Assert.fail();
     }
@@ -384,6 +381,7 @@ public class SFABulkLoadTest {
 
   /**
    * Opens multiple streams to disk but writes them sequentially to disk
+   *
    */
   static class SerializedStreams {
     LinkedBlockingQueue<SFATrie.Approximation>[] wordPartitions;
@@ -508,8 +506,7 @@ public class SFABulkLoadTest {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws FileNotFoundException,
-            IOException {
+    protected void writeToDisk(List<SFATrie.Approximation> current, int letter) throws IOException {
       if (!current.isEmpty()) {
         if (partitionsStream[letter] == null) {
           String fileName = tempDir.getAbsolutePath() + File.separator + letter + ".bucket";

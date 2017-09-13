@@ -17,11 +17,9 @@ import com.carrotsearch.hppc.cursors.LongFloatCursor;
 
 /**
  * The WEASEL-Model as published in
- *  
- *    Schäfer, P., Leser, U.: Fast and Accurate Time Series 
- *    Classification with WEASEL." CIKM 2017
- *
- *
+ * <p>
+ * Schäfer, P., Leser, U.: Fast and Accurate Time Series
+ * Classification with WEASEL." CIKM 2017
  */
 public class WEASELModel {
 
@@ -29,7 +27,6 @@ public class WEASELModel {
   public int maxF;
 
   public int[] windowLengths;
-  public boolean norm;
   public boolean normMean;
   public boolean lowerBounding;
   public SFA[] signature;
@@ -41,29 +38,23 @@ public class WEASELModel {
     Runtime runtime = Runtime.getRuntime();
     if (runtime.availableProcessors() <= 4) {
       BLOCKS = 8;
-    }
-    else {
+    } else {
       BLOCKS = runtime.availableProcessors();
     }
 
-    //    BLOCKS = 1;
+    //    BLOCKS = 1; // for testing purposes
   }
 
   /**
    * Create a WEASEL model.
    *
-   * @param maxF
-   *          length of the SFA words
-   * @param maxS
-   *          alphabet size
-   * @param windowLengths
-   *          the set of window lengths to use for extracting SFA words from
-   *          time series.
-   * @param normMean
-   *          set to true, if mean should be set to 0 for a window
-   * @param normMean
-   *          set to true, if the Fourier transform should be normed (typically
-   *          used to lower bound / mimic Euclidean distance).
+   * @param maxF          length of the SFA words
+   * @param maxS          alphabet size
+   * @param windowLengths the set of window lengths to use for extracting SFA words from
+   *                      time series.
+   * @param normMean      set to true, if mean should be set to 0 for a window
+   * @param lowerBounding set to true, if the Fourier transform should be normed (typically
+   *                      used to lower bound / mimic Euclidean distance).
    */
   public WEASELModel(
       int maxF, int maxS,
@@ -92,6 +83,7 @@ public class WEASELModel {
 
   /**
    * Create SFA words and bigrams for all samples
+   *
    * @param samples
    * @return
    */
@@ -113,6 +105,7 @@ public class WEASELModel {
 
   /**
    * Create SFA words and bigrams for all samples
+   *
    * @param samples
    * @return
    */
@@ -142,27 +135,27 @@ public class WEASELModel {
       final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
-    final byte usedBits = (byte)Words.binlog(this.alphabetSize);
+    final byte usedBits = (byte) Words.binlog(this.alphabetSize);
 
     // FIXME
-    //    final long mask = (usedBits << wordLength) - 1l;
-    final long mask = (1l << (usedBits * wordLength)) - 1l;
+    //    final long mask = (usedBits << wordLength) - 1L;
+    final long mask = (1L << (usedBits * wordLength)) - 1L;
 
     // iterate all samples
     // and create a bag of pattern
     for (int j = 0; j < samples.length; j++) {
-      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length*6, samples[j].getLabel());
+      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length * 6, samples[j].getLabel());
 
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
         for (int offset = 0; offset < words[w][j].length; offset++) {
-          int word = this.dict.getWord( (long)w << 52 | (words[w][j][offset] & mask));
+          int word = this.dict.getWord((long) w << 52 | (words[w][j][offset] & mask));
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
           // add 2 grams
-          if (offset-this.windowLengths[w] >= 0) {
-            long prevWord = this.dict.getWord( (long)w << 52 | (words[w][j][offset-this.windowLengths[w]] & mask));
-            int newWord = this.dict.getWord( (long)w << 52 |  prevWord << 26 | word);
+          if (offset - this.windowLengths[w] >= 0) {
+            long prevWord = this.dict.getWord((long) w << 52 | (words[w][j][offset - this.windowLengths[w]] & mask));
+            int newWord = this.dict.getWord((long) w << 52 | prevWord << 26 | word);
             bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
           }
         }
@@ -172,10 +165,8 @@ public class WEASELModel {
   }
 
   /**
-   *
    * Implementation based on:
-   *    https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
-   *
+   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
   public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // class frequencies
@@ -209,7 +200,7 @@ public class WEASELModel {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // chi square: observed minus expected occurence
+    // chi square: observed minus expected occurrence
     for (LongFloatCursor prob : classProb) {
       prob.value /= bob.length; // (float) frequencies.get(prob.key);
 
@@ -218,7 +209,7 @@ public class WEASELModel {
         float expected = prob.value * feature.value;
 
         float chi = observed.get(key) - expected;
-        float newChi = chi*chi / expected;
+        float newChi = chi * chi / expected;
         if (newChi >= chi_limit
             && newChi > chiSquare.get(feature.key)) {
           chiSquare.put(feature.key, newChi);
@@ -241,7 +232,7 @@ public class WEASELModel {
 
   /**
    * A dictionary that maps each SFA word to an integer.
-   *
+   * <p>
    * Condenses the SFA word space.
    */
   public static class Dictionary {
@@ -262,22 +253,20 @@ public class WEASELModel {
       int index = 0;
       if ((index = this.dict.indexOf(word)) > -1) {
         word = this.dict.indexGet(index);
-      }
-      else {
-        int newWord = this.dict.size()+1;
+      } else {
+        int newWord = this.dict.size() + 1;
         this.dict.put(word, newWord);
         word = newWord;
       }
-      return (int)word;
+      return (int) word;
     }
 
     public int getWordChi(long word) {
       int index = 0;
       if ((index = this.dictChi.indexOf(word)) > -1) {
         return this.dictChi.indexGet(index);
-      }
-      else {
-        int newWord = this.dictChi.size()+1;
+      } else {
+        int newWord = this.dictChi.size() + 1;
         this.dictChi.put(word, newWord);
         return newWord;
       }
@@ -286,8 +275,7 @@ public class WEASELModel {
     public int size() {
       if (!this.dictChi.isEmpty()) {
         return this.dictChi.size();
-      }
-      else {
+      } else {
         return this.dict.size();
       }
     }

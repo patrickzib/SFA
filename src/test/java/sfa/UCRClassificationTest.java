@@ -47,10 +47,9 @@ public class UCRClassificationTest {
       for (String s : datasets) {
         File d = new File(dir.getAbsolutePath()+"/"+s);
         if (d.exists() && d.isDirectory()) {
-          for (File f : d.listFiles()) {
-            if (f.getName().toUpperCase().endsWith("TRAIN")) {
-              File train = f;
-              File test = new File(f.getAbsolutePath().replaceFirst("TRAIN", "TEST"));
+          for (File train : d.listFiles()) {
+            if (train.getName().toUpperCase().endsWith("TRAIN")) {
+              File test = new File(train.getAbsolutePath().replaceFirst("TRAIN", "TEST"));
 
               if (!test.exists()) {
                 System.err.println("File " + test.getName() + " does not exist");
@@ -60,8 +59,8 @@ public class UCRClassificationTest {
               Classifier.DEBUG = false;
 
               // Load the train/test splits
-              TimeSeries[] testSamples = TimeSeriesLoader.loadDatset(test);
-              TimeSeries[] trainSamples = TimeSeriesLoader.loadDatset(train);
+              TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
+              TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 
               // The W-classifier
               Classifier w = new WEASELClassifier(trainSamples, testSamples);
@@ -91,7 +90,9 @@ public class UCRClassificationTest {
           }
         }
         else {
-          System.err.println("Does not exist!" + d.getAbsolutePath());
+          // not really an error. just a hint:
+          System.err.println("Dataset could not be found: " + d.getAbsolutePath() + ". " +
+              "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
         }
       }
     } finally {

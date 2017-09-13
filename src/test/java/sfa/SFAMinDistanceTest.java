@@ -4,6 +4,7 @@ package sfa;
 
 import java.io.IOException;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -15,7 +16,7 @@ import sfa.transformation.SFA.HistogramType;
 import sfa.transformation.SFADistance;
 
 /**
- * Performs a 1-NN search
+ * Performs a 1-NN search using the SFA lower bounding distance
  *
  */
 @RunWith(JUnit4.class)
@@ -26,15 +27,15 @@ public class SFAMinDistanceTest {
 
     int symbols = 8;
     int wordLength = 16;
-    boolean normMean = true;
+    final boolean normMean = true;
 
     SFA sfa = new SFA(HistogramType.EQUI_DEPTH);
     SFADistance sfaDistance = new SFADistance(sfa);
 
     // Load the train/test splits
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-    TimeSeries[] train = TimeSeriesLoader.loadDatset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
-    TimeSeries[] test = TimeSeriesLoader.loadDatset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
+    TimeSeries[] train = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TRAIN").getFile());
+    TimeSeries[] test = TimeSeriesLoader.loadDataset(classLoader.getResource("datasets/CBF/CBF_TEST").getFile());
 
     // train SFA representation
     short[][] wordsTrain = sfa.fitTransform(train, wordLength, symbols, normMean);
@@ -63,10 +64,9 @@ public class SFAMinDistanceTest {
             minDistance = realDistance;
             best = t;
           }
-          // plausability check
-          if (realDistance < distance) {
-            System.err.println("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance);
-          }
+
+          // plausibility check
+          Assert.assertTrue("Lower bounding violated:\tSFA: " + distance + "\tED: " + realDistance, realDistance > distance);
         }
       }
 
@@ -75,10 +75,10 @@ public class SFAMinDistanceTest {
       }
     }
 
-    System.out.println("Accuracy: "+ (Math.round(100.0*(accuracy / test.length))/100.0));
+    System.out.println("Accuracy: "+ String.format("%.3f", accuracy / test.length));
   }
 
-  public static double getEuclideanDistance (TimeSeries t1, TimeSeries t2, double minValue) {
+  private static double getEuclideanDistance (TimeSeries t1, TimeSeries t2, double minValue) {
     double distance = 0;
     double[] t1Values = t1.getData();
     double[] t2Values = t2.getData();

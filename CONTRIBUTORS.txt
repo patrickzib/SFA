@@ -1,0 +1,12 @@
+This file contains a list of people who have made contributions
+to this project.
+
+Original design and implementation:
+  	Patrick Schäfer <patrick.schaefer@hu-berlin.de>
+  
+Contributors:
+	Christian Schulze <accounts@andinfinity.de>
+	* JUnit tests, gradle support
+
+	Mohamed Taher Alrefaie <m.taher@msn.com>
+	* Integration, gradle support

@@ -17,26 +17,26 @@ public class TimeSeriesLoader {
 
   /**
    * Loads the time series from a csv-file of the UCR time series archive.
+   *
    * @param dataset
    * @return
-   * @throws IOException
    */
-  public static TimeSeries[] loadDatset(String dataset) throws IOException {
-    return loadDatset(new File(dataset));
+  public static TimeSeries[] loadDataset(String dataset) {
+    return loadDataset(new File(dataset));
   }
 
   /**
    * Loads the time series from a csv-file of the UCR time series archive.
+   *
    * @param dataset
    * @return
-   * @throws IOException
    */
-  public static TimeSeries[] loadDatset(File dataset) throws IOException {
-    ArrayList<TimeSeries> samples = new ArrayList<TimeSeries>();
+  public static TimeSeries[] loadDataset(File dataset) {
+    ArrayList<TimeSeries> samples = new ArrayList<>();
 
     try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {
       String line = null;
-      while( (line = br.readLine()) != null) {
+      while ((line = br.readLine()) != null) {
         if (line.startsWith("@")) {
           continue;
         }
@@ -56,7 +56,7 @@ public class TimeSeriesLoader {
         }
 
         // next the data
-        for (i = i+1; i < columns.length; i++) {
+        for (i = i + 1; i < columns.length; i++) {
           String column = columns[i].trim();
           try {
             if (isNonEmptyColumn(column)) {
@@ -78,26 +78,26 @@ public class TimeSeriesLoader {
     }
 
     System.out.println("Done reading from " + dataset + " samples " + samples.size() + " length " + samples.get(0).getLength());
-    return samples.toArray(new TimeSeries[] {});
+    return samples.toArray(new TimeSeries[]{});
   }
 
 
-  public static TimeSeries readSampleSubsequence (File dataset) throws IOException {
-    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){
+  public static TimeSeries readSampleSubsequence(File dataset) throws IOException {
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {
       DoubleArrayList data = new DoubleArrayList();
       String line = null;
-      while( (line = br.readLine()) != null) {
-        line.trim();
+      while ((line = br.readLine()) != null) {
+        line = line.trim();
         String[] values = line.split("[ \\t]");
         if (values.length > 0) {
           for (String value : values) {
             try {
-              value.trim();
+              value = value.trim();
               if (isNonEmptyColumn(value)) {
                 data.add(Double.parseDouble(value));
               }
             } catch (NumberFormatException nfe) {
-              // Parse-Exception ignorieren
+              // Parse-Exception ignored
             }
           }
         }
@@ -106,27 +106,27 @@ public class TimeSeriesLoader {
     }
   }
 
-  public static TimeSeries[] readSamplesQuerySeries (String dataset) throws IOException {
+  public static TimeSeries[] readSamplesQuerySeries(String dataset) throws IOException {
     return readSamplesQuerySeries(new File(dataset));
   }
 
-  public static TimeSeries[] readSamplesQuerySeries (File dataset) throws IOException {
+  public static TimeSeries[] readSamplesQuerySeries(File dataset) throws IOException {
     List<TimeSeries> samples = new ArrayList<>();
-    try (BufferedReader br = new BufferedReader(new FileReader(dataset))){
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {
       String line = null;
-      while( (line = br.readLine()) != null) {
+      while ((line = br.readLine()) != null) {
         DoubleArrayList data = new DoubleArrayList();
-        line.trim();
+        line = line.trim();
         String[] values = line.split("[ \\t]");
         if (values.length > 0) {
           for (String value : values) {
             try {
-              value.trim();
+              value = value.trim();
               if (isNonEmptyColumn(value)) {
                 data.add(Double.parseDouble(value));
               }
             } catch (NumberFormatException nfe) {
-              // Parse-Exception ignorieren
+              // Parse-Exception ignored
             }
           }
           samples.add(new TimeSeries(data.toArray()));
@@ -137,7 +137,7 @@ public class TimeSeriesLoader {
   }
 
   public static boolean isNonEmptyColumn(String column) {
-    return column!=null && !"".equals(column) && !"NaN".equals(column) && !"\t".equals(column);
+    return column != null && !"".equals(column) && !"NaN".equals(column) && !"\t".equals(column);
   }
 
   public static TimeSeries generateRandomWalkData(int maxDimension, Random generator) {
@@ -147,7 +147,7 @@ public class TimeSeriesLoader {
     data[0] = generator.nextGaussian();
 
     for (int d = 1; d < maxDimension; d++) {
-      data[d] = data[d-1] + generator.nextGaussian();
+      data[d] = data[d - 1] + generator.nextGaussian();
     }
 
     return new TimeSeries(data);
