@@ -2,33 +2,12 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
 import sfa.index.SFATrie;
 import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
@@ -36,40 +15,45 @@ import sfa.timeseries.TimeSeriesLoader;
 import sfa.transformation.SFA;
 import sfa.transformation.SFA.HistogramType;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.*;
+
 @RunWith(JUnit4.class)
 public class SFABulkLoadTest {
 
   static File tempDir = null;
-  static ExecutorService serializerExec = Executors.newFixedThreadPool(2); // serialize
-  // access
-  // to
-  // the
-  // disk
-  static ExecutorService transformExec = Executors.newFixedThreadPool(4); // parallel
-                                                                          // SFA
-                                                                          // transformation
+  static ExecutorService serializerExec = Executors.newFixedThreadPool(2); // serialize access to the disk
+  static ExecutorService transformExec = Executors.newFixedThreadPool(4); // parallel SFA transformation
 
   static LinkedList<Future<Long>> futures = new LinkedList<>();
 
   static int l = 16; // SFA word length ( & dimensionality of the index)
-  static int leafThreshold = 1000; // number of subsequences in each leaf node
+  static int leafThreshold = 100; // number of subsequences in each leaf node
   static byte symbols = SFATrie.symbols;
 
   static Runtime runtime = Runtime.getRuntime();
 
+  @Before
   public void setUpBucketDir() {
     try {
       tempDir = Files.createTempDirectory("tmp").toFile();
       System.out.println("Created temp directory at "+tempDir.getAbsolutePath());
+
+      // remove file on exit
+      tempDir.deleteOnExit();
     } catch (IOException e) {
-      Assert.fail("Unable to create temp directory");
+      Assert.fail("Unable to create temp directory: " + e.getMessage());
     }
   }
 
   @Test
   public void testBulkLoadWholeMatching() throws IOException {
-    // setUpBucketDir();
-    //
+
     // int N = 100000;
     // System.out.println("Loading/generating "+N+" Time Series...");
     //
@@ -182,8 +166,6 @@ public class SFABulkLoadTest {
 
   @Test
   public void testBulkLoadSubsequenceMatching() throws IOException {
-    setUpBucketDir();
-
     int N = 20 * 100_000;
     System.out.println("Loading/generating Time Series of length " + N + "...");
 
@@ -195,7 +177,7 @@ public class SFABulkLoadTest {
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
     TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(
-            classLoader.getResource("datasets/indexing/query_lightcurves.txt").getFile());
+        classLoader.getResource("datasets/indexing/query_lightcurves.txt").getFile());
     int n = timeSeries2[0].getLength();
     System.out.println("Query DS size:\t" + n);
 
@@ -234,7 +216,7 @@ public class SFABulkLoadTest {
         try {
           bytesWritten = futures.remove().get();
         } catch (Exception e) {
-          Assert.fail();
+          Assert.fail(e.getMessage());
         }
       }
       System.out.println("\tavg write speed: " + (bytesWritten / (System.currentTimeMillis() - time)) + " kb/s");
@@ -281,7 +263,7 @@ public class SFABulkLoadTest {
       time = System.currentTimeMillis();
       double resultDistance = Double.MAX_VALUE;
       for (int ww = 0; ww < size; ww++) { // faster than reevaluation in for
-                                          // loop
+        // loop
         double distance = SFATrieTest.getEuclideanDistance(timeSeries, query, means[ww], stds[ww], resultDistance, ww);
         resultDistance = Math.min(distance, resultDistance);
       }
@@ -297,7 +279,7 @@ public class SFABulkLoadTest {
 
   /**
    * Builds one SFA trie for each bucket and merges these to one SFA trie.
-   * 
+   *
    * @param l
    * @param leafThreshold
    * @param windowLength
@@ -328,7 +310,7 @@ public class SFABulkLoadTest {
           }
 
           System.out.println("Merging done in " + (System.currentTimeMillis() - time) + " ms. " + "\t Elements: "
-                  + index.getSize() + "\t Height: " + index.getHeight());
+              + index.getSize() + "\t Height: " + index.getHeight());
         }
       }
     }
@@ -375,7 +357,7 @@ public class SFABulkLoadTest {
     } catch (EOFException e) {
       // ignore EOFException
     } catch (Exception e) {
-      Assert.fail();
+      Assert.fail(e.getMessage());
     }
     System.out.println("\t" + count + " time series read.");
 
@@ -425,7 +407,7 @@ public class SFABulkLoadTest {
           this.wordPartitions[i].drainTo(current);
           writeToDisk(current, i);
         } catch (Exception e) {
-          Assert.fail();
+          Assert.fail(e.getMessage());
         }
       }
       // wait for all futures/threads to finish
@@ -433,7 +415,7 @@ public class SFABulkLoadTest {
         try {
           futures.remove().get();
         } catch (Exception e) {
-          Assert.fail();
+          Assert.fail(e.toString());
         }
       }
       // close all streams
@@ -445,7 +427,7 @@ public class SFABulkLoadTest {
             totalTSwritten += writtenSamples[i];
           }
         } catch (Exception e) {
-          Assert.fail();
+          Assert.fail(e.getMessage());
         }
       }
       System.out.println("Time series written:" + totalTSwritten);
@@ -479,7 +461,7 @@ public class SFABulkLoadTest {
 
         }
       } catch (Exception e) {
-        Assert.fail();
+        Assert.fail(e.getMessage());
       }
     }
 
@@ -516,7 +498,7 @@ public class SFABulkLoadTest {
           File file = new File(fileName);
           file.deleteOnExit();
           partitionsStream[letter] = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file, false),
-                  1048576 * 8 /* 8mb */));
+              1048576 * 8 /* 8mb */));
         }
 
         partitionsStream[letter].writeUnshared(current.toArray(new SFATrie.Approximation[]{}));
@@ -528,7 +510,7 @@ public class SFABulkLoadTest {
         try {
           Thread.sleep(100);
         } catch (InterruptedException e) {
-          Assert.fail();
+          Assert.fail(e.getMessage());
         }
 
         this.writtenSamples[letter] += current.size();

@@ -164,7 +164,7 @@ public class SFATrieTest {
       System.gc();
       Thread.sleep(10);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
   }
 
