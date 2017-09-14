@@ -63,7 +63,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
       Score score = model.getHighestScoringModel().score;
       Predictions pred = predictEnsemble(model, trainSamples);
 
-      if (model == null || bestCorrectTraining < pred.correct.get()) {
+      if (model == null || bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
         bestScore = score;
         bestScore.training = pred.correct.get();

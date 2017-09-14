@@ -46,7 +46,7 @@ public class WEASELClassifier extends Classifier {
   // the trained weasel
   WEASELModel model;
 
-  public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) {
+  public WEASELClassifier() {
     super();
   }
 

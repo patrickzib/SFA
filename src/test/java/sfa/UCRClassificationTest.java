@@ -64,7 +64,7 @@ public class UCRClassificationTest {
               TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 
               // The WEASEL-classifier
-              Classifier w = new WEASELClassifier(trainSamples, testSamples);
+              Classifier w = new WEASELClassifier();
               Classifier.Score scoreW = w.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreW.toString());
 
