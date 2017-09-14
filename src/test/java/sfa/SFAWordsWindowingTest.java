@@ -45,11 +45,11 @@ public class SFAWordsWindowingTest {
     for (int q = 0; q < test.length; q++) {
       short[][] wordsQuery = sfa.transformWindowing(test[q]);
       System.out.print(q + "-th time Series " + "\t");
-      Assert.assertTrue("SFA word length does not match actual length.",
+      Assert.assertTrue("SFA word queryLength does not match actual queryLength.",
           wordsQuery.length == test[q].getLength()-windowLength+1);
 
       for (short[] word : wordsQuery) {
-        Assert.assertTrue("SFA word length does not match actual length.", word.length == wordLength);
+        Assert.assertTrue("SFA word queryLength does not match actual queryLength.", word.length == wordLength);
         System.out.print(toSfaWord(word, symbols) + ";");
       }
 

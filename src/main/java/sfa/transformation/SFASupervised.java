@@ -49,13 +49,13 @@ public class SFASupervised extends SFA {
   }
 
   /**
-   * Trains the SFA model based on a set of samples. At the end of this call,
+   * Trains the SFA boss based on a set of samples. At the end of this call,
    * the quantization bins are set.
    *
    * @param samples    the samples to use for training.
    * @param wordLength Length of the resulting SFA words. Each character of a word
    *                   corresponds to one Fourier value. As opposed to the normal SFA
-   *                   model, here characters correspond to those Fourier values that are
+   *                   boss, here characters correspond to those Fourier values that are
    *                   most distinctive between class labels.
    * @param symbols    the alphabet size, i.e. number of quantization bins to use
    * @param normMean   true: sets mean to 0 for each time series.

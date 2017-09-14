@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.cursors.LongFloatCursor;
  * Schäfer, P., Leser, U.: Fast and Accurate Time Series
  * Classification with WEASEL." CIKM 2017
  */
-public class WEASELModel {
+public class WEASEL {
 
   public int alphabetSize;
   public int maxF;
@@ -46,9 +46,9 @@ public class WEASELModel {
   }
 
   /**
-   * Create a WEASEL model.
+   * Create a WEASEL boss.
    *
-   * @param maxF          length of the SFA words
+   * @param maxF          queryLength of the SFA words
    * @param maxS          alphabet size
    * @param windowLengths the set of window lengths to use for extracting SFA words from
    *                      time series.
@@ -56,7 +56,7 @@ public class WEASELModel {
    * @param lowerBounding set to true, if the Fourier transform should be normed (typically
    *                      used to lower bound / mimic Euclidean distance).
    */
-  public WEASELModel(
+  public WEASEL(
       int maxF, int maxS,
       int[] windowLengths, boolean normMean, boolean lowerBounding) {
     this.maxF = maxF;
@@ -69,7 +69,7 @@ public class WEASELModel {
   }
 
   /**
-   * The Weasel-model: a histogram of SFA word and bi-gram frequencies
+   * The Weasel-boss: a histogram of SFA word and bi-gram frequencies
    */
   public static class BagOfBigrams {
     public IntIntHashMap bob;
@@ -88,12 +88,12 @@ public class WEASELModel {
    * @return
    */
   public int[][][] createWords(final TimeSeries[] samples) {
-    // create bag of words for each window length
+    // create bag of words for each window queryLength
     final int[][][] words = new int[this.windowLengths.length][samples.length][];
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
-        for (int w = 0; w < WEASELModel.this.windowLengths.length; w++) {
+        for (int w = 0; w < WEASEL.this.windowLengths.length; w++) {
           if (w % BLOCKS == id) {
             words[w] = createWords(samples, w);
           }

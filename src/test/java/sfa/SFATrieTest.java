@@ -19,7 +19,7 @@ import sfa.timeseries.TimeSeriesLoader;
  */
 @RunWith(JUnit4.class)
 public class SFATrieTest {
-  final static int l = 20; // SFA word length ( & dimensionality of the index)
+  final static int l = 20; // SFA word queryLength ( & dimensionality of the index)
   final static int leafThreshold = 10; // number of subsequences in each leaf node
   final static int k = 1; // k-NN search
 
@@ -103,7 +103,7 @@ public class SFATrieTest {
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));
     System.out.println("Sample DS size : " + timeSeries.getLength());
 
-    int windowLength = timeSeries2[0].getLength(); // length of the subsequences to be indexed
+    int windowLength = timeSeries2[0].getLength(); // queryLength of the subsequences to be indexed
     System.out.println("Query DS size : " + windowLength);
 
     Runtime runtime = Runtime.getRuntime();

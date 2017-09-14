@@ -10,8 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
-import sfa.transformation.EnsembleModel;
-import sfa.transformation.ShotgunModel;
 
 /**
  * The Shotgun Classifier as published in:
@@ -22,42 +20,51 @@ import sfa.transformation.ShotgunModel;
  */
 public class ShotgunClassifier extends Classifier {
 
+  // the trained boss
+  ShotgunModel model;
+
   public ShotgunClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
+  }
+
+  public class ShotgunModel extends Model {
+    public ShotgunModel(
+        boolean normed,
+        int windowLength,
+        TimeSeries[] samples
+    ) {
+      super("Shotgun", -1, -1, normed, windowLength);
+      this.samples = samples;
+    }
+
+    public TimeSeries[] samples;
   }
 
   public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
-
-      // Shotgun Distance
-      ShotgunModel bestModel = new ShotgunModel(0, false, trainSamples);
+      Score bestScore = null;
       int bestCorrectTesting = 0;
       int bestCorrectTraining = 0;
 
       for (boolean normMean : NORMALIZATION) {
         long startTime = System.currentTimeMillis();
 
-        this.correctTraining = new AtomicInteger(0);
-
-        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, this.trainSamples, normMean, 1.0);
+        Score score = fit(exec, this.trainSamples, normMean);
 
         // training score
-        ShotgunModel model = models.getHighestScoringModel();
         if (DEBUG) {
-          System.out.println("Shotgun Training:\t" + model.length + "\tnormed: \t" + normMean);
-          outputResult(this.correctTraining.get(), startTime, model.samples.length);
+          System.out.println(score.toString());
+          outputResult((int)score.training, startTime, trainSamples.length);
         }
 
         // Classify: testing score
-        int correctTesting = predict(
-                model,
-                this.testSamples).correct.get();
+        int correctTesting = predict(this.testSamples).correct.get();
 
-        if (bestCorrectTraining < models.getHighestAccuracy()) {
+        if (bestCorrectTraining < score.training) {
           bestCorrectTesting = correctTesting;
-          bestCorrectTraining = this.correctTraining.get();
-          bestModel = model;
+          bestCorrectTraining = (int)score.training;
+          bestScore = score;
         }
         if (DEBUG) {
           System.out.println("");
@@ -67,19 +74,35 @@ public class ShotgunClassifier extends Classifier {
           "Shotgun",
           1 - formatError(bestCorrectTesting, this.testSamples.length),
           1 - formatError(bestCorrectTraining, this.trainSamples.length),
-          bestModel.normMean,
-          bestModel.length);
+          bestScore.windowLength);
     } finally {
       exec.shutdown();
     }
   }
 
 
-  public EnsembleModel fitEnsemble(
+  public Score fit(
       final ExecutorService exec,
       final TimeSeries[] samples,
+      final boolean normMean) {
+
+    // train the shotgun models for different window lengths
+    Ensemble<ShotgunModel> ensemble = fitEnsemble(samples, normMean, 1.0, exec);
+
+    // keep best boss
+    this.model = ensemble.getHighestScoringModel();
+
+    // return score
+    return ensemble.getHighestScoringModel().score;
+
+  }
+
+  protected Ensemble<ShotgunModel> fitEnsemble(
+      final TimeSeries[] samples,
       final boolean normMean,
-      final double factor) {
+      final double factor,
+      ExecutorService exec) {
+
     int minWindowLength = 5;
     int maxWindowLength = MAX_WINDOW_LENGTH;
     for (TimeSeries ts : samples) {
@@ -90,44 +113,39 @@ public class ShotgunClassifier extends Classifier {
     for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
       windows.add(windowLength);
     }
+    Integer[] allWindows = windows.toArray(new Integer[]{});
 
-    return fit(windows.toArray(new Integer[]{}), normMean, samples, factor, exec);
-  }
+    final AtomicInteger correctTraining = new AtomicInteger(0);
 
-  public EnsembleModel fit(
-      final Integer[] allWindows,
-      final boolean normMean,
-      final TimeSeries[] samples,
-      final double factor,
-      ExecutorService exec) {
-    final List<Score> results = new ArrayList<>(allWindows.length);
+    final List<ShotgunModel> results = new ArrayList<>(allWindows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      Score bestScore = new Score("Shotgun", 0, 0, normMean, 0);
+      ShotgunModel bestModel = null;
       final Object sync = new Object();
 
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < allWindows.length; i++) {
           if (i % threads == id) {
+            ShotgunModel model = new ShotgunModel(normMean, allWindows[i], samples);
             Predictions p = predict(
-                new ShotgunModel(allWindows[i], normMean, samples),
+                model,
                 samples
             );
 
-            Score score = new Score("Shotgun", p.correct.get(), p.correct.get(), normMean, allWindows[i]);
+            model.score = new Score(model.name, -1, p.correct.get(), allWindows[i]);
 
             // keep best scores
             synchronized (sync) {
-              if (this.bestScore.compareTo(score) <= 0) {
-                ShotgunClassifier.this.correctTraining.set((int) score.training);
-                this.bestScore = score;
+              if (this.bestModel == null || this.bestModel.compareTo(model) <= 0) {
+                correctTraining.set((int) model.score.training);
+                this.bestModel = model;
               }
             }
 
             // add to ensemble
-            if (score.training >= ShotgunClassifier.this.correctTraining.get() * factor) { // all with same score
+            if (model.score.training >= correctTraining.get() * factor) { // all with higher score
               synchronized (results) {
-                results.add(score);
+                results.add(model);
               }
             }
           }
@@ -138,22 +156,27 @@ public class ShotgunClassifier extends Classifier {
     // sort descending
     Collections.sort(results, Collections.reverseOrder());
 
+
     // only keep best scores
     List<ShotgunModel> model = new ArrayList<>();
-    List<Double> accuracy = new ArrayList<>();
 
     for (int i = 0; i < results.size(); i++) {
-      final Score score = results.get(i);
-      if (score.training >= this.correctTraining.get() * factor) { // all with same score
-        model.add(new ShotgunModel(score.windowLength, score.normed, samples));
-        accuracy.add(score.training);
+      final ShotgunModel m = results.get(i);
+      if (m.score.training >= correctTraining.get() * factor) { // all with same score
+        model.add(m);
       }
     }
 
-    return new EnsembleModel<ShotgunModel>(model, accuracy);
+    return new Ensemble<>(results);
   }
 
-  public Predictions predict(
+
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
+
+
+  protected Predictions predict(
       final ShotgunModel model,
       final TimeSeries[] testSamples) {
 
@@ -162,7 +185,7 @@ public class ShotgunClassifier extends Classifier {
     // calculate means and stds for each sample
     final double[][] means = new double[model.samples.length][];
     final double[][] stds = new double[model.samples.length][];
-    calcMeansStds(model.length, model.samples, means, stds, model.normMean);
+    calcMeansStds(model.windowLength, model.samples, means, stds, model.normed);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -175,8 +198,8 @@ public class ShotgunClassifier extends Classifier {
             double distanceTo1NN = Double.MAX_VALUE;
             String predictedLabel = "";
 
-            int wQueryLen = Math.min(query.getLength(), model.length);
-            TimeSeries[] disjointWindows = query.getDisjointSequences(wQueryLen, model.normMean); // possible without copying!?
+            int wQueryLen = Math.min(query.getLength(), model.windowLength);
+            TimeSeries[] disjointWindows = query.getDisjointSequences(wQueryLen, model.normed); // possible without copying!?
 
             // perform a 1-NN search
             for (int j = 0; j < model.samples.length; j++) {
@@ -190,7 +213,7 @@ public class ShotgunClassifier extends Classifier {
                   double resultDistance = distanceTo1NN;
 
                   // calculate euclidean distances for each sliding window
-                  for (int ww = 0, end = ts.getLength() - model.length + 1; ww < end; ww++) { // faster than reevaluation in for loop
+                  for (int ww = 0, end = ts.getLength() - model.windowLength + 1; ww < end; ww++) { // faster than reevaluation in for loop
                     double distance = getEuclideanDistance(ts, q, means[j][ww], stds[j][ww], resultDistance, ww);
                     resultDistance = Math.min(distance, resultDistance);
                   }

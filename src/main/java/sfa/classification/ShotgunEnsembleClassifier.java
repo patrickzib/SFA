@@ -9,8 +9,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
-import sfa.transformation.EnsembleModel;
-import sfa.transformation.ShotgunModel;
 
 /**
  * The Shotgun Ensemble Classifier as published in:
@@ -21,7 +19,11 @@ import sfa.transformation.ShotgunModel;
  */
 public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
+  // default training parameters
   public static double factor = 0.92;
+
+  // the trained boss
+  Ensemble<ShotgunModel> model;
 
   public ShotgunEnsembleClassifier(TimeSeries[] train, TimeSeries[] test) {
     super(train, test);
@@ -31,35 +33,27 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
   public Score eval() {
     ExecutorService exec = Executors.newFixedThreadPool(threads);
     try {
-      EnsembleModel<ShotgunModel> bestModel = new EnsembleModel<>();
+      Ensemble<ShotgunModel> bestScore = new Ensemble<>();
       int bestCorrectTesting = 0;
       int bestCorrectTraining = 0;
 
       for (boolean normMean : NORMALIZATION) {
         long startTime = System.currentTimeMillis();
 
-        this.correctTraining = new AtomicInteger(0);
-
-        EnsembleModel<ShotgunModel> models = fitEnsemble(exec, this.trainSamples, normMean, factor);
+        Score score = fit(exec, this.trainSamples, normMean);
 
         // training score
-        ShotgunModel model = models.getHighestScoringModel();
         if (DEBUG) {
-          System.out.println("Shotgun Ensemble Training:\t" + model.length + "\tnormed: \t" + normMean);
-          outputResult(this.correctTraining.get(), startTime, this.trainSamples.length);
+          System.out.println(score.toString());
+          outputResult((int)score.training, startTime, this.trainSamples.length);
         }
 
-        int correctTesting = predictEnsemble(
-            exec,
-            models,
-            this.testSamples,
-            this.trainSamples // TODO move to shotgun model???
-        );
+        int correctTesting = predict(exec, this.testSamples).correct.get();
 
-        if (bestCorrectTraining < models.getHighestAccuracy()) {
+        if (bestCorrectTraining < score.training) {
           bestCorrectTesting = correctTesting;
-          bestCorrectTraining = this.correctTraining.get();
-          bestModel = models;
+          bestCorrectTraining = (int)score.training;
+          bestScore = model;
         }
         if (DEBUG) {
           System.out.println("");
@@ -70,18 +64,34 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
           "Shotgun Ensemble",
           1 - formatError(bestCorrectTesting, this.testSamples.length),
           1 - formatError(bestCorrectTraining, this.trainSamples.length),
-          bestModel.model.get(0).normMean,
-          bestModel.model.get(0).length);
+          bestScore.model.get(0).windowLength);
     } finally {
       exec.shutdown();
     }
   }
 
-  public int predictEnsemble(
+  public Score fit(
+      final ExecutorService exec,
+      final TimeSeries[] samples,
+      final boolean normMean) {
+
+    // train the shotgun models for different window lengths
+    this.model = fitEnsemble(samples, normMean, 1.0, exec);
+
+    // return score
+    return model.getHighestScoringModel().score;
+  }
+
+  public Predictions predict(
       final ExecutorService executor,
-      final EnsembleModel<ShotgunModel> model,
-      final TimeSeries[] testSamples,
-      final TimeSeries[] trainSamples) {
+      final TimeSeries[] testSamples) {
+    return predictEnsemble(executor, this.model, testSamples);
+  }
+
+  protected Predictions predictEnsemble(
+      final ExecutorService executor,
+      final Ensemble<ShotgunModel> model,
+      final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
@@ -99,17 +109,14 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
         // iterate each sample to classify
         for (int i = 0; i < model.model.size(); i++) {
           if (i % threads == id) {
-            final ShotgunModel m = model.model.get(i);
-            final double accuracy = model.accuracy.get(i);
+            final ShotgunModel score = model.model.get(i);
 
-            usedLengths.add(m.length);
+            usedLengths.add(score.windowLength);
 
-            Predictions p = predict(
-                new ShotgunModel(m.length, m.normMean, m.samples),
-                testSamples
-            );
+            Predictions p = predict(score, testSamples);
+
             for (int a = 0; a < p.labels.length; a++) {
-              testLabels[a].add(new Pair<>(p.labels[a], accuracy));
+              testLabels[a].add(new Pair<>(p.labels[a], score.score.training));
             }
           }
         }

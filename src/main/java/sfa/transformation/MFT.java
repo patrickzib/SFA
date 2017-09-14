@@ -12,7 +12,7 @@ import sfa.timeseries.TimeSeries;
 /**
  * The Momentary Fourier Transform is alternative algorithm of
  * the Discrete Fourier Transform for overlapping windows. It has
- * a constant computational complexity for in the window length n as
+ * a constant computational complexity for in the window queryLength n as
  * opposed to O(n log n) for the Fast Fourier Transform algorithm.
  * <p>
  * It was first published in:
@@ -125,7 +125,7 @@ public class MFT implements Serializable {
         this.fft.realForward(dft);
         dft[1] = 0; // DC-coefficient imag part
 
-        // if windowSize > mftData.length, the remaining data should be 0 now.
+        // if windowSize > mftData.queryLength, the remaining data should be 0 now.
         System.arraycopy(dft, 0, mftData, 0, Math.min(mftData.length, dft.length));
       }
 

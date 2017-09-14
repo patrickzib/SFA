@@ -30,8 +30,6 @@ public abstract class Classifier {
 
   public static int threads = 1;
 
-  public AtomicInteger correctTraining = new AtomicInteger(0);
-
   public TimeSeries[] testSamples;
   public TimeSeries[] trainSamples;
 
@@ -45,7 +43,7 @@ public abstract class Classifier {
   protected static int MAX_WINDOW_LENGTH = 250;
 
   // Blocks for parallel execution
-  public final int BLOCKS = 8;
+  public final static int BLOCKS = 8;
 
   static {
     Runtime runtime = Runtime.getRuntime();
@@ -129,24 +127,60 @@ public abstract class Classifier {
     }
   }
 
-  public static class Score implements Comparable<Score> {
+  public static class Model implements Comparable<Model> {
     public String name;
-    public double training;
-    public double testing;
-    public boolean normed;
     public int windowLength;
+    public boolean normed;
 
-    public Score(
+    public Score score;
+
+    public Model(
         String name,
         double testing,
         double training,
         boolean normed,
         int windowLength
     ) {
+      this(name, new Score(name, testing, training, windowLength), normed, windowLength);
+    }
+
+    public Model(
+        String name,
+        Score score,
+        boolean normed,
+        int windowLength
+    ) {
+      this.name = name;
+      this.score = score;
+      this.normed = normed;
+      this.windowLength = windowLength;
+    }
+
+    @Override
+    public String toString() {
+      return score.toString();
+    }
+
+    public int compareTo(Model bestScore) {
+      return this.score.compareTo(bestScore.score);
+    }
+  }
+
+  public static class Score implements Comparable<Score> {
+    public String name;
+    public double training;
+    public double testing;
+    public int windowLength;
+
+    public Score(
+        String name,
+        double testing,
+        double training,
+        int windowLength
+    ) {
       this.name = name;
       this.training = training;
       this.testing = testing;
-      this.normed = normed;
       this.windowLength = windowLength;
     }
 
@@ -275,16 +309,19 @@ public abstract class Classifier {
     }
   }
 
-  public int score(
+  public Predictions score(
       final String name,
       final TimeSeries[] samples,
       long startTime,
       final List<Pair<String, Double>>[] labels,
       final List<Integer> currentWindowLengths) {
+
+    String[] predictedLabels = new String[testSamples.length];
+
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
 
-      String maxLabel = "";
+      predictedLabels[i] = "";
       double maxCount = 0.0;
 
       HashMap<String, Double> counts = new HashMap<>();
@@ -297,13 +334,13 @@ public abstract class Classifier {
           count = (count == null) ? increment : count + increment;
           counts.put(s, count);
           if (maxCount < count
-              || maxCount == count && maxLabel.compareTo(s) < 0) {
+              || maxCount == count && predictedLabels[i].compareTo(s) < 0) {
             maxCount = count;
-            maxLabel = s;
+            predictedLabels[i] = s;
           }
         }
       }
-      if (samples[i].getLabel().equals(maxLabel)) {
+      if (samples[i].getLabel().equals(predictedLabels[i])) {
         correctTesting++;
       }
     }
@@ -312,7 +349,7 @@ public abstract class Classifier {
       System.out.println(name + " Testing with " + currentWindowLengths.size() + " models:\t");
       outputResult(correctTesting, startTime, samples.length);
     }
-    return correctTesting;
+    return new Predictions(predictedLabels, correctTesting);
   }
 
   public int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {

@@ -234,8 +234,8 @@ public class SFA implements Serializable {
    * At the end of this call, the quantization bins are set.
    *
    * @param timeSeries
-   * @param windowLength The length of each sliding window
-   * @param wordLength   the SFA word-length
+   * @param windowLength The queryLength of each sliding window
+   * @param wordLength   the SFA word-queryLength
    * @param symbols      the SFA alphabet size
    * @param normMean     if set, the mean is subtracted from each sliding window
    */
@@ -304,14 +304,14 @@ public class SFA implements Serializable {
   }
 
   /**
-   * Trains the SFA model based on a set of samples. At the end of this call,
+   * Trains the SFA boss based on a set of samples. At the end of this call,
    * the quantization bins are set.
    *
    * @param samples    the samples to use for training.
    * @param wordLength Length of the resulting SFA words. Each character of a word
    *                   corresponds to one Fourier value. Even characters (starting with
    *                   0) are real values and uneven characters are imaginary values. A
-   *                   shorter word length corresponds to a stronger low-pass filtering
+   *                   shorter word queryLength corresponds to a stronger low-pass filtering
    *                   of the time series.
    * @param symbols    the alphabet size, i.e. number of quantization bins to use
    * @param normMean   true: sets mean to 0 for each time series.

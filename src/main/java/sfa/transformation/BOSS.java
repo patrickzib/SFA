@@ -12,13 +12,13 @@ import sfa.transformation.SFA.HistogramType;
 import com.carrotsearch.hppc.IntIntHashMap;
 
 /**
- * The Bag-of-SFA-Symbols model as published in
+ * The Bag-of-SFA-Symbols boss as published in
  * Schäfer, P.: The boss is concerned with time series classification
  * in the presence of noise. DMKD 29(6) (2015) 1505–1530
  *
  * @author bzcschae
  */
-public class BOSSModel {
+public class BOSS {
 
   public int symbols;
   public int maxF;
@@ -40,15 +40,15 @@ public class BOSSModel {
   }
 
   /**
-   * Create a BOSS model.
+   * Create a BOSS boss.
    *
-   * @param maxF         length of the SFA words
+   * @param maxF         queryLength of the SFA words
    * @param maxS         alphabet size
-   * @param windowLength sub-sequence (window) length used for extracting SFA words from
+   * @param windowLength sub-sequence (window) queryLength used for extracting SFA words from
    *                     time series.
    * @param normMean     set to true, if mean should be set to 0 for a window
    */
-  public BOSSModel(int maxF, int maxS, int windowLength, boolean normMean) {
+  public BOSS(int maxF, int maxS, int windowLength, boolean normMean) {
     this.maxF = maxF;
     this.symbols = maxS;
     this.windowLength = windowLength;
@@ -56,7 +56,7 @@ public class BOSSModel {
   }
 
   /**
-   * The BOSS model: a histogram of SFA word frequencies
+   * The BOSS boss: a histogram of SFA word frequencies
    */
   public static class BagOfPattern {
     public IntIntHashMap bag;
@@ -89,10 +89,10 @@ public class BOSSModel {
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < samples.length; i++) {
           if (i % BLOCKS == id) {
-            short[][] sfaWords = BOSSModel.this.signature.transformWindowing(samples[i]);
+            short[][] sfaWords = BOSS.this.signature.transformWindowing(samples[i]);
             words[i] = new int[sfaWords.length];
             for (int j = 0; j < sfaWords.length; j++) {
-              words[i][j] = (int) Words.createWord(sfaWords[j], BOSSModel.this.maxF, (byte) Words.binlog(BOSSModel.this.symbols));
+              words[i][j] = (int) Words.createWord(sfaWords[j], BOSS.this.maxF, (byte) Words.binlog(BOSS.this.symbols));
             }
           }
         }
@@ -103,12 +103,12 @@ public class BOSSModel {
   }
 
   /**
-   * Create the BOSS model for a fixed window-length and SFA word length
+   * Create the BOSS boss for a fixed window-queryLength and SFA word queryLength
    *
    * @param words      the SFA words of the time series
    * @param samples    the samples to be transformed
-   * @param wordLength the SFA word length
-   * @return returns a BOSS model for each time series in samples
+   * @param wordLength the SFA word queryLength
+   * @return returns a BOSS boss for each time series in samples
    */
   public BagOfPattern[] createBagOfPattern(
       final int[][] words,
@@ -129,7 +129,7 @@ public class BOSSModel {
       long lastWord = Long.MIN_VALUE;
 
       for (int offset = 0; offset < words[j].length; offset++) {
-        // use the words of larger length to get words of smaller lengths
+        // use the words of larger queryLength to get words of smaller lengths
         long word = words[j][offset] & mask;
         if (word != lastWord) { // ignore adjacent samples
           bagOfPatterns[j].bag.putOrAdd((int) word, (short) 1, (short) 1);

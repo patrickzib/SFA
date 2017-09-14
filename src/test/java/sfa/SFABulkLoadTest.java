@@ -32,7 +32,7 @@ public class SFABulkLoadTest {
 
   static LinkedList<Future<Long>> futures = new LinkedList<>();
 
-  static int l = 16; // SFA word length ( & dimensionality of the index)
+  static int l = 16; // SFA word queryLength ( & dimensionality of the index)
   static int leafThreshold = 100; // number of subsequences in each leaf node
   static byte symbols = SFATrie.symbols;
 
@@ -60,7 +60,7 @@ public class SFABulkLoadTest {
     // TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(
     // new File("./datasets/indexing/query_lightcurves.txt"));
     // int n = timeSeries2[0].getLength();
-    // System.out.println("Queries DS size: " + timeSeries2.length);
+    // System.out.println("Queries DS size: " + timeSeries2.queryLength);
     //
     // long mem = runtime.totalMemory();
     //
@@ -140,7 +140,7 @@ public class SFABulkLoadTest {
   }
 
   /**
-   * Gets the i-th time series of length n
+   * Gets the i-th time series of queryLength n
    *
    * @param i
    * @param n
@@ -167,7 +167,7 @@ public class SFABulkLoadTest {
   @Test
   public void testBulkLoadSubsequenceMatching() throws IOException {
     int N = 20 * 100_000;
-    System.out.println("Loading/generating Time Series of length " + N + "...");
+    System.out.println("Loading/generating Time Series of queryLength " + N + "...");
 
     // samples to be indexed
     TimeSeries timeSeries = getTimeSeries(1, N);
@@ -466,7 +466,7 @@ public class SFABulkLoadTest {
     }
 
     /**
-     * Gets a prefix of length useLetters from the word, encoded as int.
+     * Gets a prefix of queryLength useLetters from the word, encoded as int.
      *
      * @param word
      * @param useLetters

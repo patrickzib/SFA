@@ -156,7 +156,7 @@ public class TimeSeries implements Serializable {
 
 
   /**
-   * Get a subsequence starting at offset with length windowSize.
+   * Get a subsequence starting at offset with queryLength windowSize.
    *
    * @param windowSize
    * @return
@@ -169,7 +169,7 @@ public class TimeSeries implements Serializable {
   }
 
   /**
-   * Get a subsequence starting at offset with length windowSize.
+   * Get a subsequence starting at offset with queryLength windowSize.
    *
    * @param windowSize
    * @return
@@ -208,7 +208,7 @@ public class TimeSeries implements Serializable {
       double subsequenceData[] = new double[windowSize];
       System.arraycopy(this.data, pos, subsequenceData, 0, windowSize);
 
-      // The newly created time series have length windowSize and offset i
+      // The newly created time series have queryLength windowSize and offset i
       subsequences[i] = new TimeSeries(subsequenceData);
       if (offset == 1) {
         subsequences[i].norm(normMean, means[i], stddevs[i]);

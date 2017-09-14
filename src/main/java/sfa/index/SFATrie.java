@@ -34,14 +34,14 @@ public class SFATrie implements Serializable {
 
   protected SFANode root;
 
-  // The length of the approximations
+  // The queryLength of the approximations
   protected int wordLength;
   public SFA quantization = null;
 
   // The number of elements until a leaf node is split
   protected int leafThreshold;
 
-  // the minimal prefix length where all nodes start.
+  // the minimal prefix queryLength where all nodes start.
   protected int minimalDepth = -1;
 
   // Alphabet size of the SFA representation
@@ -82,7 +82,7 @@ public class SFATrie implements Serializable {
    * Create a new SFATrie with dimensionality l and threshold 'leafThreshold'.
    * A leaf will be split, once leafThreshold is exceeded.
    *
-   * @param l             word length of the SFA transformation
+   * @param l             word queryLength of the SFA transformation
    * @param leafThreshold number of ts in a leaf
    */
   public SFATrie(int l, int leafThreshold) {
@@ -165,7 +165,7 @@ public class SFATrie implements Serializable {
    * Bulk insertion into the SFA trie
    *
    * @param approximations The approximations to insert
-   * @param minDepth       The minimal depth of the trie (i.e. all nodes start with this prefix length)
+   * @param minDepth       The minimal depth of the trie (i.e. all nodes start with this prefix queryLength)
    *                       This is needed for bulk loading.
    */
   public void buildIndex(List<SFATrie.Approximation[]> approximations, int minDepth) {
@@ -269,7 +269,7 @@ public class SFATrie implements Serializable {
       }
     } else if (node.type == NodeType.Leaf) {
       if (nodeToInsert.type == NodeType.Internal) {
-        // extend node by length
+        // extend node by queryLength
         node.type = NodeType.Internal;
         for (IntCursor ts : node.getApproximationIds()) {
           insert(getApproximation(ts.value), index, node);
@@ -751,7 +751,7 @@ public class SFATrie implements Serializable {
   }
 
   /**
-   * Sets the minimal prefix length to use.
+   * Sets the minimal prefix queryLength to use.
    *
    * @param minimalHeight
    */

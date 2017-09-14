@@ -14,23 +14,23 @@ import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 
 /**
- * The Bag-of-SFA-Symbols in Vector Space model as published in
+ * The Bag-of-SFA-Symbols in Vector Space boss as published in
  * Schäfer, P.: Scalable time series classification. DMKD (Preprint)
  *
  * @author bzcschae
  */
-public class BOSSVSModel extends BOSSModel {
+public class BOSSVS extends BOSS {
 
   /**
-   * Create a BOSS VS model.
+   * Create a BOSS VS boss.
    *
-   * @param maxF         length of the SFA words
+   * @param maxF         queryLength of the SFA words
    * @param maxS         alphabet size
-   * @param windowLength subsequence (window) length used for extracting SFA words from
+   * @param windowLength subsequence (window) queryLength used for extracting SFA words from
    *                     time series.
    * @param normMean     set to true, if mean should be set to 0 for a window
    */
-  public BOSSVSModel(int maxF, int maxS, int windowLength, boolean normMean) {
+  public BOSSVS(int maxF, int maxS, int windowLength, boolean normMean) {
     super(maxF, maxS, windowLength, normMean);
   }
 
@@ -56,7 +56,7 @@ public class BOSSVSModel extends BOSSModel {
    * @param bagOfPatterns The BOSS (bag-of-patterns) representation of the time series
    * @param sampleIndices The indices to use
    * @param uniqueLabels  The unique class labels in the data set
-   * @return              returns the tf-idf model for the time series
+   * @return              returns the tf-idf boss for the time series
    */
   public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
@@ -127,7 +127,7 @@ public class BOSSVSModel extends BOSSModel {
   }
 
   /**
-   * Norm the vector to length 1
+   * Norm the vector to queryLength 1
    *
    * @param classStatistics
    */

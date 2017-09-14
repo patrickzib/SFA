@@ -40,7 +40,7 @@ public class SFAWordsTest {
     sfa.printBins();
 
     // check discretization bins
-    Assert.assertTrue("Wrong word length of SFA transformation detected", sfa.bins.length == wordLength);
+    Assert.assertTrue("Wrong word queryLength of SFA transformation detected", sfa.bins.length == wordLength);
     for (int i = 0; i < sfa.bins.length; i++) {
       for (int j = 0; j < sfa.bins[i].length-1; j++) {
         Assert.assertTrue("SFA bins should be monotonically increasing.", sfa.bins[i][j] <= sfa.bins[i][j+1]);
@@ -50,7 +50,7 @@ public class SFAWordsTest {
     // transform
     for (int q = 0; q < test.length; q++) {
       short[] wordQuery = sfa.transform(test[q]);
-      Assert.assertTrue("SFA word length does not match actual length.", wordQuery.length == wordLength);
+      Assert.assertTrue("SFA word queryLength does not match actual queryLength.", wordQuery.length == wordLength);
 
       System.out.println(q + "-th transformed time series SFA word " + "\t" + toSfaWord(wordQuery, symbols));
     }
