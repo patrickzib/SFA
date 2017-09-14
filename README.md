@@ -254,19 +254,19 @@ CIKM 2017, (accepted), [[LINK]](https://arxiv.org/abs/1701.07681)
 There are 7 implemented use cases:
 
 
-1. Classification accuracy of WEASEL, BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassification.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/UCRClassificationTest.java)
+1. Classification accuracy of WEASEL, BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassificationTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/UCRClassificationTest.java)
 2. SFA lower bounding distance to the Euclidean distance: 
-[SFAMinDistance.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAMinDistanceTest.java)
+[SFAMinDistanceTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAMinDistanceTest.java)
 3. Generate SFA words from a set of samples: 
-[SFAWords.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsTest.java)
+[SFAWordsTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsTest.java)
 4. SFA makes use of variable word lengths: 
-[SFAWordsVariableLength.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsVariableLengthTest.java)
+[SFAWordsVariableLengthTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsVariableLengthTest.java)
 5. Extract sliding windows from a time series and transform each sliding window to its SFA word: 
-[SFAWordsWindowing.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsWindowingTest.java)
+[SFAWordsWindowingTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsWindowingTest.java)
 6. Time series indexing and similarity search: 
 [SFATrieTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFATrieTest.java)
 7. Time series bulk loading and similarity search: 
-[SFABulkLoad.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFABulkLoadTest.java)
+[SFABulkLoadTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFABulkLoadTest.java)
 
 
 # References & Acknowledgements
