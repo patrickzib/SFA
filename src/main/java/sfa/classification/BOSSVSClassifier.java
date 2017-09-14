@@ -89,7 +89,7 @@ public class BOSSVSClassifier extends Classifier {
 
       Predictions pred = predictEnsemble(model, samples);
 
-      if (bestCorrectTraining < pred.correct.get()) {
+      if (bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
         bestScore = score;
         this.model = model;
