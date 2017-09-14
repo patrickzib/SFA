@@ -47,7 +47,7 @@ public class WEASELClassifier extends Classifier {
   WEASELModel model;
 
   public WEASELClassifier(TimeSeries[] train, TimeSeries[] test) {
-    super(train, test);
+    super();
   }
 
   public static class WEASELModel extends Model {
@@ -71,44 +71,50 @@ public class WEASELClassifier extends Classifier {
   }
 
   @Override
-  public Score eval() {
-    // generate test train/split for cross-validation
-    generateIndices();
-
+  public Score eval(
+      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
-    Score score = fit(this.trainSamples);
+    Score score = fit(trainSamples);
 
     // training score
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, this.trainSamples.length);
+      outputResult((int) score.training, startTime, trainSamples.length);
     }
 
     // determine label based on the majority of predictions
-    int correctTesting = predict(this.testSamples).correct.get();
+    int correctTesting = predict(testSamples).correct.get();
 
     if (DEBUG) {
       System.out.println("Weasel Testing:\t");
-      outputResult(correctTesting, startTime, this.testSamples.length);
+      outputResult(correctTesting, startTime, testSamples.length);
       System.out.println("");
     }
 
     return new Score(
         "Weasel",
-        1 - formatError(correctTesting, this.testSamples.length),
-        1 - formatError((int) score.training, this.trainSamples.length),
+        1 - formatError(correctTesting, testSamples.length),
+        1 - formatError((int) score.training, trainSamples.length),
         score.windowLength
     );
   }
 
-  public Score fit(final TimeSeries[] samples) {
+
+  @Override
+  public Score fit(final TimeSeries[] trainSamples) {
 
     // train the shotgun models for different window lengths
-    this.model = fitWeasel(samples);
+    this.model = fitWeasel(trainSamples);
 
     // return score
     return model.score;
+  }
+
+
+  @Override
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
   }
 
   protected WEASELModel fitWeasel(final TimeSeries[] samples) {
@@ -174,9 +180,6 @@ public class WEASELClassifier extends Classifier {
     return null;
   }
 
-  public Predictions predict(final TimeSeries[] testSamples) {
-    return predict(this.model, testSamples);
-  }
 
   protected Predictions predict(
       final WEASELModel model,

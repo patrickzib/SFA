@@ -21,8 +21,8 @@ public class ShotgunClassifier extends Classifier {
   // the trained boss
   ShotgunModel model;
 
-  public ShotgunClassifier(TimeSeries[] train, TimeSeries[] test) {
-    super(train, test);
+  public ShotgunClassifier() {
+    super();
   }
 
   public class ShotgunModel extends Model {
@@ -38,11 +38,12 @@ public class ShotgunClassifier extends Classifier {
     public TimeSeries[] samples;
   }
 
-  public Score eval() {
+  public Score eval(
+      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
 
     long startTime = System.currentTimeMillis();
 
-    Score score = fit(this.trainSamples);
+    Score score = fit(trainSamples);
 
     // training score
     if (DEBUG) {
@@ -51,23 +52,24 @@ public class ShotgunClassifier extends Classifier {
     }
 
     // Classify: testing score
-    int correctTesting = predict(this.testSamples).correct.get();
+    int correctTesting = predict(testSamples).correct.get();
 
     if (DEBUG) {
       System.out.println("Shotgun Testing:\t");
-      outputResult(correctTesting, startTime, this.testSamples.length);
+      outputResult(correctTesting, startTime, testSamples.length);
       System.out.println("");
     }
 
     return new Score(
         "Shotgun",
-        1 - formatError(correctTesting, this.testSamples.length),
-        1 - formatError((int) score.training, this.trainSamples.length),
+        1 - formatError(correctTesting, testSamples.length),
+        1 - formatError((int) score.training, trainSamples.length),
         score.windowLength);
   }
 
 
-  public Score fit(final TimeSeries[] samples) {
+  @Override
+  public Score fit(final TimeSeries[] trainSamples) {
     Score bestScore = null;
     int bestCorrectTraining = 0;
 
@@ -75,7 +77,7 @@ public class ShotgunClassifier extends Classifier {
       long startTime = System.currentTimeMillis();
 
       // train the shotgun models for different window lengths
-      ShotgunModel model = fitEnsemble(samples, normMean, 1.0).getHighestScoringModel();
+      ShotgunModel model = fitEnsemble(trainSamples, normMean, 1.0).getHighestScoringModel();
       Score score = model.score;
 
       if (model == null || bestCorrectTraining < score.training) {
@@ -88,6 +90,13 @@ public class ShotgunClassifier extends Classifier {
     // return score
     return bestScore;
   }
+
+
+  @Override
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
+
 
   protected Ensemble<ShotgunModel> fitEnsemble(
       final TimeSeries[] samples,
@@ -160,10 +169,6 @@ public class ShotgunClassifier extends Classifier {
     return new Ensemble<>(results);
   }
 
-
-  public Predictions predict(final TimeSeries[] testSamples) {
-    return predict(this.model, testSamples);
-  }
 
 
   protected Predictions predict(

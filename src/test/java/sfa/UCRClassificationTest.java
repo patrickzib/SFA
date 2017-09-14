@@ -65,27 +65,27 @@ public class UCRClassificationTest {
 
               // The WEASEL-classifier
               Classifier w = new WEASELClassifier(trainSamples, testSamples);
-              Classifier.Score scoreW = w.eval();
+              Classifier.Score scoreW = w.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreW.toString());
 
               // The BOSS ensemble classifier
-              Classifier boss = new BOSSEnsembleClassifier(trainSamples, testSamples);
-              Classifier.Score scoreBOSS = boss.eval();
+              Classifier boss = new BOSSEnsembleClassifier();
+              Classifier.Score scoreBOSS = boss.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreBOSS.toString());
 
               // The BOSS VS classifier
-              Classifier bossVS = new BOSSVSClassifier(trainSamples, testSamples);
-              Classifier.Score scoreBOSSVS = bossVS.eval();
+              Classifier bossVS = new BOSSVSClassifier();
+              Classifier.Score scoreBOSSVS = bossVS.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreBOSSVS.toString());
 
               // The Shotgun ensemble classifier
-              Classifier shotgunEnsemble = new ShotgunEnsembleClassifier(trainSamples, testSamples);
-              Classifier.Score scoreShotgunEnsemble = shotgunEnsemble.eval();
+              Classifier shotgunEnsemble = new ShotgunEnsembleClassifier();
+              Classifier.Score scoreShotgunEnsemble = shotgunEnsemble.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreShotgunEnsemble.toString());
 
               // The Shotgun classifier
-              Classifier shotgun = new ShotgunClassifier(trainSamples, testSamples);
-              Classifier.Score scoreShotgun = shotgun.eval();
+              Classifier shotgun = new ShotgunClassifier();
+              Classifier.Score scoreShotgun = shotgun.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreShotgun.toString());
             }
           }

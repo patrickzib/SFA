@@ -35,8 +35,8 @@ public class BOSSVSClassifier extends Classifier {
   // the trained weasel
   public Ensemble<BossVSModel<IntFloatHashMap>> model;
 
-  public BOSSVSClassifier(TimeSeries[] train, TimeSeries[] test) {
-    super(train, test);
+  public BOSSVSClassifier() {
+    super();
   }
 
 
@@ -54,44 +54,47 @@ public class BOSSVSClassifier extends Classifier {
 
 
   @Override
-  public Score eval() {
+  public Score eval(
+      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
-    Score score = fit(this.trainSamples);
+    Score score = fit(trainSamples);
 
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, this.testSamples.length);
+      outputResult((int) score.training, startTime, testSamples.length);
       System.out.println("");
     }
 
     // Classify: testing score
-    int correctTesting = predict(this.testSamples).correct.get();
+    int correctTesting = predict(testSamples).correct.get();
 
     return new Score(
         "BOSS VS",
-        1 - formatError(correctTesting, this.testSamples.length),
-        1 - formatError((int) score.training, this.trainSamples.length),
+        1 - formatError(correctTesting, testSamples.length),
+        1 - formatError((int) score.training, trainSamples.length),
         score.windowLength);
   }
 
-  public Score fit(final TimeSeries[] samples) {
+  @Override
+  public Score fit(final TimeSeries[] trainSamples) {
     // generate test train/split for cross-validation
-    generateIndices();
+    generateIndices(trainSamples);
 
     Score bestScore = null;
     int bestCorrectTraining = 0;
 
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
-      Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(samples, normMean);
+      Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(trainSamples, normMean);
       Score score = model.getHighestScoringModel().score;
 
-      Predictions pred = predictEnsemble(model, samples);
+      Predictions pred = predictEnsemble(model, trainSamples);
 
       if (bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
         bestScore = score;
+        bestScore.training = pred.correct.get();
         this.model = model;
       }
     }
@@ -100,11 +103,18 @@ public class BOSSVSClassifier extends Classifier {
     return bestScore;
   }
 
+
+  @Override
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predictEnsemble(this.model, testSamples);
+  }
+
+
   protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(
       final TimeSeries[] samples,
       final boolean normMean) {
     int minWindowLength = 10;
-    int maxWindowLength = getMax(this.trainSamples, MAX_WINDOW_LENGTH);
+    int maxWindowLength = getMax(samples, MAX_WINDOW_LENGTH);
 
     // equi-distance sampling of windows
     ArrayList<Integer> windows = new ArrayList<>();
@@ -115,6 +125,7 @@ public class BOSSVSClassifier extends Classifier {
     }
     return fit(windows.toArray(new Integer[]{}), normMean, samples);
   }
+
 
   protected Ensemble<BossVSModel<IntFloatHashMap>> fit(
       Integer[] allWindows,
@@ -137,10 +148,10 @@ public class BOSSVSClassifier extends Classifier {
             BossVSModel<IntFloatHashMap> model = new BossVSModel<>(normMean, allWindows[i]);
             try {
               BOSSVS bossvs = new BOSSVS(maxF, maxS, allWindows[i], model.normed);
-              int[][] words = bossvs.createWords(BOSSVSClassifier.this.trainSamples);
+              int[][] words = bossvs.createWords(samples);
 
               for (int f = minF; f <= Math.min(model.windowLength, maxF); f += 2) {
-                BagOfPattern[] bag = bossvs.createBagOfPattern(words, BOSSVSClassifier.this.trainSamples, f);
+                BagOfPattern[] bag = bossvs.createBagOfPattern(words, samples, f);
 
                 // cross validation using folds
                 int correct = 0;
@@ -163,7 +174,7 @@ public class BOSSVSClassifier extends Classifier {
               }
 
               // obtain the final matrix
-              BagOfPattern[] bag = bossvs.createBagOfPattern(words, BOSSVSClassifier.this.trainSamples, model.features);
+              BagOfPattern[] bag = bossvs.createBagOfPattern(words, samples, model.features);
 
               // calculate the tf-idf for each class
               model.idf = bossvs.createTfIdf(bag, this.uniqueLabels);
@@ -258,9 +269,6 @@ public class BOSSVSClassifier extends Classifier {
     return p;
   }
 
-  public Predictions predict(final TimeSeries[] testSamples) {
-    return predictEnsemble(this.model, testSamples);
-  }
 
   protected Predictions predictEnsemble(
       final Ensemble<BossVSModel<IntFloatHashMap>> results,

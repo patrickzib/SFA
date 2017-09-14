@@ -2,26 +2,22 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.io.File;
-import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import sfa.timeseries.TimeSeries;
-import sfa.timeseries.TimeSeriesLoader;
-
 import com.carrotsearch.hppc.FloatContainer;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import sfa.timeseries.TimeSeries;
+
+import java.io.File;
+import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class Classifier {
   transient ExecutorService exec;
@@ -32,12 +28,6 @@ public abstract class Classifier {
   public static boolean ENSEMBLE_WEIGHTS = true;
 
   public static int threads = 1;
-
-  public TimeSeries[] testSamples;
-  public TimeSeries[] trainSamples;
-
-  public File train;
-  public File test;
 
   protected int[][] testIndices;
   protected int[][] trainIndices;
@@ -57,24 +47,7 @@ public abstract class Classifier {
     }
   }
 
-  public Classifier(TimeSeries[] train, TimeSeries[] test) {
-    this.trainSamples = train;
-    this.testSamples = test;
-
-    this.exec = Executors.newFixedThreadPool(threads);
-  }
-
-  public Classifier(File train, File test) {
-    this.train = train;
-    this.test = test;
-
-    this.trainSamples = TimeSeriesLoader.loadDataset(train);
-    if (test != null) {
-      this.testSamples = TimeSeriesLoader.loadDataset(test);
-    } else {
-      this.testSamples = this.trainSamples;
-    }
-
+  public Classifier() {
     this.exec = Executors.newFixedThreadPool(threads);
   }
 
@@ -88,11 +61,29 @@ public abstract class Classifier {
     }
   }
 
-  public abstract Score fit(final TimeSeries[] samples);
+  /**
+   * Build a classifier from the a training set with class labels.
+   * @param trainSamples The training set
+   * @return The accuracy on the train-samples
+   */
+  public abstract Score fit(final TimeSeries[] trainSamples);
 
+  /**
+   * The predicted the classes of an array of samples.
+   * @param testSamples The training set
+   * @return The predictions for each test-sample and the test accuracy.
+   */
   public abstract Predictions predict(final TimeSeries[] testSamples);
 
-  public abstract Score eval();
+  /**
+   * Performs training and testing on a set of train- and test-samples.
+   * @return The predictions for each test-sample and the test accuracy.
+   * @param trainSamples The training set
+   * @param testSamples The training set
+   * @return The accuracy on the test- and train-samples
+   */
+  public abstract Score eval(
+      final TimeSeries[] trainSamples, final TimeSeries[] testSamples);
 
 
   public static class Words {
@@ -300,7 +291,7 @@ public abstract class Classifier {
       final List<Pair<String, Double>>[] labels,
       final List<Integer> currentWindowLengths) {
 
-    String[] predictedLabels = new String[testSamples.length];
+    String[] predictedLabels = new String[samples.length];
 
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
@@ -368,8 +359,8 @@ public abstract class Classifier {
     return indices;
   }
 
-  protected void generateIndices() {
-    IntArrayList[] sets = getStratifiedTrainTestSplitIndices(this.trainSamples, folds);
+  protected void generateIndices(TimeSeries[] samples) {
+    IntArrayList[] sets = getStratifiedTrainTestSplitIndices(samples, folds);
     this.testIndices = new int[folds][];
     this.trainIndices = new int[folds][];
     for (int s = 0; s < folds; s++) {
