@@ -42,7 +42,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     }
 
     // Classify: testing score
-    int correctTesting = predict(testSamples).correct.get();
+    int correctTesting = score(testSamples).correct.get();
 
     return new Score(
         "Shotgun Ensemble",
@@ -76,7 +76,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
   }
 
   @Override
-  public Predictions predict(final TimeSeries[] testSamples) {
+  public Predictions score(final TimeSeries[] testSamples) {
     return predictEnsemble(this.model, testSamples);
   }
 

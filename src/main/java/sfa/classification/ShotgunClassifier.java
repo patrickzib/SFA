@@ -52,7 +52,7 @@ public class ShotgunClassifier extends Classifier {
     }
 
     // Classify: testing score
-    int correctTesting = predict(testSamples).correct.get();
+    int correctTesting = score(testSamples).correct.get();
 
     if (DEBUG) {
       System.out.println("Shotgun Testing:\t");
@@ -93,7 +93,7 @@ public class ShotgunClassifier extends Classifier {
 
 
   @Override
-  public Predictions predict(final TimeSeries[] testSamples) {
+  public Predictions score(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }
 

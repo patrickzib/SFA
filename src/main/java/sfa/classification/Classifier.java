@@ -73,7 +73,7 @@ public abstract class Classifier {
    * @param testSamples The training set
    * @return The predictions for each test-sample and the test accuracy.
    */
-  public abstract Predictions predict(final TimeSeries[] testSamples);
+  public abstract Predictions score(final TimeSeries[] testSamples);
 
   /**
    * Performs training and testing on a set of train- and test-samples.
