@@ -194,10 +194,10 @@ First, load datasets, set parameters (or keep defaults), and train the BOSS VS m
 TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(...);
 
 BOSSVSClassifier bossvs = new BOSSVSClassifier();
-boss.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
-boss.maxF   = 16;	// represents the maximal length for training SFA words. default: 16.
-boss.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
-boss.factor = 0.95 	// the best models within this factor are kept for ensembling. default: 0.95
+bossvs.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
+bossvs.maxF   = 16;	// represents the maximal length for training SFA words. default: 16.
+bossvs.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
+bossvs.factor = 0.95 	// the best models within this factor are kept for ensembling. default: 0.95
 
 // train the BOSS VS model
 Score score = bossvs.fit(trainSamples);
@@ -232,9 +232,9 @@ First, load datasets, set parameters (or keep defaults), and train the WEASEL mo
 TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(...);
 
 WEASELClassifier weasel = new WEASELClassifier();
-boss.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
-boss.maxF   = 6;	// represents the maximal length for training SFA words. default: 6.
-boss.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
+weasel.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
+weasel.maxF   = 6;	// represents the maximal length for training SFA words. default: 6.
+weasel.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
 
 // train the BOSS VS model
 Score score = weasel.fit(trainSamples);
