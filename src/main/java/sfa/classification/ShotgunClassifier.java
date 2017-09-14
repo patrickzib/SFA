@@ -78,7 +78,7 @@ public class ShotgunClassifier extends Classifier {
       ShotgunModel model = fitEnsemble(samples, normMean, 1.0).getHighestScoringModel();
       Score score = model.score;
 
-      if (bestCorrectTraining < score.training) {
+      if (model == null || bestCorrectTraining < score.training) {
         bestCorrectTraining = (int) score.training;
         bestScore = score;
         this.model = model;
@@ -146,7 +146,6 @@ public class ShotgunClassifier extends Classifier {
 
     // sort descending
     Collections.sort(results, Collections.reverseOrder());
-
 
     // only keep best scores
     List<ShotgunModel> model = new ArrayList<>();

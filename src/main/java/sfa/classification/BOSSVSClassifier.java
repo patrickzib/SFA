@@ -87,8 +87,10 @@ public class BOSSVSClassifier extends Classifier {
       Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(samples, normMean);
       Score score = model.getHighestScoringModel().score;
 
-      if (bestCorrectTraining < score.training) {
-        bestCorrectTraining = (int) score.training;
+      Predictions pred = predictEnsemble(model, samples);
+
+      if (bestCorrectTraining < pred.correct.get()) {
+        bestCorrectTraining = pred.correct.get();
         bestScore = score;
         this.model = model;
       }

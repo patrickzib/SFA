@@ -80,8 +80,10 @@ public class BOSSEnsembleClassifier extends Classifier {
       Ensemble<BOSSModel> model = fitEnsemble(samples, normMean);
       Score score = model.getHighestScoringModel().score;
 
-      if (bestCorrectTraining < score.training) {
-        bestCorrectTraining = (int) score.training;
+      Predictions pred = predictEnsemble(model, samples);
+
+      if (model == null || bestCorrectTraining < pred.correct.get()) {
+        bestCorrectTraining = pred.correct.get();
         bestScore = score;
         this.model = model;
       }

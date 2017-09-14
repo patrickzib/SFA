@@ -59,9 +59,10 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
       // train the shotgun models for different window lengths
       Ensemble<ShotgunModel> model = fitEnsemble(samples, normMean, factor);
       Score score = model.getHighestScoringModel().score;
+      Predictions pred = predictEnsemble(model, samples);
 
-      if (bestCorrectTraining < score.training) {
-        bestCorrectTraining = (int) score.training;
+      if (model == null || bestCorrectTraining < pred.correct.get()) {
+        bestCorrectTraining = pred.correct.get();
         bestScore = score;
         this.model = model;
       }
