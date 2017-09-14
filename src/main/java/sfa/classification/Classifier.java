@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -22,6 +24,7 @@ import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
 public abstract class Classifier {
+  transient ExecutorService exec;
 
   public static boolean[] NORMALIZATION = new boolean[]{true, false};
 
@@ -57,6 +60,8 @@ public abstract class Classifier {
   public Classifier(TimeSeries[] train, TimeSeries[] test) {
     this.trainSamples = train;
     this.testSamples = test;
+
+    this.exec = Executors.newFixedThreadPool(threads);
   }
 
   public Classifier(File train, File test) {
@@ -68,6 +73,18 @@ public abstract class Classifier {
       this.testSamples = TimeSeriesLoader.loadDataset(test);
     } else {
       this.testSamples = this.trainSamples;
+    }
+
+    this.exec = Executors.newFixedThreadPool(threads);
+  }
+
+  /**
+   * Invokes {@code shutdown} when this executor is no longer
+   * referenced and it has no threads.
+   */
+  protected void finalize() {
+    if (exec != null) {
+      exec.shutdown();
     }
   }
 

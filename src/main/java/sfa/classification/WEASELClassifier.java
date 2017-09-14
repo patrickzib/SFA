@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -74,40 +72,34 @@ public class WEASELClassifier extends Classifier {
 
   @Override
   public Score eval() {
-    ExecutorService exec = Executors.newFixedThreadPool(threads);
-    try {
-      // generate test train/split for cross-validation
-      generateIndices();
+    // generate test train/split for cross-validation
+    generateIndices();
 
-      long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
-      Score score = fit(this.trainSamples);
+    Score score = fit(this.trainSamples);
 
-      // training score
-      if (DEBUG) {
-        System.out.println(score.toString());
-        outputResult((int) score.training, startTime, this.trainSamples.length);
-      }
-
-      // determine label based on the majority of predictions
-      int correctTesting = predict(this.testSamples).correct.get();
-
-      if (DEBUG) {
-        System.out.println("Weasel Testing:\t");
-        outputResult(correctTesting, startTime, this.testSamples.length);
-        System.out.println("");
-      }
-
-      return new Score(
-          "Weasel",
-          1 - formatError(correctTesting, this.testSamples.length),
-          1 - formatError((int) score.training, this.trainSamples.length),
-          score.windowLength
-      );
-    } finally {
-      exec.shutdown();
+    // training score
+    if (DEBUG) {
+      System.out.println(score.toString());
+      outputResult((int) score.training, startTime, this.trainSamples.length);
     }
 
+    // determine label based on the majority of predictions
+    int correctTesting = predict(this.testSamples).correct.get();
+
+    if (DEBUG) {
+      System.out.println("Weasel Testing:\t");
+      outputResult(correctTesting, startTime, this.testSamples.length);
+      System.out.println("");
+    }
+
+    return new Score(
+        "Weasel",
+        1 - formatError(correctTesting, this.testSamples.length),
+        1 - formatError((int) score.training, this.trainSamples.length),
+        score.windowLength
+    );
   }
 
   public Score fit(final TimeSeries[] samples) {
@@ -174,7 +166,7 @@ public class WEASELClassifier extends Classifier {
           linearModel,
           0, // testing
           maxCorrect // training
-          );
+      );
 
     } catch (Exception e) {
       e.printStackTrace();

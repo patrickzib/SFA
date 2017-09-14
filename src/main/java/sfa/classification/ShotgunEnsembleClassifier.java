@@ -4,8 +4,6 @@ package sfa.classification;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -31,65 +29,56 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
   @Override
   public Score eval() {
-    ExecutorService exec = Executors.newFixedThreadPool(threads);
-    try {
-      Ensemble<ShotgunModel> bestScore = new Ensemble<>();
-      int bestCorrectTesting = 0;
-      int bestCorrectTraining = 0;
+    Ensemble<ShotgunModel> bestScore = new Ensemble<>();
+    int bestCorrectTesting = 0;
+    int bestCorrectTraining = 0;
 
-      for (boolean normMean : NORMALIZATION) {
-        long startTime = System.currentTimeMillis();
+    for (boolean normMean : NORMALIZATION) {
+      long startTime = System.currentTimeMillis();
 
-        Score score = fit(exec, this.trainSamples, normMean);
+      Score score = fit(this.trainSamples, normMean);
 
-        // training score
-        if (DEBUG) {
-          System.out.println(score.toString());
-          outputResult((int)score.training, startTime, this.trainSamples.length);
-        }
-
-        int correctTesting = predict(exec, this.testSamples).correct.get();
-
-        if (bestCorrectTraining < score.training) {
-          bestCorrectTesting = correctTesting;
-          bestCorrectTraining = (int)score.training;
-          bestScore = model;
-        }
-        if (DEBUG) {
-          System.out.println("");
-        }
+      // training score
+      if (DEBUG) {
+        System.out.println(score.toString());
+        outputResult((int)score.training, startTime, this.trainSamples.length);
       }
 
-      return new Score(
-          "Shotgun Ensemble",
-          1 - formatError(bestCorrectTesting, this.testSamples.length),
-          1 - formatError(bestCorrectTraining, this.trainSamples.length),
-          bestScore.model.get(0).windowLength);
-    } finally {
-      exec.shutdown();
+      int correctTesting = predict(this.testSamples).correct.get();
+
+      if (bestCorrectTraining < score.training) {
+        bestCorrectTesting = correctTesting;
+        bestCorrectTraining = (int)score.training;
+        bestScore = model;
+      }
+      if (DEBUG) {
+        System.out.println("");
+      }
     }
+
+    return new Score(
+        "Shotgun Ensemble",
+        1 - formatError(bestCorrectTesting, this.testSamples.length),
+        1 - formatError(bestCorrectTraining, this.trainSamples.length),
+        bestScore.model.get(0).windowLength);
   }
 
   public Score fit(
-      final ExecutorService exec,
       final TimeSeries[] samples,
       final boolean normMean) {
 
     // train the shotgun models for different window lengths
-    this.model = fitEnsemble(samples, normMean, 1.0, exec);
+    this.model = fitEnsemble(samples, normMean, 1.0);
 
     // return score
     return model.getHighestScoringModel().score;
   }
 
-  public Predictions predict(
-      final ExecutorService executor,
-      final TimeSeries[] testSamples) {
-    return predictEnsemble(executor, this.model, testSamples);
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predictEnsemble(this.model, testSamples);
   }
 
   protected Predictions predictEnsemble(
-      final ExecutorService executor,
       final Ensemble<ShotgunModel> model,
       final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
@@ -103,7 +92,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     final List<Integer> usedLengths = new ArrayList<>(model.model.size());
 
     // parallel execution
-    ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
+    ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify

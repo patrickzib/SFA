@@ -5,8 +5,6 @@ package sfa.classification;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -58,65 +56,57 @@ public class BOSSVSClassifier extends Classifier {
 
   @Override
   public Score eval() {
-    ExecutorService exec = Executors.newFixedThreadPool(threads);
-    try {
-      // BOSS Distance
-      Score bestScore = null;
-      int bestCorrectTesting = 0;
-      int bestCorrectTraining = 0;
+    // BOSS Distance
+    Score bestScore = null;
+    int bestCorrectTesting = 0;
+    int bestCorrectTraining = 0;
 
-      // generate test train/split for cross-validation
-      generateIndices();
+    // generate test train/split for cross-validation
+    generateIndices();
 
-      for (boolean normMean : NORMALIZATION) {
-        long startTime = System.currentTimeMillis();
+    for (boolean normMean : NORMALIZATION) {
+      long startTime = System.currentTimeMillis();
 
-        Score score = fit(exec, trainSamples, normMean);
+      Score score = fit(trainSamples, normMean);
 
-        // training score
-        if (DEBUG) {
-          System.out.println(score.toString());
-          outputResult((int)score.training, startTime, this.trainSamples.length);
-        }
-
-        // determine labels based on the majority of predictions
-        int correctTesting = predict(exec, this.testSamples).correct.get();
-
-        if (bestCorrectTraining <= score.training) {
-          bestCorrectTesting = correctTesting;
-          bestCorrectTraining = (int)score.training;
-          bestScore = score;
-        }
-        if (DEBUG) {
-          System.out.println("");
-        }
+      // training score
+      if (DEBUG) {
+        System.out.println(score.toString());
+        outputResult((int)score.training, startTime, this.trainSamples.length);
       }
 
-      return new Score(
-          "BOSS VS",
-          1 - formatError(bestCorrectTesting, this.testSamples.length),
-          1 - formatError(bestCorrectTraining, this.trainSamples.length),
-          bestScore.windowLength);
-    } finally {
-      exec.shutdown();
+      // determine labels based on the majority of predictions
+      int correctTesting = predict(this.testSamples).correct.get();
+
+      if (bestCorrectTraining <= score.training) {
+        bestCorrectTesting = correctTesting;
+        bestCorrectTraining = (int)score.training;
+        bestScore = score;
+      }
+      if (DEBUG) {
+        System.out.println("");
+      }
     }
 
+    return new Score(
+        "BOSS VS",
+        1 - formatError(bestCorrectTesting, this.testSamples.length),
+        1 - formatError(bestCorrectTraining, this.trainSamples.length),
+        bestScore.windowLength);
   }
 
   public Score fit(
-      final ExecutorService exec,
       final TimeSeries[] samples,
       final boolean normMean) {
 
     // train the shotgun models for different window lengths
-    this.model = fitEnsemble(exec, samples, normMean);
+    this.model = fitEnsemble(samples, normMean);
 
     // return score
     return model.getHighestScoringModel().score;
   }
 
   protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(
-      ExecutorService exec,
       final TimeSeries[] samples,
       final boolean normMean) {
     int minWindowLength = 10;
@@ -129,14 +119,13 @@ public class BOSSVSClassifier extends Classifier {
     for (int c = minWindowLength; c <= maxWindowLength; c += distance) {
       windows.add(c);
     }
-    return fit(windows.toArray(new Integer[]{}), normMean, samples, exec);
+    return fit(windows.toArray(new Integer[]{}), normMean, samples);
   }
 
   protected Ensemble<BossVSModel<IntFloatHashMap>> fit(
       Integer[] allWindows,
       boolean normMean,
-      TimeSeries[] samples,
-      ExecutorService exec) {
+      TimeSeries[] samples) {
 
     final List<BossVSModel<IntFloatHashMap>> results = new ArrayList<>(allWindows.length);
 
@@ -275,14 +264,11 @@ public class BOSSVSClassifier extends Classifier {
     return p;
   }
 
-  public Predictions predict(
-      final ExecutorService executor,
-      final TimeSeries[] testSamples) {
-    return predictEnsemble(executor, this.model, testSamples);
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predictEnsemble(this.model, testSamples);
   }
 
   protected Predictions predictEnsemble(
-      ExecutorService executor,
       final Ensemble<BossVSModel<IntFloatHashMap>> results,
       final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
@@ -297,7 +283,7 @@ public class BOSSVSClassifier extends Classifier {
     final int[] indicesTest = createIndices(testSamples.length);
 
     // parallel execution
-    ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
+    ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify

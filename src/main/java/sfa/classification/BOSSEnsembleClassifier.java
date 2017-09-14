@@ -5,8 +5,6 @@ package sfa.classification;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -22,7 +20,6 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
  * in the presence of noise. DMKD (2015)
  */
 public class BOSSEnsembleClassifier extends Classifier {
-
   // default training parameters
   public static double factor = 0.92;
 
@@ -50,60 +47,53 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
   public Score eval() {
-    ExecutorService exec = Executors.newFixedThreadPool(threads);
-    try {
-      Score bestScore = null;
-      int bestCorrectTesting = 0;
-      int bestCorrectTraining = 0;
+    Score bestScore = null;
+    int bestCorrectTesting = 0;
+    int bestCorrectTraining = 0;
 
-      for (boolean norm : NORMALIZATION) {
-        long startTime = System.currentTimeMillis();
+    for (boolean norm : NORMALIZATION) {
+      long startTime = System.currentTimeMillis();
 
-        Score score = fit(exec, trainSamples, norm);
+      Score score = fit(trainSamples, norm);
 
-        // training score
-        if (DEBUG) {
-          System.out.println(score.toString());
-          outputResult((int)score.training, startTime, this.trainSamples.length);
-        }
-
-        // determine labels based on the majority of predictions
-        int correctTesting = predict(exec, this.testSamples).correct.get();
-
-        if (bestCorrectTraining < score.training) {
-          bestCorrectTesting = correctTesting;
-          bestCorrectTraining = (int) score.training;
-          bestScore = score;
-        }
-        if (DEBUG) {
-          System.out.println("");
-        }
+      // training score
+      if (DEBUG) {
+        System.out.println(score.toString());
+        outputResult((int)score.training, startTime, this.trainSamples.length);
       }
 
-      return new Score(
-          "BOSS ensemble",
-          1 - formatError(bestCorrectTesting, this.testSamples.length),
-          1 - formatError(bestCorrectTraining, this.trainSamples.length),
-          bestScore.windowLength);
-    } finally {
-      exec.shutdown();
+      // determine labels based on the majority of predictions
+      int correctTesting = predict(this.testSamples).correct.get();
+
+      if (bestCorrectTraining < score.training) {
+        bestCorrectTesting = correctTesting;
+        bestCorrectTraining = (int) score.training;
+        bestScore = score;
+      }
+      if (DEBUG) {
+        System.out.println("");
+      }
     }
+
+    return new Score(
+        "BOSS ensemble",
+        1 - formatError(bestCorrectTesting, this.testSamples.length),
+        1 - formatError(bestCorrectTraining, this.trainSamples.length),
+        bestScore.windowLength);
   }
 
   public Score fit(
-      final ExecutorService exec,
       final TimeSeries[] samples,
       final boolean normMean) {
 
     // train the shotgun models for different window lengths
-    this.model = fitEnsemble(exec, samples, normMean);
+    this.model = fitEnsemble(samples, normMean);
 
     // return score
     return model.getHighestScoringModel().score;
   }
 
   protected Ensemble<BOSSModel> fitEnsemble(
-      ExecutorService exec,
       final TimeSeries[] samples,
       final boolean normMean) {
     int minWindowLength = 10;
@@ -116,14 +106,13 @@ public class BOSSEnsembleClassifier extends Classifier {
     for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
       windows.add(windowLength);
     }
-    return fit(windows.toArray(new Integer[]{}), normMean, samples, exec);
+    return fit(windows.toArray(new Integer[]{}), normMean, samples);
   }
 
   protected Ensemble<BOSSModel> fit(
       Integer[] allWindows,
       boolean normMean,
-      TimeSeries[] samples,
-      ExecutorService exec) {
+      TimeSeries[] samples) {
 
     final AtomicInteger correctTraining = new AtomicInteger(0);
 
@@ -199,10 +188,8 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
 
-  public Predictions predict(
-      final ExecutorService executor,
-      final TimeSeries[] testSamples) {
-    return predictEnsemble(executor, this.model, testSamples);
+  public Predictions predict(final TimeSeries[] testSamples) {
+    return predictEnsemble(this.model, testSamples);
   }
 
   protected Predictions predict(
@@ -262,7 +249,6 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
   protected Predictions predictEnsemble(
-      final ExecutorService executor,
       final Ensemble<BOSSModel> results,
       final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
@@ -276,7 +262,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     final List<Integer> usedLengths = new ArrayList<>(results.size());
 
     // parallel execution
-    ParallelFor.withIndex(executor, threads, new ParallelFor.Each() {
+    ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify
