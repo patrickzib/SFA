@@ -39,54 +39,54 @@ public class ShotgunClassifier extends Classifier {
   }
 
   public Score eval() {
+
+    long startTime = System.currentTimeMillis();
+
+    Score score = fit(this.trainSamples);
+
+    // training score
+    if (DEBUG) {
+      System.out.println(score.toString());
+      outputResult((int) score.training, startTime, trainSamples.length);
+    }
+
+    // Classify: testing score
+    int correctTesting = predict(this.testSamples).correct.get();
+
+    if (DEBUG) {
+      System.out.println("Shotgun Testing:\t");
+      outputResult(correctTesting, startTime, this.testSamples.length);
+      System.out.println("");
+    }
+
+    return new Score(
+        "Shotgun",
+        1 - formatError(correctTesting, this.testSamples.length),
+        1 - formatError((int) score.training, this.trainSamples.length),
+        score.windowLength);
+  }
+
+
+  public Score fit(final TimeSeries[] samples) {
     Score bestScore = null;
-    int bestCorrectTesting = 0;
     int bestCorrectTraining = 0;
 
     for (boolean normMean : NORMALIZATION) {
       long startTime = System.currentTimeMillis();
 
-      Score score = fit(this.trainSamples, normMean);
-
-      // training score
-      if (DEBUG) {
-        System.out.println(score.toString());
-        outputResult((int)score.training, startTime, trainSamples.length);
-      }
-
-      // Classify: testing score
-      int correctTesting = predict(this.testSamples).correct.get();
+      // train the shotgun models for different window lengths
+      ShotgunModel model = fitEnsemble(samples, normMean, 1.0).getHighestScoringModel();
+      Score score = model.score;
 
       if (bestCorrectTraining < score.training) {
-        bestCorrectTesting = correctTesting;
-        bestCorrectTraining = (int)score.training;
+        bestCorrectTraining = (int) score.training;
         bestScore = score;
-      }
-      if (DEBUG) {
-        System.out.println("");
+        this.model = model;
       }
     }
-    return new Score(
-        "Shotgun",
-        1 - formatError(bestCorrectTesting, this.testSamples.length),
-        1 - formatError(bestCorrectTraining, this.trainSamples.length),
-        bestScore.windowLength);
-  }
-
-
-  public Score fit(
-      final TimeSeries[] samples,
-      final boolean normMean) {
-
-    // train the shotgun models for different window lengths
-    Ensemble<ShotgunModel> ensemble = fitEnsemble(samples, normMean, 1.0);
-
-    // keep best boss
-    this.model = ensemble.getHighestScoringModel();
 
     // return score
-    return ensemble.getHighestScoringModel().score;
-
+    return bestScore;
   }
 
   protected Ensemble<ShotgunModel> fitEnsemble(

@@ -88,7 +88,12 @@ public abstract class Classifier {
     }
   }
 
+  public abstract Score fit(final TimeSeries[] samples);
+
+  public abstract Predictions predict(final TimeSeries[] testSamples);
+
   public abstract Score eval();
+
 
   public static class Words {
     public static int binlog(int bits) {
@@ -245,61 +250,23 @@ public abstract class Classifier {
     return Math.round(1000 * (testSize - correct) / (double) (testSize)) / 1000.0;
   }
 
-//  @SuppressWarnings("unchecked")
-//  public static TimeSeries[][] getStratifiedSplits(
-//      TimeSeries[] samples,
-//      int splits) {
+
+//  public static Map<String, LinkedList<Integer>> splitByLabel(TimeSeries[] samples) {
+//    Map<String, LinkedList<Integer>> elements = new HashMap<>();
 //
-//    Map<String, LinkedList<Integer>> elements = splitByLabel(samples);
-//
-//    // pick samples
-//    double trainTestSplit = 1.0 / (double)splits;
-//    ArrayList<TimeSeries>[] sets = new ArrayList[splits];
-//    for (int s = 0; s < splits; s++) {
-//      sets[s] = new ArrayList<TimeSeries>();
-//      for (Entry<String, LinkedList<Integer>> data : elements.entrySet()) {
-//        int count = (int)(data.getValue().size() * trainTestSplit);
-//        int i = 0;
-//        while (!data.getValue().isEmpty()
-//            && i <= count) {
-//          sets[s].add(samples[data.getValue().remove()]);
-//          i++;
+//    for (int i = 0; i < samples.length; i++) {
+//      String label = samples[i].getLabel();
+//      if (!label.trim().isEmpty()) {
+//        LinkedList<Integer> sameLabel = elements.get(label);
+//        if (sameLabel == null) {
+//          sameLabel = new LinkedList<>();
+//          elements.put(label, sameLabel);
 //        }
+//        sameLabel.add(i);
 //      }
 //    }
-//
-//    ArrayList<TimeSeries> testSet = new ArrayList<TimeSeries>();
-//    for (List<Integer> indices: elements.values()) {
-//      for (int index : indices) {
-//        testSet.add(samples[index]);
-//      }
-//    }
-//
-//    TimeSeries[][] data = new TimeSeries[splits][];
-//    for (int s = 0; s < splits; s++) {
-//      data[s] = sets[s].toArray(new TimeSeries[]{});
-//    }
-//
-//    return data;
+//    return elements;
 //  }
-
-
-  public static Map<String, LinkedList<Integer>> splitByLabel(TimeSeries[] samples) {
-    Map<String, LinkedList<Integer>> elements = new HashMap<>();
-
-    for (int i = 0; i < samples.length; i++) {
-      String label = samples[i].getLabel();
-      if (!label.trim().isEmpty()) {
-        LinkedList<Integer> sameLabel = elements.get(label);
-        if (sameLabel == null) {
-          sameLabel = new LinkedList<>();
-          elements.put(label, sameLabel);
-        }
-        sameLabel.add(i);
-      }
-    }
-    return elements;
-  }
 
   public static class Pair<E, T> {
     public E key;
@@ -326,7 +293,7 @@ public abstract class Classifier {
     }
   }
 
-  public Predictions score(
+  protected Predictions score(
       final String name,
       final TimeSeries[] samples,
       long startTime,
@@ -369,7 +336,7 @@ public abstract class Classifier {
     return new Predictions(predictedLabels, correctTesting);
   }
 
-  public int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {
+  protected int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {
     int max = MAX_WINDOW_SIZE;
     for (TimeSeries ts : samples) {
       max = Math.min(ts.getLength(), max);

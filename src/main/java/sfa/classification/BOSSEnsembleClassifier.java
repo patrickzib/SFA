@@ -47,51 +47,50 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
   public Score eval() {
+    long startTime = System.currentTimeMillis();
+
+    Score score = fit(this.trainSamples);
+
+    if (DEBUG) {
+      System.out.println(score.toString());
+      outputResult((int) score.training, startTime, this.testSamples.length);
+      System.out.println("");
+    }
+
+    // Classify: testing score
+    int correctTesting = predict(this.testSamples).correct.get();
+
+    return new Score(
+        "BOSS Ensemble",
+        1 - formatError(correctTesting, this.testSamples.length),
+        1 - formatError((int) score.training, this.trainSamples.length),
+        score.windowLength);
+  }
+
+
+  public Score fit(final TimeSeries[] samples) {
+    // generate test train/split for cross-validation
+    generateIndices();
+
     Score bestScore = null;
-    int bestCorrectTesting = 0;
     int bestCorrectTraining = 0;
 
-    for (boolean norm : NORMALIZATION) {
-      long startTime = System.currentTimeMillis();
-
-      Score score = fit(trainSamples, norm);
-
-      // training score
-      if (DEBUG) {
-        System.out.println(score.toString());
-        outputResult((int)score.training, startTime, this.trainSamples.length);
-      }
-
-      // determine labels based on the majority of predictions
-      int correctTesting = predict(this.testSamples).correct.get();
+    for (boolean normMean : NORMALIZATION) {
+      // train the shotgun models for different window lengths
+      Ensemble<BOSSModel> model = fitEnsemble(samples, normMean);
+      Score score = model.getHighestScoringModel().score;
 
       if (bestCorrectTraining < score.training) {
-        bestCorrectTesting = correctTesting;
         bestCorrectTraining = (int) score.training;
         bestScore = score;
-      }
-      if (DEBUG) {
-        System.out.println("");
+        this.model = model;
       }
     }
 
-    return new Score(
-        "BOSS ensemble",
-        1 - formatError(bestCorrectTesting, this.testSamples.length),
-        1 - formatError(bestCorrectTraining, this.trainSamples.length),
-        bestScore.windowLength);
-  }
-
-  public Score fit(
-      final TimeSeries[] samples,
-      final boolean normMean) {
-
-    // train the shotgun models for different window lengths
-    this.model = fitEnsemble(samples, normMean);
-
     // return score
-    return model.getHighestScoringModel().score;
+    return bestScore;
   }
+
 
   protected Ensemble<BOSSModel> fitEnsemble(
       final TimeSeries[] samples,
@@ -106,13 +105,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
       windows.add(windowLength);
     }
-    return fit(windows.toArray(new Integer[]{}), normMean, samples);
-  }
-
-  protected Ensemble<BOSSModel> fit(
-      Integer[] allWindows,
-      boolean normMean,
-      TimeSeries[] samples) {
+    Integer[] allWindows = windows.toArray(new Integer[]{});
 
     final AtomicInteger correctTraining = new AtomicInteger(0);
 

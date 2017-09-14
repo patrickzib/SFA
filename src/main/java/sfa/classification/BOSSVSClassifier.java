@@ -53,57 +53,49 @@ public class BOSSVSClassifier extends Classifier {
   }
 
 
-
   @Override
   public Score eval() {
-    // BOSS Distance
-    Score bestScore = null;
-    int bestCorrectTesting = 0;
-    int bestCorrectTraining = 0;
+    long startTime = System.currentTimeMillis();
 
-    // generate test train/split for cross-validation
-    generateIndices();
+    Score score = fit(this.trainSamples);
 
-    for (boolean normMean : NORMALIZATION) {
-      long startTime = System.currentTimeMillis();
-
-      Score score = fit(trainSamples, normMean);
-
-      // training score
-      if (DEBUG) {
-        System.out.println(score.toString());
-        outputResult((int)score.training, startTime, this.trainSamples.length);
-      }
-
-      // determine labels based on the majority of predictions
-      int correctTesting = predict(this.testSamples).correct.get();
-
-      if (bestCorrectTraining <= score.training) {
-        bestCorrectTesting = correctTesting;
-        bestCorrectTraining = (int)score.training;
-        bestScore = score;
-      }
-      if (DEBUG) {
-        System.out.println("");
-      }
+    if (DEBUG) {
+      System.out.println(score.toString());
+      outputResult((int) score.training, startTime, this.testSamples.length);
+      System.out.println("");
     }
+
+    // Classify: testing score
+    int correctTesting = predict(this.testSamples).correct.get();
 
     return new Score(
         "BOSS VS",
-        1 - formatError(bestCorrectTesting, this.testSamples.length),
-        1 - formatError(bestCorrectTraining, this.trainSamples.length),
-        bestScore.windowLength);
+        1 - formatError(correctTesting, this.testSamples.length),
+        1 - formatError((int) score.training, this.trainSamples.length),
+        score.windowLength);
   }
 
-  public Score fit(
-      final TimeSeries[] samples,
-      final boolean normMean) {
+  public Score fit(final TimeSeries[] samples) {
+    // generate test train/split for cross-validation
+    generateIndices();
 
-    // train the shotgun models for different window lengths
-    this.model = fitEnsemble(samples, normMean);
+    Score bestScore = null;
+    int bestCorrectTraining = 0;
+
+    for (boolean normMean : NORMALIZATION) {
+      // train the shotgun models for different window lengths
+      Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(samples, normMean);
+      Score score = model.getHighestScoringModel().score;
+
+      if (bestCorrectTraining < score.training) {
+        bestCorrectTraining = (int) score.training;
+        bestScore = score;
+        this.model = model;
+      }
+    }
 
     // return score
-    return model.getHighestScoringModel().score;
+    return bestScore;
   }
 
   protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(

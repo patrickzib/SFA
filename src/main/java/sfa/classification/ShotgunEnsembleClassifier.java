@@ -29,49 +29,46 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
   @Override
   public Score eval() {
-    Ensemble<ShotgunModel> bestScore = new Ensemble<>();
-    int bestCorrectTesting = 0;
-    int bestCorrectTraining = 0;
 
-    for (boolean normMean : NORMALIZATION) {
-      long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
-      Score score = fit(this.trainSamples, normMean);
+    Score score = fit(this.trainSamples);
 
-      // training score
-      if (DEBUG) {
-        System.out.println(score.toString());
-        outputResult((int)score.training, startTime, this.trainSamples.length);
-      }
-
-      int correctTesting = predict(this.testSamples).correct.get();
-
-      if (bestCorrectTraining < score.training) {
-        bestCorrectTesting = correctTesting;
-        bestCorrectTraining = (int)score.training;
-        bestScore = model;
-      }
-      if (DEBUG) {
-        System.out.println("");
-      }
+    if (DEBUG) {
+      System.out.println(score.toString());
+      outputResult((int) score.training, startTime, this.testSamples.length);
+      System.out.println("");
     }
+
+    // Classify: testing score
+    int correctTesting = predict(this.testSamples).correct.get();
 
     return new Score(
         "Shotgun Ensemble",
-        1 - formatError(bestCorrectTesting, this.testSamples.length),
-        1 - formatError(bestCorrectTraining, this.trainSamples.length),
-        bestScore.model.get(0).windowLength);
+        1 - formatError(correctTesting, this.testSamples.length),
+        1 - formatError((int) score.training, this.trainSamples.length),
+        score.windowLength);
   }
 
-  public Score fit(
-      final TimeSeries[] samples,
-      final boolean normMean) {
+  public Score fit(final TimeSeries[] samples) {
 
-    // train the shotgun models for different window lengths
-    this.model = fitEnsemble(samples, normMean, 1.0);
+    Score bestScore = null;
+    int bestCorrectTraining = 0;
+
+    for (boolean normMean : NORMALIZATION) {
+      // train the shotgun models for different window lengths
+      Ensemble<ShotgunModel> model = fitEnsemble(samples, normMean, factor);
+      Score score = model.getHighestScoringModel().score;
+
+      if (bestCorrectTraining < score.training) {
+        bestCorrectTraining = (int) score.training;
+        bestScore = score;
+        this.model = model;
+      }
+    }
 
     // return score
-    return model.getHighestScoringModel().score;
+    return bestScore;
   }
 
   public Predictions predict(final TimeSeries[] testSamples) {
