@@ -117,14 +117,6 @@ index.buildIndex(timeSeries, windowLength);
 // perform a k-NN search
 SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
 
-// output result
-List<Integer> offsets = result.values();
-List<Double> distances = result.keys();
-
-for (int j = 0; j < result.size(); j++) {
-	System.out.println("\tResult:\t"+distances.get(j) + "\t" +offsets.get(j));
-}
-
 ```
 
 
