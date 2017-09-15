@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.bwaldvogel.liblinear.Linear;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.BOSS;
 import sfa.transformation.BOSS.BagOfPattern;
@@ -77,16 +78,18 @@ public class BOSSEnsembleClassifier extends Classifier {
     Score bestScore = null;
     int bestCorrectTraining = 0;
 
+    int minWindowLength = 10;
+    int maxWindowLength = getMax(trainSamples, MAX_WINDOW_LENGTH);
+    Integer[] windows = getWindowsBetween(minWindowLength, maxWindowLength);
+
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
-      Ensemble<BOSSModel> model = fitEnsemble(trainSamples, normMean);
-      Score score = model.getHighestScoringModel().score;
-
+      Ensemble<BOSSModel> model = fitEnsemble(windows, normMean, trainSamples);
       Predictions pred = predictEnsemble(model, trainSamples);
 
       if (model == null || bestCorrectTraining < pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
-        bestScore = score;
+        bestScore = model.getHighestScoringModel().score;
         bestScore.training = pred.correct.get();
         this.model = model;
       }
@@ -96,42 +99,30 @@ public class BOSSEnsembleClassifier extends Classifier {
     return bestScore;
   }
 
-
   @Override
   public Predictions predict(final TimeSeries[] testSamples) {
     return predictEnsemble(this.model, testSamples);
   }
 
 
-  protected Ensemble<BOSSModel> fitEnsemble(
-      final TimeSeries[] samples,
-      final boolean normMean) {
-    int minWindowLength = 10;
-    int maxWindowLength = MAX_WINDOW_LENGTH;
-    for (TimeSeries ts : samples) {
-      maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
-    }
-
-    ArrayList<Integer> windows = new ArrayList<>();
-    for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
-      windows.add(windowLength);
-    }
-    Integer[] allWindows = windows.toArray(new Integer[]{});
+  protected Ensemble<BOSSModel> fitEnsemble(Integer[] windows,
+                                            boolean normMean,
+                                            TimeSeries[] samples) {
 
     final AtomicInteger correctTraining = new AtomicInteger(0);
+    final ArrayList<BOSSModel> results = new ArrayList<>(windows.length);
 
-    final ArrayList<BOSSModel> results = new ArrayList<>(allWindows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       Score bestScore = new Score("BOSS", 0, 1, 0, samples.length, 0);
       final Object sync = new Object();
 
       @Override
       public void run(int id, AtomicInteger processed) {
-        for (int i = 0; i < allWindows.length; i++) {
+        for (int i = 0; i < windows.length; i++) {
           if (i % threads == id) {
-            BOSSModel model = new BOSSModel(normMean, allWindows[i]);
+            BOSSModel model = new BOSSModel(normMean, windows[i]);
             try {
-              BOSS boss = new BOSS(maxF, maxS, allWindows[i], model.normed);
+              BOSS boss = new BOSS(maxF, maxS, windows[i], model.normed);
               int[][] words = boss.createWords(samples);
 
               for (int f = minF; f <= maxF; f += 2) {

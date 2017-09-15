@@ -12,6 +12,7 @@ import sfa.timeseries.TimeSeries;
 
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -341,6 +342,15 @@ public abstract class Classifier {
       outputResult(correctTesting, startTime, samples.length);
     }
     return new Predictions(predictedLabels, correctTesting);
+  }
+
+
+  protected Integer[] getWindowsBetween(int minWindowLength, int maxWindowLength) {
+    List<Integer> windows = new ArrayList<>();
+    for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
+      windows.add(windowLength);
+    }
+    return windows.toArray(new Integer[]{});
   }
 
   protected int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {

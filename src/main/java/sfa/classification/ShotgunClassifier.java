@@ -27,9 +27,9 @@ public class ShotgunClassifier extends Classifier {
 
   public class ShotgunModel extends Model {
     public ShotgunModel(
-        boolean normed,
-        int windowLength,
-        TimeSeries[] samples
+            boolean normed,
+            int windowLength,
+            TimeSeries[] samples
     ) {
       super("Shotgun", -1, 1, -1, 1, normed, windowLength);
       this.samples = samples;
@@ -39,7 +39,7 @@ public class ShotgunClassifier extends Classifier {
   }
 
   public Score eval(
-      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
+          final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
 
     long startTime = System.currentTimeMillis();
 
@@ -61,10 +61,10 @@ public class ShotgunClassifier extends Classifier {
     }
 
     return new Score(
-        "Shotgun",
-        correctTesting, testSamples.length,
-        score.training, trainSamples.length,
-        score.windowLength);
+            "Shotgun",
+            correctTesting, testSamples.length,
+            score.training, trainSamples.length,
+            score.windowLength);
   }
 
 
@@ -99,40 +99,32 @@ public class ShotgunClassifier extends Classifier {
 
 
   protected Ensemble<ShotgunModel> fitEnsemble(
-      final TimeSeries[] samples,
-      final boolean normMean,
-      final double factor) {
+          final TimeSeries[] samples,
+          final boolean normMean,
+          final double factor) {
 
     int minWindowLength = 5;
-    int maxWindowLength = MAX_WINDOW_LENGTH;
-    for (TimeSeries ts : samples) {
-      maxWindowLength = Math.min(ts.getLength(), maxWindowLength);
-    }
-
-    ArrayList<Integer> windows = new ArrayList<>();
-    for (int windowLength = maxWindowLength; windowLength >= minWindowLength; windowLength--) {
-      windows.add(windowLength);
-    }
-    Integer[] allWindows = windows.toArray(new Integer[]{});
+    int maxWindowLength = getMax(samples, MAX_WINDOW_LENGTH);
+    Integer[] windows = getWindowsBetween(minWindowLength, maxWindowLength);
 
     final AtomicInteger correctTraining = new AtomicInteger(0);
 
-    final List<ShotgunModel> results = new ArrayList<>(allWindows.length);
+    final List<ShotgunModel> results = new ArrayList<>(windows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       ShotgunModel bestModel = null;
       final Object sync = new Object();
 
       @Override
       public void run(int id, AtomicInteger processed) {
-        for (int i = 0; i < allWindows.length; i++) {
+        for (int i = 0; i < windows.length; i++) {
           if (i % threads == id) {
-            ShotgunModel model = new ShotgunModel(normMean, allWindows[i], samples);
+            ShotgunModel model = new ShotgunModel(normMean, windows[i], samples);
             Predictions p = predict(
-                model,
-                samples
+                    model,
+                    samples
             );
 
-            model.score = new Score(model.name, -1, 1, p.correct.get(), samples.length, allWindows[i]);
+            model.score = new Score(model.name, -1, 1, p.correct.get(), samples.length, windows[i]);
 
             // keep best scores
             synchronized (sync) {
@@ -170,10 +162,9 @@ public class ShotgunClassifier extends Classifier {
   }
 
 
-
   protected Predictions predict(
-      final ShotgunModel model,
-      final TimeSeries[] testSamples) {
+          final ShotgunModel model,
+          final TimeSeries[] testSamples) {
 
     final Predictions p = new Predictions(new String[testSamples.length], 0);
 
@@ -242,12 +233,12 @@ public class ShotgunClassifier extends Classifier {
   }
 
   public static double getEuclideanDistance(
-      TimeSeries ts,
-      TimeSeries q,
-      double meanTs,
-      double stdTs,
-      double minValue,
-      int w
+          TimeSeries ts,
+          TimeSeries q,
+          double meanTs,
+          double stdTs,
+          double minValue,
+          int w
   ) {
 
     double distance = 0.0;
@@ -269,11 +260,11 @@ public class ShotgunClassifier extends Classifier {
   }
 
   public static void calcMeansStds(
-      final int windowLength,
-      final TimeSeries[] trainSamples,
-      final double[][] means,
-      final double[][] stds,
-      boolean normMean) {
+          final int windowLength,
+          final TimeSeries[] trainSamples,
+          final double[][] means,
+          final double[][] stds,
+          boolean normMean) {
     for (int i = 0; i < trainSamples.length; i++) {
       int w = Math.min(windowLength, trainSamples[i].getLength());
       means[i] = new double[trainSamples[i].getLength() - w + 1];

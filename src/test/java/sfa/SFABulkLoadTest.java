@@ -65,7 +65,7 @@ public class SFABulkLoadTest {
     // long mem = runtime.totalMemory();
     //
     // // train SFA quantization bins on a SUBSET of all time series,
-    // // as we cannot fit all into main memory
+    // // as we cannot fitEnsemble all into main memory
     // TimeSeries[] timeSeriesSubset = new TimeSeries[50_000];
     // for (int i = 0; i < N; i++) {
     // timeSeriesSubset[i] = getTimeSeries(i, n);

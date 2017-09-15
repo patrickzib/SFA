@@ -42,8 +42,8 @@ public class BOSSVSClassifier extends Classifier {
 
   public static class BossVSModel<E> extends Model {
     public BossVSModel(
-        boolean normed,
-        int windowLength) {
+            boolean normed,
+            int windowLength) {
       super("BOSS VS", -1, 1, -1, 1, normed, windowLength);
     }
 
@@ -55,7 +55,7 @@ public class BOSSVSClassifier extends Classifier {
 
   @Override
   public Score eval(
-      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
+          final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     Score score = fit(trainSamples);
@@ -70,10 +70,10 @@ public class BOSSVSClassifier extends Classifier {
     int correctTesting = predict(testSamples).correct.get();
 
     return new Score(
-        "BOSS VS",
-        correctTesting, testSamples.length,
-        score.training, trainSamples.length,
-        score.windowLength);
+            "BOSS VS",
+            correctTesting, testSamples.length,
+            score.training, trainSamples.length,
+            score.windowLength);
   }
 
   @Override
@@ -84,16 +84,27 @@ public class BOSSVSClassifier extends Classifier {
     Score bestScore = null;
     int bestCorrectTraining = 0;
 
+    int minWindowLength = 10;
+    int maxWindowLength = getMax(trainSamples, MAX_WINDOW_LENGTH);
+
+    // equi-distance sampling of windows
+    ArrayList<Integer> windows = new ArrayList<>();
+    double count = Math.sqrt(maxWindowLength);
+    double distance = ((maxWindowLength - minWindowLength) / count);
+    for (int c = minWindowLength; c <= maxWindowLength; c += distance) {
+      windows.add(c);
+    }
+
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
-      Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(trainSamples, normMean);
-      Score score = model.getHighestScoringModel().score;
-
+      Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(
+              windows.toArray(new Integer[]{}), normMean, trainSamples);
       Predictions pred = predictEnsemble(model, trainSamples);
 
       if (bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
-        bestScore = score;
+        bestScore = model.getHighestScoringModel().score;
+        ;
         bestScore.training = pred.correct.get();
         this.model = model;
       }
@@ -110,30 +121,11 @@ public class BOSSVSClassifier extends Classifier {
   }
 
 
-  protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(
-      final TimeSeries[] samples,
-      final boolean normMean) {
-    int minWindowLength = 10;
-    int maxWindowLength = getMax(samples, MAX_WINDOW_LENGTH);
+  protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(Integer[] windows,
+                                                               boolean normMean,
+                                                               TimeSeries[] samples) {
 
-    // equi-distance sampling of windows
-    ArrayList<Integer> windows = new ArrayList<>();
-    double count = Math.sqrt(maxWindowLength);
-    double distance = ((maxWindowLength - minWindowLength) / count);
-    for (int c = minWindowLength; c <= maxWindowLength; c += distance) {
-      windows.add(c);
-    }
-    return fit(windows.toArray(new Integer[]{}), normMean, samples);
-  }
-
-
-  protected Ensemble<BossVSModel<IntFloatHashMap>> fit(
-      Integer[] allWindows,
-      boolean normMean,
-      TimeSeries[] samples) {
-
-    final List<BossVSModel<IntFloatHashMap>> results = new ArrayList<>(allWindows.length);
-
+    final List<BossVSModel<IntFloatHashMap>> results = new ArrayList<>(windows.length);
     final AtomicInteger correctTraining = new AtomicInteger(0);
 
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
@@ -143,11 +135,11 @@ public class BOSSVSClassifier extends Classifier {
 
       @Override
       public void run(int id, AtomicInteger processed) {
-        for (int i = 0; i < allWindows.length; i++) {
+        for (int i = 0; i < windows.length; i++) {
           if (i % threads == id) {
-            BossVSModel<IntFloatHashMap> model = new BossVSModel<>(normMean, allWindows[i]);
+            BossVSModel<IntFloatHashMap> model = new BossVSModel<>(normMean, windows[i]);
             try {
-              BOSSVS bossvs = new BOSSVS(maxF, maxS, allWindows[i], model.normed);
+              BOSSVS bossvs = new BOSSVS(maxF, maxS, windows[i], model.normed);
               int[][] words = bossvs.createWords(samples);
 
               for (int f = minF; f <= Math.min(model.windowLength, maxF); f += 2) {
@@ -158,7 +150,7 @@ public class BOSSVSClassifier extends Classifier {
                 for (int s = 0; s < folds; s++) {
                   // calculate the tf-idf for each class
                   ObjectObjectHashMap<String, IntFloatHashMap> idf = bossvs.createTfIdf(bag,
-                      BOSSVSClassifier.this.trainIndices[s], this.uniqueLabels);
+                          BOSSVSClassifier.this.trainIndices[s], this.uniqueLabels);
 
                   correct += predict(BOSSVSClassifier.this.testIndices[s], bag, idf).correct.get();
                 }
@@ -217,9 +209,9 @@ public class BOSSVSClassifier extends Classifier {
 
 
   public Predictions predict(
-      final int[] indices,
-      final BagOfPattern[] bagOfPatternsTestSamples,
-      final ObjectObjectHashMap<String, IntFloatHashMap> matrixTrain) {
+          final int[] indices,
+          final BagOfPattern[] bagOfPatternsTestSamples,
+          final ObjectObjectHashMap<String, IntFloatHashMap> matrixTrain) {
 
     Predictions p = new Predictions(new String[bagOfPatternsTestSamples.length], 0);
 
@@ -271,8 +263,8 @@ public class BOSSVSClassifier extends Classifier {
 
 
   protected Predictions predictEnsemble(
-      final Ensemble<BossVSModel<IntFloatHashMap>> results,
-      final TimeSeries[] testSamples) {
+          final Ensemble<BossVSModel<IntFloatHashMap>> results,
+          final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
