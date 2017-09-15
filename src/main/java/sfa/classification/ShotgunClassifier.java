@@ -31,7 +31,7 @@ public class ShotgunClassifier extends Classifier {
         int windowLength,
         TimeSeries[] samples
     ) {
-      super("Shotgun", -1, -1, normed, windowLength);
+      super("Shotgun", -1, 1, -1, 1, normed, windowLength);
       this.samples = samples;
     }
 
@@ -62,8 +62,8 @@ public class ShotgunClassifier extends Classifier {
 
     return new Score(
         "Shotgun",
-        1 - formatError(correctTesting, testSamples.length),
-        1 - formatError((int) score.training, trainSamples.length),
+        correctTesting, testSamples.length,
+        score.training, trainSamples.length,
         score.windowLength);
   }
 
@@ -132,7 +132,7 @@ public class ShotgunClassifier extends Classifier {
                 samples
             );
 
-            model.score = new Score(model.name, -1, p.correct.get(), allWindows[i]);
+            model.score = new Score(model.name, -1, 1, p.correct.get(), samples.length, allWindows[i]);
 
             // keep best scores
             synchronized (sync) {

@@ -38,7 +38,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     public BOSSModel(
         boolean normed,
         int windowLength) {
-      super("BOSS", -1, -1, normed, windowLength);
+      super("BOSS", -1, 1, -1, 1, normed, windowLength);
     }
 
     public BagOfPattern[] bag;
@@ -64,8 +64,8 @@ public class BOSSEnsembleClassifier extends Classifier {
 
     return new Score(
         "BOSS Ensemble",
-        1 - formatError(correctTesting, testSamples.length),
-        1 - formatError((int) score.training, trainSamples.length),
+        correctTesting, testSamples.length,
+        score.training, trainSamples.length,
         score.windowLength);
   }
 
@@ -122,7 +122,7 @@ public class BOSSEnsembleClassifier extends Classifier {
 
     final ArrayList<BOSSModel> results = new ArrayList<>(allWindows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      Score bestScore = new Score("BOSS", 0, 0, 0);
+      Score bestScore = new Score("BOSS", 0, 1, 0, samples.length, 0);
       final Object sync = new Object();
 
       @Override
@@ -254,7 +254,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
-    final List<Pair<String, Double>>[] testLabels = new List[testSamples.length];
+    final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }
