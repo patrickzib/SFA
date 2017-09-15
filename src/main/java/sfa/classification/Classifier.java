@@ -7,6 +7,7 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import jdk.nashorn.internal.objects.NativeRegExp;
 import sfa.timeseries.TimeSeries;
 
 import java.io.File;
@@ -149,12 +150,17 @@ public abstract class Classifier {
 
     public Model(
         String name,
-        double testing,
-        double training,
+        int testing,
+        int testSize,
+        int training,
+        int trainSize,
         boolean normed,
         int windowLength
     ) {
-      this(name, new Score(name, testing, training, windowLength), normed, windowLength);
+      this(   name,
+              new Score(name, testing, testSize, training, trainSize, windowLength),
+              normed,
+              windowLength);
     }
 
     public Model(
@@ -181,31 +187,41 @@ public abstract class Classifier {
 
   public static class Score implements Comparable<Score> {
     public String name;
-    public double training;
-    public double testing;
+    public int training;
+    public int trainSize;
+    public int testing;
+    public int testSize;
     public int windowLength;
 
     public Score(
         String name,
-        double testing,
-        double training,
+        int testing,
+        int testSize,
+        int training,
+        int trainSize,
         int windowLength
     ) {
       this.name = name;
       this.training = training;
+      this.trainSize = trainSize;
       this.testing = testing;
+      this.testSize = testSize;
       this.windowLength = windowLength;
     }
 
     @Override
     public String toString() {
-      return this.name + ";" + this.training + ";" + this.testing;
+      double test = 1 - formatError(testing, testSize);
+      double train = 1 - formatError((int) training, trainSize);
+
+      return this.name + ";" + train + ";" + test;
     }
 
     public int compareTo(Score bestScore) {
       if (this.training > bestScore.training
           || this.training == bestScore.training
-          && this.windowLength > bestScore.windowLength) {
+          && this.windowLength > bestScore.windowLength // on a tie, prefer the one with the larger window-length
+              ) {
         return 1;
       }
       return -1;
@@ -288,7 +304,7 @@ public abstract class Classifier {
       final String name,
       final TimeSeries[] samples,
       long startTime,
-      final List<Pair<String, Double>>[] labels,
+      final List<Pair<String, Integer>>[] labels,
       final List<Integer> currentWindowLengths) {
 
     String[] predictedLabels = new String[samples.length];
@@ -301,11 +317,11 @@ public abstract class Classifier {
 
       HashMap<String, Double> counts = new HashMap<>();
 
-      for (Pair<String, Double> k : labels[i]) {
+      for (Pair<String, Integer> k : labels[i]) {
         if (k != null && k.key != null) {
           String s = k.key;
           Double count = counts.get(s);
-          double increment = ENSEMBLE_WEIGHTS ? k.value : 1;
+          int increment = ENSEMBLE_WEIGHTS ? k.value : 1;
           count = (count == null) ? increment : count + increment;
           counts.put(s, count);
           if (maxCount < count

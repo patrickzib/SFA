@@ -44,7 +44,7 @@ public class BOSSVSClassifier extends Classifier {
     public BossVSModel(
         boolean normed,
         int windowLength) {
-      super("BOSS VS", -1, -1, normed, windowLength);
+      super("BOSS VS", -1, 1, -1, 1, normed, windowLength);
     }
 
     public ObjectObjectHashMap<String, E> idf;
@@ -71,8 +71,8 @@ public class BOSSVSClassifier extends Classifier {
 
     return new Score(
         "BOSS VS",
-        1 - formatError(correctTesting, testSamples.length),
-        1 - formatError((int) score.training, trainSamples.length),
+        correctTesting, testSamples.length,
+        score.training, trainSamples.length,
         score.windowLength);
   }
 
@@ -138,7 +138,7 @@ public class BOSSVSClassifier extends Classifier {
 
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       HashSet<String> uniqueLabels = uniqueClassLabels(samples);
-      Score bestScore = new Score("BOSS VS", 0, 0, 0);
+      Score bestScore = new Score("BOSS VS", 0, 1, 0, 1, 0);
       final Object sync = new Object();
 
       @Override
@@ -276,7 +276,7 @@ public class BOSSVSClassifier extends Classifier {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
-    final List<Pair<String, Double>>[] testLabels = new List[testSamples.length];
+    final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }

@@ -46,8 +46,8 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
     return new Score(
         "Shotgun Ensemble",
-        1 - formatError(correctTesting, testSamples.length),
-        1 - formatError((int) score.training, trainSamples.length),
+        correctTesting, testSamples.length,
+        score.training, trainSamples.length,
         score.windowLength);
   }
 
@@ -86,7 +86,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
-    final List<Pair<String, Double>>[] testLabels = new List[testSamples.length];
+    final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }

@@ -117,14 +117,6 @@ index.buildIndex(timeSeries, windowLength);
 // perform a k-NN search
 SortedListMap<Double, Integer> result = index.searchNearestNeighbor(query, k);
 
-// output result
-List<Integer> offsets = result.values();
-List<Double> distances = result.keys();
-
-for (int j = 0; j < result.size(); j++) {
-	System.out.println("\tResult:\t"+distances.get(j) + "\t" +offsets.get(j));
-}
-
 ```
 
 
@@ -144,26 +136,30 @@ and clustering accuracy in time series literature to date.
 
 **Usage:**
 
-First, to train the BOSS model using a set of samples, we first have to obtain the SFA words:
+First, load datasets, set parameters (or keep defaults), and train the BOSS model.
 
 ```java
-boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int maxF = 4;	// represents the length of the resulting SFA words. typically, in-between 4 and 16.
-int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
-// subsequence (window) length used for extracting SFA words from time series. 
-// typically, in-between 4 and time series length n.
-int windowLength = ...; 
+// Load the train data
+TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(...);
 
-TimeSeries[] trainSamples = ...
+BOSSEnsembleClassifier boss = new BOSSEnsembleClassifier();
+boss.minF   = 6;	// represents the minimal length for training SFA words. default: 6.
+boss.maxF   = 16;	// represents the maximal length for training SFA words. default: 16.
+boss.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
+boss.factor = 0.92 	// the best models within this factor are kept for ensembling. default: 0.92
 
-BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);
-int[][] words = model.createWords(trainSamples);
+// train the BOSS model
+Score score = boss.fit(trainSamples);
 ```
 
-Next, we build a histogram of word frequencies (bag-of-patterns):
+Finally, predict test labels:
 
 ```java
-BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
+// Load the test data
+TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(...);
+
+// predict labels
+Predicions predictions = boss.predict(testSamples);
 ```
 
 **References**
@@ -183,32 +179,30 @@ with its good accuracy makes it unique and relevant for many practical use cases
 
 **Usage:**
 
-First, to train the BOSS VS model using a set of samples, we first have to obtain the SFA words:
+First, load datasets, set parameters (or keep defaults), and train the BOSS VS model.
 
 ```java
-boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int maxF = 4;	// represents the length of the resulting SFA words. typically, in-between 4 and 16.
-int maxS = 4; 	// symbols of the discretization alphabet. 4 is the default value
-// subsequence (window) length used for extracting SFA words from time series. 
-// typically, in-between 4 and time series length n.
-int windowLength = ...; 
+// Load the train data
+TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(...);
 
-TimeSeries[] trainSamples = ...
+BOSSVSClassifier bossvs = new BOSSVSClassifier();
+bossvs.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
+bossvs.maxF   = 16;	// represents the maximal length for training SFA words. default: 16.
+bossvs.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
+bossvs.factor = 0.95 	// the best models within this factor are kept for ensembling. default: 0.95
 
-BOSSVSModel model = new BOSSVSModel(maxF, maxS, windowLength, normMean);
-int[][] words = model.createWords(trainSamples);
+// train the BOSS VS model
+Score score = bossvs.fit(trainSamples);
 ```
 
-Next, we build a histogram of word frequencies (bag-of-patterns):
+Finally, predict test labels:
 
 ```java
-BagOfPattern[] bag = model.createBagOfPattern(words, trainSamples, wordLength);
-```
+// Load the test data
+TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(...);
 
-Finally, we build obtain the tf-idf model from the bag-of-patterns for each class label (uniqueLabels):
-
-```java
-ObjectObjectHashMap<String, IntFloatHashMap> idf = model.createTfIdf(bag, uniqueLabels);
+// predict labels
+Predicions predictions = bossvs.predict(testSamples);
 ```
 
 **References**
@@ -223,40 +217,29 @@ The Word ExtrAction for time SEries cLassification (WEASEL) model builds upon th
 
 **Usage:**
 
-First, to train the WEASEL model using a set of samples, we first have to obtain the supervised SFA words:
+First, load datasets, set parameters (or keep defaults), and train the WEASEL model.
 
 ```java
-boolean normMean = true or false; // set to true, if mean should be set to 0 for a window
-int wordLength = 4;	// represents the length of the resulting SFA words. typically, in-between 4 and 16.
-int maxS = 4; 		// symbols of the discretization alphabet. 4 is the default value
-// range of window lengths to use for extracting SFA words from time series. 
-// typically, set to all window lengths in-between 4 and n.
-int[] windowLengths = new int[]{...}; 
-	
+// Load the train data
+TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(...);
 
-TimeSeries[] trainSamples = ...
+WEASELClassifier weasel = new WEASELClassifier();
+weasel.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
+weasel.maxF   = 6;	// represents the maximal length for training SFA words. default: 6.
+weasel.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
 
-WEASELModel model = new WEASELModel(wordLength, maxS, windowLengths, normMean, false);
-int[][][] words = model.createWords(samples);
+// train the BOSS VS model
+Score score = weasel.fit(trainSamples);
 ```
 
-Next, we build a histogram of word co-occurrences (bi-grams) frequencies (bag-of-bigrams):
+Finally, predict test labels:
 
 ```java
-BagOfBigrams[] bop = model.createBagOfPatterns(words, samples, wordLength);
-```
+// Load the test data
+TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(...);
 
-Next, we apply the chi-squared test to remove irrelevant features from each class:
-
-```java
-model.filterChiSquared(bop, chi);
-```
-
-Finally, we train the logistic regression classifier (using default parameters of liblinear) to assign high weights to discriminative words of each class.
-
-```java
-final Problem problem = initLibLinearProblem(bop, model.dict, -1);
-int correct = trainLibLinear(problem, SolverType.L2R_LR_DUAL, 1, 5000, 0.1, 10, new Random(1));
+// predict labels
+Predicions predictions = weasel.predict(testSamples);
 ```
 
 
@@ -271,19 +254,19 @@ CIKM 2017, (accepted), [[LINK]](https://arxiv.org/abs/1701.07681)
 There are 7 implemented use cases:
 
 
-1. Classification accuracy of WEASEL, BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassification.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/UCRClassification.java)
+1. Classification accuracy of WEASEL, BOSS VS and BOSS ensemble on the UCR datasets: [UCRClassificationTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/UCRClassificationTest.java)
 2. SFA lower bounding distance to the Euclidean distance: 
-[SFAMinDistance.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAMinDistance.java)
+[SFAMinDistanceTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAMinDistanceTest.java)
 3. Generate SFA words from a set of samples: 
-[SFAWords.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWords.java)
+[SFAWordsTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsTest.java)
 4. SFA makes use of variable word lengths: 
-[SFAWordsVariableLength.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWordsVariableLength.java)
+[SFAWordsVariableLengthTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsVariableLengthTest.java)
 5. Extract sliding windows from a time series and transform each sliding window to its SFA word: 
-[SFAWordsWindowing.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFAWordsWindowing.java)
+[SFAWordsWindowingTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFAWordsWindowingTest.java)
 6. Time series indexing and similarity search: 
-[SFATrieTest.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFATrieTest.java)
+[SFATrieTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFATrieTest.java)
 7. Time series bulk loading and similarity search: 
-[SFABulkLoad.java](https://github.com/patrickzib/SFA/blob/master/src/sfa/test/SFABulkLoad.java)
+[SFABulkLoadTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFABulkLoadTest.java)
 
 
 # References & Acknowledgements
