@@ -115,16 +115,15 @@ public class WEASELClassifier extends Classifier {
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
     String[] labels = predict(testSamples);
-    int correct = evalTest(testSamples, labels);
-    return new Predictions(labels, correct);
+    return evalLabels(testSamples, labels);
   }
 
-  private int evalTest(TimeSeries[] testSamples, String[] labels) {
+  private Predictions evalLabels(TimeSeries[] testSamples, String[] labels) {
     int correct = 0;
     for (int ind = 0; ind < testSamples.length; ind++) {
       correct+=compareLabels(labels[ind],(testSamples[ind].getLabel()))?1:0;
     }
-    return correct;
+    return new Predictions(labels, correct);
   }
 
   private boolean compareLabels(String label1, String label2) {
