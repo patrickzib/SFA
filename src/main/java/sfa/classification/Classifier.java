@@ -308,7 +308,8 @@ public abstract class Classifier {
 
   protected boolean compareLabels(String label1, String label2) {
     // compare 1.0000 to 1.0 in String returns false, hence the conversion to double
-    return Double.valueOf(label1).equals(Double.valueOf(label2));
+    return label1 != null && label2 != null
+            && Double.valueOf(label1).equals(Double.valueOf(label2));
   }
 
   protected Predictions score(
@@ -332,8 +333,8 @@ public abstract class Classifier {
           count = (count == null) ? increment : count + increment;
           counts.put(label, count);
           if (predictedLabels[i] == null
-              || maxCount < count
-              || maxCount == count
+                  || maxCount < count
+                  || maxCount == count
                   && predictedLabels[i].compareTo(label) < 0 // break ties
                   ) {
             maxCount = count;

@@ -229,6 +229,9 @@ public class BOSSEnsembleClassifier extends Classifier {
             if (bagOfPatternsTestSamples[i].label.equals(p.labels[i])) {
               p.correct.incrementAndGet();
             }
+//            if (bestMatch == -1) {
+//              System.out.println("No match!");
+//            }
           }
         }
       }
