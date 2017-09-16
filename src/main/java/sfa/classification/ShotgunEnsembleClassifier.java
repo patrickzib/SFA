@@ -114,6 +114,6 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
       }
     });
 
-    return score("Shotgun Ensemble", testSamples, startTime, testLabels, usedLengths);
+    return score("Shotgun Ensemble", testSamples, testLabels, usedLengths);
   }
 }

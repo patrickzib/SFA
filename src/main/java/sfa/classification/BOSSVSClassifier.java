@@ -301,6 +301,6 @@ public class BOSSVSClassifier extends Classifier {
       }
     });
 
-    return score("BOSS VS", testSamples, startTime, testLabels, usedLengths);
+    return score("BOSS VS", testSamples, testLabels, usedLengths);
   }
 }

@@ -278,7 +278,7 @@ public class BOSSEnsembleClassifier extends Classifier {
       }
     });
 
-    return score("BOSS", testSamples, startTime, testLabels, usedLengths);
+    return score("BOSS", testSamples, testLabels, usedLengths);
   }
 
 }

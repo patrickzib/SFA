@@ -314,7 +314,6 @@ public abstract class Classifier {
   protected Predictions score(
       final String name,
       final TimeSeries[] samples,
-      long startTime,
       final List<Pair<String, Integer>>[] labels,
       final List<Integer> currentWindowLengths) {
 
