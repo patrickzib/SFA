@@ -181,9 +181,7 @@ public class BOSSVSClassifier extends Classifier {
 
               // add to ensemble if train-score is within factor to the best score
               if (model.score.training >= correctTraining.get() * factor) {
-                synchronized (results) {
-                  results.add(model);
-                }
+                results.add(model);
               }
             }
           }
@@ -193,7 +191,6 @@ public class BOSSVSClassifier extends Classifier {
 
     // only keep best scores
     List<BossVSModel<IntFloatHashMap>> model = new ArrayList<>();
-
     for (BossVSModel<IntFloatHashMap> score : results) {
       if (score.score.training >= correctTraining.get() * factor) { // all with same score
         model.add(score);

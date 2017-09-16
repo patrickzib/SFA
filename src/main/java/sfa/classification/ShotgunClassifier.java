@@ -141,9 +141,7 @@ public class ShotgunClassifier extends Classifier {
 
     // only keep best scores
     List<ShotgunModel> model = new ArrayList<>();
-
-    for (int i = 0; i < results.size(); i++) {
-      final ShotgunModel m = results.get(i);
+    for (ShotgunModel m : results) {
       if (m.score.training >= correctTraining.get() * factor) { // all with same score
         model.add(m);
       }
