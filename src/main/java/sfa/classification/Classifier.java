@@ -7,10 +7,8 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import jdk.nashorn.internal.objects.NativeRegExp;
 import sfa.timeseries.TimeSeries;
 
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,7 +73,7 @@ public abstract class Classifier {
    * @param testSamples The training set
    * @return The predictions for each test-sample and the test accuracy.
    */
-  public abstract Predictions predict(final TimeSeries[] testSamples);
+  public abstract Predictions score(final TimeSeries[] testSamples);
 
   /**
    * Performs training and testing on a set of train- and test-samples.
@@ -210,13 +208,22 @@ public abstract class Classifier {
       this.windowLength = windowLength;
     }
 
+    public double getTestingAccuracy(){
+      return 1 - formatError(testing, testSize);
+    }
+
+    public double getTrainingAccuracy() {
+      return 1 - formatError((int) training, trainSize);
+    }
+
     @Override
     public String toString() {
-      double test = 1 - formatError(testing, testSize);
-      double train = 1 - formatError((int) training, trainSize);
+      double test = getTestingAccuracy();
+      double train = getTrainingAccuracy();
 
       return this.name + ";" + train + ";" + test;
     }
+
 
     public int compareTo(Score bestScore) {
       if (this.training > bestScore.training

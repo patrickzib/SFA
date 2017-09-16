@@ -86,7 +86,7 @@ public class WEASELClassifier extends Classifier {
     }
 
     // determine label based on the majority of predictions
-    int correctTesting = predict(testSamples).correct.get();
+    int correctTesting = score(testSamples).correct.get();
 
     if (DEBUG) {
       System.out.println("Weasel Testing:\t");
@@ -115,8 +115,40 @@ public class WEASELClassifier extends Classifier {
 
 
   @Override
-  public Predictions predict(final TimeSeries[] testSamples) {
-    return predict(this.model, testSamples);
+  public Predictions score(final TimeSeries[] testSamples) {
+    String[] labels = predict(testSamples);
+    return evalLabels(testSamples, labels);
+  }
+
+  private Predictions evalLabels(TimeSeries[] testSamples, String[] labels) {
+    int correct = 0;
+    for (int ind = 0; ind < testSamples.length; ind++) {
+      correct+=compareLabels(labels[ind],(testSamples[ind].getLabel()))?1:0;
+    }
+    return new Predictions(labels, correct);
+  }
+
+  private boolean compareLabels(String label1, String label2) {
+    // compare 1.0000 to 1.0 in String returns false, hence the conversion to double
+    return Double.valueOf(label1).equals(Double.valueOf(label2));
+  }
+
+  public String[] predict(TimeSeries[] samples) {
+    final int[][][] wordsTest = model.weasel.createWords(samples);
+    BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);
+
+    // chi square changes key mappings => remap
+    model.weasel.dict.remap(bagTest);
+
+    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
+
+    String[] labels = new String[samples.length];
+
+    for (int ind = 0; ind < features.length; ind++) {
+      double label = Linear.predict(model.linearModel, features[ind]);
+      labels[ind] = String.valueOf(label);
+    }
+    return labels;
   }
 
   protected WEASELModel fitWeasel(final TimeSeries[] samples) {
@@ -182,32 +214,6 @@ public class WEASELClassifier extends Classifier {
       e.printStackTrace();
     }
     return null;
-  }
-
-
-  protected Predictions predict(
-          final WEASELModel model,
-          final TimeSeries[] testSamples) {
-    // iterate each sample to classify
-    final int[][][] wordsTest = model.weasel.createWords(testSamples);
-    BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, testSamples, model.features);
-
-    // chi square changes key mappings => remap
-    model.weasel.dict.remap(bagTest);
-
-    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
-
-    String[] labels = new String[testSamples.length];
-
-    int correct = 0;
-    for (int ind = 0; ind < features.length; ind++) {
-      double label = Linear.predict(model.linearModel, features[ind]);
-      if (label == Double.valueOf(bagTest[ind].label)) {
-        correct++;
-      }
-      labels[ind] = String.valueOf(label);
-    }
-    return new Predictions(labels, correct);
   }
 
   protected static Problem initLibLinearProblem(

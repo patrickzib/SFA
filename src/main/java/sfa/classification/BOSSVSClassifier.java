@@ -67,7 +67,7 @@ public class BOSSVSClassifier extends Classifier {
     }
 
     // Classify: testing score
-    int correctTesting = predict(testSamples).correct.get();
+    int correctTesting = score(testSamples).correct.get();
 
     return new Score(
             "BOSS VS",
@@ -116,7 +116,7 @@ public class BOSSVSClassifier extends Classifier {
 
 
   @Override
-  public Predictions predict(final TimeSeries[] testSamples) {
+  public Predictions score(final TimeSeries[] testSamples) {
     return predictEnsemble(this.model, testSamples);
   }
 
