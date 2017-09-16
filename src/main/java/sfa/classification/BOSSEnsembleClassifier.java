@@ -193,7 +193,6 @@ public class BOSSEnsembleClassifier extends Classifier {
         // iterate each sample to classify
         for (int i = 0; i < bagOfPatternsTestSamples.length; i++) {
           if (i % BLOCKS == id) {
-            int bestMatch = -1;
             long minDistance = Integer.MAX_VALUE;
 
             // Distance if there is no matching word
@@ -219,19 +218,15 @@ public class BOSSEnsembleClassifier extends Classifier {
                 // update nearest neighbor
                 if (distance != noMatchDistance && distance < minDistance) {
                   minDistance = distance;
-                  bestMatch = j;
+                  p.labels[i] = bagOfPatternsTrainSamples[j].label;
                 }
               }
             }
 
             // check if the prediction is correct
-            p.labels[i] = bestMatch > -1 ? bagOfPatternsTrainSamples[bestMatch].label : null;
             if (compareLabels(bagOfPatternsTestSamples[i].label, p.labels[i])) {
               p.correct.incrementAndGet();
             }
-//            if (bestMatch == -1) {
-//              System.out.println("No match!");
-//            }
           }
         }
       }
@@ -243,8 +238,6 @@ public class BOSSEnsembleClassifier extends Classifier {
   protected Predictions predictEnsemble(
       final Ensemble<BOSSModel> results,
       final TimeSeries[] testSamples) {
-    long startTime = System.currentTimeMillis();
-
     @SuppressWarnings("unchecked")
     final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
@@ -273,7 +266,9 @@ public class BOSSEnsembleClassifier extends Classifier {
 
             for (int j = 0; j < p.labels.length; j++) {
               synchronized (testLabels[j]) {
-                testLabels[j].add(new Pair<>(p.labels[j], score.score.training));
+                if (p.labels[j] != null) {
+                  testLabels[j].add(new Pair<>(p.labels[j], score.score.training));
+                }
               }
             }
           }

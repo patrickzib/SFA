@@ -212,12 +212,12 @@ public class BOSSVSClassifier extends Classifier {
 
     Predictions p = new Predictions(new String[bagOfPatternsTestSamples.length], 0);
 
-    ParallelFor.withIndex(this.BLOCKS, new ParallelFor.Each() {
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify
         for (int i : indices) {
-          if (i % BOSSVSClassifier.this.BLOCKS == id) {
+          if (i % BLOCKS == id) {
             double bestDistance = 0.0;
 
             // for each class
@@ -262,8 +262,6 @@ public class BOSSVSClassifier extends Classifier {
   protected Predictions predictEnsemble(
           final Ensemble<BossVSModel<IntFloatHashMap>> results,
           final TimeSeries[] testSamples) {
-    long startTime = System.currentTimeMillis();
-
     @SuppressWarnings("unchecked")
     final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {

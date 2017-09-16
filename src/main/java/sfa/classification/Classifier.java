@@ -335,7 +335,7 @@ public abstract class Classifier {
           if (predictedLabels[i] == null
                   || maxCount < count
                   || maxCount == count
-                  && predictedLabels[i].compareTo(label) < 0 // break ties
+                      && Double.valueOf(predictedLabels[i]) < Double.valueOf(label) // break ties
                   ) {
             maxCount = count;
             predictedLabels[i] = label;
