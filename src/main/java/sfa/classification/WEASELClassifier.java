@@ -220,8 +220,6 @@ public class WEASELClassifier extends Classifier {
           final BagOfBigrams[] bob,
           final Dictionary dict,
           final double bias) {
-    Linear.resetRandom();
-
     Problem problem = new Problem();
     problem.bias = bias;
     problem.n = dict.size() + 1;
@@ -291,6 +289,7 @@ public class WEASELClassifier extends Classifier {
         ThreadLocal<Linear> myLinear = new ThreadLocal<>();
         myLinear.set(new Linear());
         myLinear.get().disableDebugOutput();
+        myLinear.get().resetRandom(); // reset random component of liblinear for reproducibility
 
         for (int i = 0; i < fold; i++) {
           if (i % threads == id) {
