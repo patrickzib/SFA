@@ -226,7 +226,7 @@ public class BOSSEnsembleClassifier extends Classifier {
 
             // check if the prediction is correct
             p.labels[i] = bestMatch > -1 ? bagOfPatternsTrainSamples[bestMatch].label : null;
-            if (bagOfPatternsTestSamples[i].label.equals(p.labels[i])) {
+            if (compareLabels(bagOfPatternsTestSamples[i].label, p.labels[i])) {
               p.correct.incrementAndGet();
             }
 //            if (bestMatch == -1) {

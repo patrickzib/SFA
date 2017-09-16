@@ -247,7 +247,7 @@ public class BOSSVSClassifier extends Classifier {
             }
 
             // check if the prediction is correct
-            if (bagOfPatternsTestSamples[i].label.equals(p.labels[i])) {
+            if (compareLabels(bagOfPatternsTestSamples[i].label, p.labels[i])) {
               p.correct.incrementAndGet();
             }
           }
