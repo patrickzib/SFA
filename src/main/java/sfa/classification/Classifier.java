@@ -322,14 +322,14 @@ public abstract class Classifier {
 
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
-      double maxCount = 0.0;
-      HashMap<String, Double> counts = new HashMap<>();
+      long maxCount = 0;
+      HashMap<String, Long> counts = new HashMap<>();
 
       for (Pair<String, Integer> k : labels[i]) {
         if (k != null && k.key != null) {
           String label = k.key;
-          Double count = counts.get(label);
-          double increment = ENSEMBLE_WEIGHTS ? k.value : 1;
+          Long count = counts.get(label);
+          long increment = ENSEMBLE_WEIGHTS ? k.value : 1;
           count = (count == null) ? increment : count + increment;
           counts.put(label, count);
           if (predictedLabels[i] == null
