@@ -221,7 +221,7 @@ public class ShotgunClassifier extends Classifier {
 
             // check if the prediction is correct
             p.labels[i] = predictedLabel;
-            if (testSamples[i].getLabel().equals(p.labels[i])) {
+            if (compareLabels(testSamples[i].getLabel(), p.labels[i])) {
               p.correct.incrementAndGet();
             }
           }

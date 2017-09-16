@@ -2,22 +2,15 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import sfa.classification.BOSSEnsembleClassifier;
-import sfa.classification.BOSSVSClassifier;
-import sfa.classification.Classifier;
-import sfa.classification.ParallelFor;
-import sfa.classification.ShotgunClassifier;
-import sfa.classification.ShotgunEnsembleClassifier;
-import sfa.classification.WEASELClassifier;
+import sfa.classification.*;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
+
+import java.io.File;
+import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class UCRClassificationTest {

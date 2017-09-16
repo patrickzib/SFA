@@ -128,11 +128,6 @@ public class WEASELClassifier extends Classifier {
     return new Predictions(labels, correct);
   }
 
-  private boolean compareLabels(String label1, String label2) {
-    // compare 1.0000 to 1.0 in String returns false, hence the conversion to double
-    return Double.valueOf(label1).equals(Double.valueOf(label2));
-  }
-
   public String[] predict(TimeSeries[] samples) {
     final int[][][] wordsTest = model.weasel.createWords(samples);
     BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);

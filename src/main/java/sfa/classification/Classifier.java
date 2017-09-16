@@ -305,6 +305,12 @@ public abstract class Classifier {
     }
   }
 
+
+  protected boolean compareLabels(String label1, String label2) {
+    // compare 1.0000 to 1.0 in String returns false, hence the conversion to double
+    return Double.valueOf(label1).equals(Double.valueOf(label2));
+  }
+
   protected Predictions score(
       final String name,
       final TimeSeries[] samples,
@@ -316,29 +322,27 @@ public abstract class Classifier {
 
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
-
-      predictedLabels[i] = null;
       double maxCount = 0.0;
-
       HashMap<String, Double> counts = new HashMap<>();
 
       for (Pair<String, Integer> k : labels[i]) {
         if (k != null && k.key != null) {
-          String s = k.key;
-          Double count = counts.get(s);
+          String label = k.key;
+          Double count = counts.get(label);
           double increment = ENSEMBLE_WEIGHTS ? k.value : 1;
           count = (count == null) ? increment : count + increment;
-          counts.put(s, count);
+          counts.put(label, count);
           if (predictedLabels[i] == null
               || maxCount < count
               || maxCount == count
-                  && predictedLabels[i].compareTo(s) < 0) {
+                  && predictedLabels[i].compareTo(label) < 0 // break ties
+                  ) {
             maxCount = count;
-            predictedLabels[i] = s;
+            predictedLabels[i] = label;
           }
         }
       }
-      if (samples[i].getLabel().equals(predictedLabels[i])) {
+      if (compareLabels(samples[i].getLabel(), predictedLabels[i])) {
         correctTesting++;
       }
     }
