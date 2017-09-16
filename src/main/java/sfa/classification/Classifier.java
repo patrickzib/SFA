@@ -319,10 +319,10 @@ public abstract class Classifier {
       final List<Integer> currentWindowLengths) {
 
     String[] predictedLabels = new String[samples.length];
+    long[] maxCounts = new long[samples.length];
 
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
-      long maxCount = 0;
       HashMap<String, Long> counts = new HashMap<>();
 
       for (Pair<String, Integer> k : labels[i]) {
@@ -332,26 +332,38 @@ public abstract class Classifier {
           long increment = ENSEMBLE_WEIGHTS ? k.value : 1;
           count = (count == null) ? increment : count + increment;
           counts.put(label, count);
-          if (predictedLabels[i] == null
-                  || maxCount < count
-                  || maxCount == count
-                      && Double.valueOf(predictedLabels[i]) < Double.valueOf(label) // break ties
-                  ) {
-            maxCount = count;
-            predictedLabels[i] = label;
-          }
         }
       }
+
+      long maxCount = 0;
+      for (Entry<String, Long> e : counts.entrySet()) {
+        if (predictedLabels[i] == null
+                || maxCount < e.getValue()
+                || maxCount == e.getValue()  // break ties
+                   && Double.valueOf(predictedLabels[i]) <= Double.valueOf(e.getKey())
+                ) {
+          maxCount = e.getValue();
+          predictedLabels[i] = e.getKey();
+        }
+      }
+
+      maxCounts[i] = maxCount;
+
       if (compareLabels(samples[i].getLabel(), predictedLabels[i])) {
         correctTesting++;
       }
     }
 
+    System.out.println();
+    System.out.println(Arrays.toString(predictedLabels));
+    System.out.println(Arrays.toString(maxCounts));
+    System.out.println();
+
     if (DEBUG) {
       System.out.print(name + " Testing with " + currentWindowLengths.size() + " models:\t");
       System.out.println(currentWindowLengths.toString() + "\n");
-
     }
+
     return new Predictions(predictedLabels, correctTesting);
   }
 

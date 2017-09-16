@@ -111,32 +111,23 @@ public class ShotgunClassifier extends Classifier {
 
     final List<ShotgunModel> results = new ArrayList<>(windows.length);
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      ShotgunModel bestModel = null;
-      final Object sync = new Object();
-
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < windows.length; i++) {
           if (i % threads == id) {
             ShotgunModel model = new ShotgunModel(normMean, windows[i], samples);
-            Predictions p = predict(
-                    model,
-                    samples
-            );
+            Predictions p = predict( model, samples );
 
             model.score = new Score(model.name, -1, 1, p.correct.get(), samples.length, windows[i]);
 
             // keep best scores
-            synchronized (sync) {
-              if (this.bestModel == null || this.bestModel.compareTo(model) <= 0) {
-                correctTraining.set((int) model.score.training);
-                this.bestModel = model;
+            synchronized (correctTraining) {
+              if (model.score.training > correctTraining.get()) {
+                correctTraining.set(model.score.training);
               }
-            }
 
-            // add to ensemble
-            if (model.score.training >= correctTraining.get() * factor) { // all with higher score
-              synchronized (results) {
+              // add to ensemble if train-score is within factor to the best score
+              if (model.score.training >= correctTraining.get() * factor) {
                 results.add(model);
               }
             }
@@ -158,7 +149,7 @@ public class ShotgunClassifier extends Classifier {
       }
     }
 
-    return new Ensemble<>(results);
+    return new Ensemble<>(model);
   }
 
 

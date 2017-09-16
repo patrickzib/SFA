@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,9 +114,6 @@ public class BOSSEnsembleClassifier extends Classifier {
     final AtomicInteger correctTraining = new AtomicInteger(0);
 
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      final Object sync = new Object();
-      Score bestScore = new Score("BOSS", 0, 1, 0, samples.length, 0);
-
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < windows.length; i++) {
@@ -147,17 +145,14 @@ public class BOSSEnsembleClassifier extends Classifier {
             }
 
             // keep best scores
-            synchronized (sync) {
-              if (bestScore.compareTo(model.score) < 0) {
-                bestScore = model.score;
+            synchronized (correctTraining) {
+              if (model.score.training > correctTraining.get()) {
                 correctTraining.set(model.score.training);
               }
 
               // add to ensemble if train-score is within factor to the best score
               if (model.score.training >= correctTraining.get() * factor) {
-                synchronized (results) {
-                  results.add(model);
-                }
+                results.add(model);
               }
             }
           }
@@ -170,14 +165,13 @@ public class BOSSEnsembleClassifier extends Classifier {
 
     // only keep best scores
     List<BOSSModel> model = new ArrayList<>();
-
     for (BOSSModel score : results) {
       if (score.score.training >= correctTraining.get() * factor) { // all with same score
         model.add(score);
       }
     }
 
-    return new Ensemble<>(results);
+    return new Ensemble<>(model);
   }
 
 

@@ -130,8 +130,6 @@ public class BOSSVSClassifier extends Classifier {
 
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       HashSet<String> uniqueLabels = uniqueClassLabels(samples);
-      Score bestScore = new Score("BOSS VS", 0, 1, 0, 1, 0);
-      final Object sync = new Object();
 
       @Override
       public void run(int id, AtomicInteger processed) {
@@ -176,15 +174,16 @@ public class BOSSVSClassifier extends Classifier {
             }
 
             // keep best scores
-            synchronized (sync) {
-              if (bestScore.compareTo(model.score) < 0) {
-                bestScore = model.score;
+            synchronized (correctTraining) {
+              if (model.score.training > correctTraining.get()) {
                 correctTraining.set(model.score.training);
               }
 
               // add to ensemble if train-score is within factor to the best score
               if (model.score.training >= correctTraining.get() * factor) {
+                synchronized (results) {
                   results.add(model);
+                }
               }
             }
           }
