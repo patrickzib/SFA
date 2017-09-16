@@ -10,10 +10,7 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import sfa.timeseries.TimeSeries;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -320,7 +317,7 @@ public abstract class Classifier {
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
 
-      predictedLabels[i] = "";
+      predictedLabels[i] = null;
       double maxCount = 0.0;
 
       HashMap<String, Double> counts = new HashMap<>();
@@ -329,11 +326,13 @@ public abstract class Classifier {
         if (k != null && k.key != null) {
           String s = k.key;
           Double count = counts.get(s);
-          int increment = ENSEMBLE_WEIGHTS ? k.value : 1;
+          double increment = ENSEMBLE_WEIGHTS ? k.value : 1;
           count = (count == null) ? increment : count + increment;
           counts.put(s, count);
-          if (maxCount < count
-              || maxCount == count && predictedLabels[i].compareTo(s) < 0) {
+          if (predictedLabels[i] == null
+              || maxCount < count
+              || maxCount == count
+                  && predictedLabels[i].compareTo(s) < 0) {
             maxCount = count;
             predictedLabels[i] = s;
           }
@@ -345,8 +344,9 @@ public abstract class Classifier {
     }
 
     if (DEBUG) {
-      System.out.println(name + " Testing with " + currentWindowLengths.size() + " models:\t");
-      outputResult(correctTesting, startTime, samples.length);
+      System.out.print(name + " Testing with " + currentWindowLengths.size() + " models:\t");
+      System.out.println(currentWindowLengths.toString() + "\n");
+
     }
     return new Predictions(predictedLabels, correctTesting);
   }

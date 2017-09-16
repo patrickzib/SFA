@@ -109,12 +109,12 @@ public class BOSSEnsembleClassifier extends Classifier {
                                             boolean normMean,
                                             TimeSeries[] samples) {
 
-    final AtomicInteger correctTraining = new AtomicInteger(0);
     final ArrayList<BOSSModel> results = new ArrayList<>(windows.length);
+    final AtomicInteger correctTraining = new AtomicInteger(0);
 
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      Score bestScore = new Score("BOSS", 0, 1, 0, samples.length, 0);
       final Object sync = new Object();
+      Score bestScore = new Score("BOSS", 0, 1, 0, samples.length, 0);
 
       @Override
       public void run(int id, AtomicInteger processed) {
@@ -133,7 +133,6 @@ public class BOSSEnsembleClassifier extends Classifier {
 
                 if (p.correct.get() > model.score.training) {
                   model.score.training = p.correct.get();
-                  model.score.testing = p.correct.get();
                   model.features = f;
                   model.boss = boss;
                   model.bag = bag;
@@ -149,16 +148,16 @@ public class BOSSEnsembleClassifier extends Classifier {
 
             // keep best scores
             synchronized (sync) {
-              if (this.bestScore.compareTo(model.score) < 0) {
-                correctTraining.set((int) model.score.training);
-                this.bestScore = model.score;
+              if (bestScore.compareTo(model.score) < 0) {
+                bestScore = model.score;
+                correctTraining.set(model.score.training);
               }
-            }
 
-            // add to ensemble
-            if (model.score.training >= correctTraining.get() * factor) { // all with higher score
-              synchronized (results) {
-                results.add(model);
+              // add to ensemble if train-score is within factor to the best score
+              if (model.score.training >= correctTraining.get() * factor) {
+                synchronized (results) {
+                  results.add(model);
+                }
               }
             }
           }
@@ -172,8 +171,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     // only keep best scores
     List<BOSSModel> model = new ArrayList<>();
 
-    for (int i = 0; i < results.size(); i++) {
-      final BOSSModel score = results.get(i);
+    for (BOSSModel score : results) {
       if (score.score.training >= correctTraining.get() * factor) { // all with same score
         model.add(score);
       }

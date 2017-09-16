@@ -156,7 +156,6 @@ public class BOSSVSClassifier extends Classifier {
                 }
                 if (correct > model.score.training) {
                   model.score.training = correct;
-                  model.score.testing = correct;
                   model.features = f;
 
                   if (correct == samples.length) {
@@ -176,17 +175,16 @@ public class BOSSVSClassifier extends Classifier {
               e.printStackTrace();
             }
 
+            // keep best scores
             synchronized (sync) {
-              if (this.bestScore.compareTo(model.score) < 0) {
-                correctTraining.set((int) model.score.training);
-                this.bestScore = model.score;
+              if (bestScore.compareTo(model.score) < 0) {
+                bestScore = model.score;
+                correctTraining.set(model.score.training);
               }
-            }
 
-            // add to ensemble
-            if (model.score.training >= correctTraining.get() * factor) {
-              synchronized (results) {
-                results.add(model);
+              // add to ensemble if train-score is within factor to the best score
+              if (model.score.training >= correctTraining.get() * factor) {
+                  results.add(model);
               }
             }
           }
@@ -197,8 +195,7 @@ public class BOSSVSClassifier extends Classifier {
     // only keep best scores
     List<BossVSModel<IntFloatHashMap>> model = new ArrayList<>();
 
-    for (int i = 0; i < results.size(); i++) {
-      final BossVSModel<IntFloatHashMap> score = results.get(i);
+    for (BossVSModel<IntFloatHashMap> score : results) {
       if (score.score.training >= correctTraining.get() * factor) { // all with same score
         model.add(score);
       }
