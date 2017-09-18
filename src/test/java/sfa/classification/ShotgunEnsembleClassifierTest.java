@@ -7,7 +7,7 @@ public class ShotgunEnsembleClassifierTest extends AbstractClassifierTest{
     @Override
     protected List<DataSet> getDataSets() {
         List<DataSet> dataSets=new ArrayList<>();
-        //Beef;Shotgun Ensemble;0.667;0.9
+        //Shotgun Ensemble;1.0;0.929
         dataSets.add(new DataSet("Coffee", 1.0, 0.929));
         //Beef;Shotgun Ensemble;0.667;0.9
         dataSets.add(new DataSet("Beef", 0.667,0.9));
