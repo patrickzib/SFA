@@ -155,7 +155,7 @@ public class WEASELClassifier extends Classifier {
       int bestF = -1;
       boolean bestNorm = false;
 
-      int min = 8;
+      int min = 8; // FIXME 4 does no work, why?
       int max = getMax(samples, MAX_WINDOW_LENGTH);
       int[] windowLengths = new int[max - min + 1];
       for (int w = min, a = 0; w <= max; w++, a++) {
