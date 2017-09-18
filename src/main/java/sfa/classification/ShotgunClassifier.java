@@ -37,7 +37,7 @@ public class ShotgunClassifier extends Classifier {
       this.samples = samples;
     }
 
-    public TimeSeries[] samples;
+    public TimeSeries[] samples; // the train samples needed for 1-NN classification
   }
 
   public Score eval(
