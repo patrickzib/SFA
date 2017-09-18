@@ -26,6 +26,9 @@ public class ShotgunClassifier extends Classifier {
   }
 
   public class ShotgunModel extends Model {
+
+    public ShotgunModel(){}
+
     public ShotgunModel(
             boolean normed,
             int windowLength,

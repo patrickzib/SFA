@@ -51,9 +51,9 @@ public class WEASELClassifier extends Classifier {
   }
 
   public static class WEASELModel extends Model {
-    public WEASELModel(){
-      super();
-    }
+
+    public WEASELModel(){}
+
     public WEASELModel(
             boolean normed,
             int features,

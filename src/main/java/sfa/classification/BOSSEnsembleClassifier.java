@@ -37,6 +37,9 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
   public static class BOSSModel extends Model {
+
+    public BOSSModel(){}
+
     public BOSSModel(
         boolean normed,
         int windowLength) {
