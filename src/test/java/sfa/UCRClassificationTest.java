@@ -17,10 +17,10 @@ public class UCRClassificationTest {
 
   // The datasets to use
   public static String[] datasets = new String[] {
-    "Coffee", "ECG200", "FaceFour", "OliveOil",
-    "Gun_Point", "Beef",
+    "Coffee", "Beef", "CBF",
+    "ECG200", "FaceFour", "OliveOil",
+    "Gun_Point",
     "DiatomSizeReduction",
-    "CBF",
     "ECGFiveDays",
     "TwoLeadECG",
     "SonyAIBORobot SurfaceII",

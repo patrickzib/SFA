@@ -287,7 +287,7 @@ public class BOSSVSClassifier extends Classifier {
         }
       }
     });
-    
+
     return score("BOSS VS", testSamples, testLabels, usedLengths);
   }
 }
