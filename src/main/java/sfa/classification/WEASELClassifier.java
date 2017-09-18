@@ -192,6 +192,7 @@ public class WEASELClassifier extends Classifier {
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
+      Linear.resetRandom();
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
       return new WEASELModel(
