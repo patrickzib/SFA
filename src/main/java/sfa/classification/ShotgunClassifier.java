@@ -3,7 +3,6 @@
 package sfa.classification;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,7 +24,7 @@ public class ShotgunClassifier extends Classifier {
     super();
   }
 
-  public class ShotgunModel extends Model {
+  public static class ShotgunModel extends Model {
 
     public ShotgunModel(){}
 

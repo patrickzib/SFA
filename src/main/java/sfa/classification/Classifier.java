@@ -7,8 +7,16 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import sfa.timeseries.TimeSeries;
+import sfa.transformation.MFT;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -67,8 +75,8 @@ public abstract class Classifier {
 
   /**
    * The predicted the classes of an array of samples.
-   * @param testSamples The training set
-   * @return The predictions for each test-sample and the test accuracy.
+   * @param testSamples The passed set
+   * @return The predictions for each passed sample and the test accuracy.
    */
   public abstract Predictions score(final TimeSeries[] testSamples);
 
@@ -143,7 +151,7 @@ public abstract class Classifier {
     public boolean normed;
 
     public Score score;
-
+    public Model(){}
     public Model(
         String name,
         int testing,
@@ -189,6 +197,7 @@ public abstract class Classifier {
     public int testSize;
     public int windowLength;
 
+    public Score(){}
     public Score(
         String name,
         int testing,
@@ -505,4 +514,25 @@ public abstract class Classifier {
 
     return setData;
   }
+
+  public void save(File file) throws FileNotFoundException {
+    Output kryoOutput=new Output(new FileOutputStream(file));
+    Kryo kryo = initKryo();
+    kryo.writeClassAndObject(kryoOutput, this);
+    kryoOutput.close();
+  }
+
+  private static Kryo initKryo() {
+    Kryo kryo=new Kryo();
+    kryo.register(MFT.class, new MFT.MFTKryoSerializer(kryo));
+    return kryo;
+  }
+
+  public static <T extends Classifier> T load(File file) throws FileNotFoundException {
+    Input kryoInput = new Input(new FileInputStream(file));
+    Kryo kryo=initKryo();
+    T classifier = (T) kryo.readClassAndObject(kryoInput);
+    return classifier;
+  }
+
 }
