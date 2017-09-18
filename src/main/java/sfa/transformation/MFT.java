@@ -39,7 +39,8 @@ public class MFT implements Serializable {
 
   private transient DoubleFFT_1D fft = null;
 
-  public MFT(){}
+  public MFT() {
+  }
 
   public MFT(int windowSize, boolean normMean, boolean lowerBounding) {
     this.windowSize = windowSize;
@@ -55,7 +56,7 @@ public class MFT implements Serializable {
    * a single Fourier transform of the time series.
    *
    * @param timeSeries the time series to be transformed
-   * @param l the number of Fourier values to keep
+   * @param l          the number of Fourier values to keep
    * @return the first l Fourier values
    */
   public double[] transform(TimeSeries timeSeries, int l) {
@@ -89,7 +90,7 @@ public class MFT implements Serializable {
    *                   coefficients). If l is uneven, l+1 Fourier values are returned. If
    *                   windowSize is smaller than l, only the first windowSize Fourier
    *                   values are set.
-   * @return           returns only the first l/2 Fourier coefficients for each window.
+   * @return returns only the first l/2 Fourier coefficients for each window.
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
     int wordLength = l + l % 2 + this.startOffset; // make it even
@@ -180,7 +181,7 @@ public class MFT implements Serializable {
     initFFT();
   }
 
-  public static final class MFTKryoSerializer extends FieldSerializer<MFT>{
+  public static final class MFTKryoSerializer extends FieldSerializer<MFT> {
 
     public MFTKryoSerializer(Kryo kryo) {
       this(kryo, MFT.class);
