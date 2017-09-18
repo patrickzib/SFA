@@ -228,7 +228,7 @@ public class BOSSEnsembleClassifier extends Classifier {
       testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = new ArrayList<>(results.size());
+    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(results.size()));
 
     // parallel execution
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {

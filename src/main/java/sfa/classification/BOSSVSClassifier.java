@@ -105,7 +105,6 @@ public class BOSSVSClassifier extends Classifier {
       if (bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
         bestScore = model.getHighestScoringModel().score;
-        ;
         bestScore.training = pred.correct.get();
         this.model = model;
       }
@@ -258,7 +257,7 @@ public class BOSSVSClassifier extends Classifier {
       testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = new ArrayList<>(results.size());
+    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(results.size()));
     final int[] indicesTest = createIndices(testSamples.length);
 
     // parallel execution
@@ -288,7 +287,7 @@ public class BOSSVSClassifier extends Classifier {
         }
       }
     });
-
+    
     return score("BOSS VS", testSamples, testLabels, usedLengths);
   }
 }

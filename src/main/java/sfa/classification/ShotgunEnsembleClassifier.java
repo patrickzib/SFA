@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -91,7 +92,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
       testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = new ArrayList<>(model.model.size());
+    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(model.model.size()));
 
     // parallel execution
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {

@@ -338,6 +338,7 @@ public abstract class Classifier {
       final List<Integer> currentWindowLengths) {
 
     String[] predictedLabels = new String[samples.length];
+    long[] maxCounts = new long[samples.length];
 
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
@@ -353,7 +354,7 @@ public abstract class Classifier {
         }
       }
 
-      long maxCount = 0;
+      long maxCount = -1;
       for (Entry<String, Long> e : counts.entrySet()) {
         if (predictedLabels[i] == null
                 || maxCount < e.getValue()
@@ -361,6 +362,7 @@ public abstract class Classifier {
                    && Double.valueOf(predictedLabels[i]) <= Double.valueOf(e.getKey())
                 ) {
           maxCount = e.getValue();
+          maxCounts[i] = maxCount;
           predictedLabels[i] = e.getKey();
         }
       }
@@ -369,6 +371,9 @@ public abstract class Classifier {
         correctTesting++;
       }
     }
+
+    //System.out.println(Arrays.toString(predictedLabels));
+    System.out.println(Arrays.toString(maxCounts));
 
     if (DEBUG) {
       System.out.print(name + " Testing with " + currentWindowLengths.size() + " models:\t");
