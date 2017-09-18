@@ -22,7 +22,7 @@ import static junit.framework.TestCase.assertNotNull;
 @RunWith(JUnit4.class)
 public abstract class AbstractClassifierTest {
 
-    private static final double MAX_ERROR_VALUES_PER_SAMPLING_SET = 5;
+    private static final double DELTA = 0.05;
     protected static final File DATASETS_DIRECTORY = new File(AbstractClassifierTest.class.getClassLoader().getResource("datasets/").getFile());
 
     @Test
@@ -103,11 +103,11 @@ public abstract class AbstractClassifierTest {
                     dataSet.name+" does NOT match",
                     scoreW.getTestingAccuracy(),
                     dataSet.testingAccuracy,
-                    calcDelta(scoreW.testSize));
+                    DELTA);
             assertEquals("training result of "+dataSet.name+" does NOT match",
                     scoreW.getTrainingAccuracy(),
                     dataSet.trainingAccuracy,
-                    calcDelta(scoreW.trainSize));
+                    DELTA);
             System.out.println(scoreW.toString());
 
         }
@@ -121,15 +121,6 @@ public abstract class AbstractClassifierTest {
 
     private File[] getTrainFilesFromDir(File dataSetDirectory) {
         return dataSetDirectory.listFiles(pathname -> pathname.getName().toUpperCase().endsWith("TRAIN"));
-    }
-
-    /**
-     * calculates the delta value to allow a maximum of error values per training or test cases
-     * @param samplingSize
-     * @return
-     */
-    private double calcDelta(int samplingSize) {
-        return MAX_ERROR_VALUES_PER_SAMPLING_SET /(double)samplingSize;
     }
 
     protected abstract List<DataSet> getDataSets();
