@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
  */
 public class BOSSVS extends BOSS {
 
+  public BOSSVS(){}
   /**
    * Create a BOSS VS boss.
    *

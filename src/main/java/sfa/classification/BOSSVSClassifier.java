@@ -42,6 +42,9 @@ public class BOSSVSClassifier extends Classifier {
 
 
   public static class BossVSModel<E> extends Model {
+
+    public BossVSModel(){}
+
     public BossVSModel(
             boolean normed,
             int windowLength) {

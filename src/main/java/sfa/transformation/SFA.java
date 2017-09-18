@@ -58,6 +58,8 @@ public class SFA implements Serializable {
     public double value;
     public String label;
 
+    public ValueLabel(){}
+
     public ValueLabel(double key, String label) {
       this.value = key;
       this.label = label;
@@ -68,6 +70,8 @@ public class SFA implements Serializable {
       return "" + this.value + ":" + this.label;
     }
   }
+
+  public SFA(){}
 
   public SFA(HistogramType histogramType) {
     reset();
