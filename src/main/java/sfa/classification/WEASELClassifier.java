@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -48,19 +49,20 @@ public class WEASELClassifier extends Classifier {
 
   public WEASELClassifier() {
     super();
+    Linear.resetRandom();
   }
 
   public static class WEASELModel extends Model {
     public WEASELModel(
-            boolean normed,
-            int features,
-            WEASEL model,
-            de.bwaldvogel.liblinear.Model linearModel,
-            int testing,
-            int testSize,
-            int training,
-            int trainSize
-            ) {
+        boolean normed,
+        int features,
+        WEASEL model,
+        de.bwaldvogel.liblinear.Model linearModel,
+        int testing,
+        int testSize,
+        int training,
+        int trainSize
+    ) {
       super("Weasel", testing, testSize, training, trainSize, normed, -1);
       this.features = features;
       this.weasel = model;
@@ -74,7 +76,7 @@ public class WEASELClassifier extends Classifier {
 
   @Override
   public Score eval(
-          final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
+      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     Score score = fit(trainSamples);
@@ -95,10 +97,10 @@ public class WEASELClassifier extends Classifier {
     }
 
     return new Score(
-            "Weasel",
-            correctTesting, testSamples.length,
-            score.training, trainSamples.length,
-            score.windowLength
+        "Weasel",
+        correctTesting, testSamples.length,
+        score.training, trainSamples.length,
+        score.windowLength
     );
   }
 
@@ -123,7 +125,7 @@ public class WEASELClassifier extends Classifier {
   private Predictions evalLabels(TimeSeries[] testSamples, String[] labels) {
     int correct = 0;
     for (int ind = 0; ind < testSamples.length; ind++) {
-      correct+=compareLabels(labels[ind],(testSamples[ind].getLabel()))?1:0;
+      correct += compareLabels(labels[ind],(testSamples[ind].getLabel()))? 1 : 0;
     }
     return new Predictions(labels, correct);
   }
@@ -143,6 +145,7 @@ public class WEASELClassifier extends Classifier {
       double label = Linear.predict(model.linearModel, features[ind]);
       labels[ind] = String.valueOf(label);
     }
+
     return labels;
   }
 
@@ -152,7 +155,7 @@ public class WEASELClassifier extends Classifier {
       int bestF = -1;
       boolean bestNorm = false;
 
-      int min = 4;
+      int min = 8;
       int max = getMax(samples, MAX_WINDOW_LENGTH);
       int[] windowLengths = new int[max - min + 1];
       for (int w = min, a = 0; w <= max; w++, a++) {
@@ -171,9 +174,10 @@ public class WEASELClassifier extends Classifier {
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
-          int correct = trainLibLinear(problem, solverType, c, iterations, p, folds, new Random(1));
+          int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
           if (correct > maxCorrect) {
+            // System.out.println(correct + "\t" + f);
             maxCorrect = correct;
             bestF = f;
             bestNorm = mean;
@@ -192,18 +196,17 @@ public class WEASELClassifier extends Classifier {
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
-      Linear.resetRandom();
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
       return new WEASELModel(
-              bestNorm,
-              bestF,
-              model,
-              linearModel,
-              0, // testing
-              1,
-              maxCorrect, // training
-              samples.length
+          bestNorm,
+          bestF,
+          model,
+          linearModel,
+          0, // testing
+          1,
+          maxCorrect, // training
+          samples.length
       );
 
     } catch (Exception e) {
@@ -213,9 +216,9 @@ public class WEASELClassifier extends Classifier {
   }
 
   protected static Problem initLibLinearProblem(
-          final BagOfBigrams[] bob,
-          final Dictionary dict,
-          final double bias) {
+      final BagOfBigrams[] bob,
+      final Dictionary dict,
+      final double bias) {
     Problem problem = new Problem();
     problem.bias = bias;
     problem.n = dict.size() + 1;
@@ -252,9 +255,13 @@ public class WEASELClassifier extends Classifier {
 
   @SuppressWarnings("static-access")
   protected static int trainLibLinear(
-          final Problem prob, final SolverType solverType, double c,
-          int iter, double p, int nr_fold, Random random) {
+      final Problem prob, final SolverType solverType, double c,
+      int iter, double p, int nr_fold) {
     final Parameter param = new Parameter(solverType, c, iter, p);
+
+    ThreadLocal<Random> myRandom = new ThreadLocal<>();
+    myRandom.set(new Random(1));
+    Random random = myRandom.get();
 
     int i;
     final int l = prob.l;

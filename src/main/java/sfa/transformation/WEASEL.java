@@ -141,6 +141,11 @@ public class WEASEL {
     //    final long mask = (usedBits << wordLength) - 1L;
     final long mask = (1L << (usedBits * wordLength)) - 1L;
 
+    // TODO rethink bit-shifting to make it collision free?!
+
+    //long max = 0;
+    //long prevMax = 0;
+
     // iterate all samples
     // and create a bag of pattern
     for (int j = 0; j < samples.length; j++) {
@@ -149,18 +154,23 @@ public class WEASEL {
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
         for (int offset = 0; offset < words[w][j].length; offset++) {
-          int word = this.dict.getWord((long) w << 52 | (words[w][j][offset] & mask));
+          int word = this.dict.getWord((long) w << 32 | (words[w][j][offset] & mask));
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
+          //max = Math.max(Long.highestOneBit((words[w][j][offset] & mask)), max);
 
           // add 2 grams
           if (offset - this.windowLengths[w] >= 0) {
-            long prevWord = this.dict.getWord((long) w << 52 | (words[w][j][offset - this.windowLengths[w]] & mask));
-            int newWord = this.dict.getWord((long) w << 52 | prevWord << 26 | word);
+            long prevWord = this.dict.getWord((long) w << 32 | (words[w][j][offset - this.windowLengths[w]] & mask));
+            //prevMax = Math.max(prevWord, Long.highestOneBit(prevMax));
+            int newWord = this.dict.getWord(prevWord << 52 | word);
             bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
           }
         }
       }
     }
+
+    //System.out.println(max + "\t" + prevMax);
+
     return bagOfPatterns;
   }
 
@@ -252,13 +262,12 @@ public class WEASEL {
     public int getWord(long word) {
       int index = 0;
       if ((index = this.dict.indexOf(word)) > -1) {
-        word = this.dict.indexGet(index);
+        return this.dict.indexGet(index);
       } else {
         int newWord = this.dict.size() + 1;
         this.dict.put(word, newWord);
-        word = newWord;
+        return newWord;
       }
-      return (int) word;
     }
 
     public int getWordChi(long word) {
