@@ -23,7 +23,8 @@ import static junit.framework.TestCase.assertNotNull;
 public abstract class AbstractClassifierTest {
 
     private static final double DELTA = 0.05;
-    protected static final File DATASETS_DIRECTORY = new File(AbstractClassifierTest.class.getClassLoader().getResource("datasets/").getFile());
+    protected static final File DATASETS_DIRECTORY = new File(
+            AbstractClassifierTest.class.getClassLoader().getResource("datasets/").getFile());
 
     @Test
     public void testClassificationOnUCRData() {
@@ -47,11 +48,10 @@ public abstract class AbstractClassifierTest {
         classifier.save(file);
         Classifier loadedClassifier = Classifier.load(file);
         Assert.assertNotNull(loadedClassifier);
-        checkEqualsResultsOfClassifiers(dataSet, classifier, loadedClassifier);
-        file.deleteOnExit();
+        checkEqualResultsOfClassifiers(dataSet, classifier, loadedClassifier);
     }
 
-    private void checkEqualsResultsOfClassifiers(DataSet dataSet, Classifier classifier, Classifier loadedClassifier) {
+    private void checkEqualResultsOfClassifiers(DataSet dataSet, Classifier classifier, Classifier loadedClassifier) {
         TimeSeries[] samples = TimeSeriesLoader.loadDataset(getFirstTrainFile(dataSet));
         Classifier.Predictions loadedScore = loadedClassifier.score(samples);
         Classifier.Predictions score = classifier.score(samples);
@@ -65,18 +65,20 @@ public abstract class AbstractClassifierTest {
     }
 
     private File createTempClassifierFile() throws IOException {
-        return File.createTempFile("classifier", "class");
-
+        File tmpFile = File.createTempFile("classifier", "class");
+        tmpFile.deleteOnExit();
+        return tmpFile;
     }
 
-    protected static final class DataSet{
+    protected static final class DataSet {
         public DataSet(String name, double trainingAccuracy, double testingAccuracy) {
             this.name = name;
             this.trainingAccuracy = trainingAccuracy;
             this.testingAccuracy = testingAccuracy;
         }
 
-        String name; double trainingAccuracy, testingAccuracy;
+        String name;
+        double trainingAccuracy, testingAccuracy;
     }
 
     protected Classifier trainClassifier(DataSet dataSet) {
