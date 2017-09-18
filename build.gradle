@@ -33,6 +33,8 @@ dependencies {
     compile 'de.bwaldvogel:liblinear:2.11'
     // efficient collection implementation without "object boxing"
     compile 'com.carrotsearch:hppc:0.7.2'
+    // java serialiser
+    compile 'com.esotericsoftware:kryo:4.0.1'
 
     testCompile 'junit:junit:4.12'
 }
