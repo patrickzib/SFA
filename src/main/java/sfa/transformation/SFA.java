@@ -58,6 +58,8 @@ public class SFA implements Serializable {
     public double value;
     public String label;
 
+    public ValueLabel(){}
+
     public ValueLabel(double key, String label) {
       this.value = key;
       this.label = label;
