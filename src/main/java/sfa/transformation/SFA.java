@@ -71,6 +71,8 @@ public class SFA implements Serializable {
     }
   }
 
+  public SFA(){}
+
   public SFA(HistogramType histogramType) {
     reset();
     this.histogramType = histogramType;

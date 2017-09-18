@@ -39,6 +39,8 @@ public class BOSS {
     //    BLOCKS = 1; // for testing purposes
   }
 
+  public BOSS(){}
+
   /**
    * Create a BOSS boss.
    *
@@ -61,6 +63,8 @@ public class BOSS {
   public static class BagOfPattern {
     public IntIntHashMap bag;
     public String label;
+
+    public BagOfPattern(){}
 
     public BagOfPattern(int size, String label) {
       this.bag = new IntIntHashMap(size);

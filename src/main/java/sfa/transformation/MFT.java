@@ -5,6 +5,14 @@ package sfa.transformation;
 import java.io.IOException;
 import java.io.Serializable;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.BeanSerializer;
+import com.esotericsoftware.kryo.serializers.DefaultSerializers;
+import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import org.jtransforms.fft.DoubleFFT_1D;
 
 import sfa.timeseries.TimeSeries;
@@ -22,7 +30,7 @@ import sfa.timeseries.TimeSeries;
  *
  * @author bzcschae
  */
-public class MFT implements Serializable {
+public class MFT {
   private static final long serialVersionUID = 8508604292241736378L;
 
   private int windowSize = 0;
@@ -31,9 +39,11 @@ public class MFT implements Serializable {
 
   private transient DoubleFFT_1D fft = null;
 
+  public MFT(){}
+
   public MFT(int windowSize, boolean normMean, boolean lowerBounding) {
     this.windowSize = windowSize;
-    this.fft = new DoubleFFT_1D(windowSize);
+    initFFT();
 
     // ignore DC value?
     this.startOffset = normMean ? 2 : 0;
@@ -167,7 +177,28 @@ public class MFT implements Serializable {
 
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
-    this.fft = new DoubleFFT_1D(this.windowSize);
+    initFFT();
   }
 
+  public static final class MFTKryoSerializer extends FieldSerializer<MFT>{
+
+    public MFTKryoSerializer(Kryo kryo) {
+      this(kryo, MFT.class);
+    }
+
+    public MFTKryoSerializer(Kryo kryo, Class type) {
+      super(kryo, type);
+    }
+
+    @Override
+    public MFT read(Kryo kryo, Input input, Class<MFT> type) {
+      MFT mft = super.read(kryo, input, type);
+      mft.initFFT();
+      return mft;
+    }
+  }
+
+  private void initFFT() {
+    this.fft = new DoubleFFT_1D(this.windowSize);
+  }
 }
