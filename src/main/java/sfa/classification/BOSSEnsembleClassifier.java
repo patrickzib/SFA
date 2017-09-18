@@ -160,18 +160,8 @@ public class BOSSEnsembleClassifier extends Classifier {
       }
     });
 
-    // sort descending
-    Collections.sort(results, Collections.reverseOrder());
-
-    // only keep best scores
-    List<BOSSModel> model = new ArrayList<>();
-    for (BOSSModel score : results) {
-      if (score.score.training >= correctTraining.get() * factor) { // all with same score
-        model.add(score);
-      }
-    }
-
-    return new Ensemble<>(model);
+    // returns the ensemble based on the best window-lengths within factor
+    return filterByFactor(results, correctTraining.get(), factor);
   }
 
 

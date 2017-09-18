@@ -136,18 +136,8 @@ public class ShotgunClassifier extends Classifier {
       }
     });
 
-    // sort descending
-    Collections.sort(results, Collections.reverseOrder());
-
-    // only keep best scores
-    List<ShotgunModel> model = new ArrayList<>();
-    for (ShotgunModel m : results) {
-      if (m.score.training >= correctTraining.get() * factor) { // all with same score
-        model.add(m);
-      }
-    }
-
-    return new Ensemble<>(model);
+    // returns the ensemble based on the best window-lengths within factor
+    return filterByFactor(results, correctTraining.get(), factor);
   }
 
 

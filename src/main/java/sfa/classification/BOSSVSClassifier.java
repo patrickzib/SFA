@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -189,15 +190,8 @@ public class BOSSVSClassifier extends Classifier {
       }
     });
 
-    // only keep best scores
-    List<BossVSModel<IntFloatHashMap>> model = new ArrayList<>();
-    for (BossVSModel<IntFloatHashMap> score : results) {
-      if (score.score.training >= correctTraining.get() * factor) { // all with same score
-        model.add(score);
-      }
-    }
-
-    return new Ensemble<>(model);
+    // returns the ensemble based on the best window-lengths within factor
+    return filterByFactor(results, correctTraining.get(), factor);
   }
 
 

@@ -312,6 +312,25 @@ public abstract class Classifier {
             && Double.valueOf(label1).equals(Double.valueOf(label2));
   }
 
+  protected <E extends Model> Ensemble<E> filterByFactor(
+      List<E> results,
+      int correctTraining,
+      double factor) {
+
+    // sort descending
+    Collections.sort(results, Collections.reverseOrder());
+
+    // only keep best scores
+    List<E> model = new ArrayList<>();
+    for (E score : results) {
+      if (score.score.training >= correctTraining * factor) { // all with same score
+        model.add(score);
+      }
+    }
+
+    return new Ensemble<>(model);
+  }
+
   protected Predictions score(
       final String name,
       final TimeSeries[] samples,
