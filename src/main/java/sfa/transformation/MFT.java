@@ -30,7 +30,7 @@ import sfa.timeseries.TimeSeries;
  *
  * @author bzcschae
  */
-public class MFT {
+public class MFT implements Serializable {
   private static final long serialVersionUID = 8508604292241736378L;
 
   private int windowSize = 0;
