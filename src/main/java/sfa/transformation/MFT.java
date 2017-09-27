@@ -63,7 +63,10 @@ public class MFT implements Serializable {
 
     // norming
     double[] copy = new double[l];
-    System.arraycopy(data, this.startOffset, copy, 0, Math.min(windowSize - this.startOffset, l));
+
+    // make it even lengthed for uneven windowSize
+    int length = Math.min(windowSize - windowSize%2 - this.startOffset, l);
+    System.arraycopy(data, this.startOffset, copy, 0, length);
 
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
@@ -87,7 +90,8 @@ public class MFT implements Serializable {
    * @return returns only the first l/2 Fourier coefficients for each window.
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
-    int wordLength = Math.min(windowSize, l + l % 2 + this.startOffset); // make it even
+    int wordLength = Math.min(windowSize, l + this.startOffset);
+    wordLength -= wordLength%2; // make it even
     double[] phis = new double[wordLength];
 
     for (int u = 0; u < phis.length; u += 2) {
