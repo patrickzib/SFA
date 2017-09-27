@@ -3,7 +3,6 @@
 package sfa.classification;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,7 +24,10 @@ public class ShotgunClassifier extends Classifier {
     super();
   }
 
-  public class ShotgunModel extends Model {
+  public static class ShotgunModel extends Model {
+
+    public ShotgunModel(){}
+
     public ShotgunModel(
             boolean normed,
             int windowLength,
@@ -35,7 +37,7 @@ public class ShotgunClassifier extends Classifier {
       this.samples = samples;
     }
 
-    public TimeSeries[] samples;
+    public TimeSeries[] samples; // the train samples needed for 1-NN classification
   }
 
   public Score eval(

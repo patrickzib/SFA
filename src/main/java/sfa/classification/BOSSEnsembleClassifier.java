@@ -37,14 +37,22 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
   public static class BOSSModel extends Model {
+
+    public BOSSModel(){}
+
     public BOSSModel(
         boolean normed,
         int windowLength) {
       super("BOSS", -1, 1, -1, 1, normed, windowLength);
     }
 
+    // the BOSS representation for each train sample
     public BagOfPattern[] bag;
+
+    // the trained BOSS transformation
     public BOSS boss;
+
+    // the best number of Fourier values to be used
     public int features;
   }
 

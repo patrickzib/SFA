@@ -53,6 +53,9 @@ public class WEASELClassifier extends Classifier {
   }
 
   public static class WEASELModel extends Model {
+
+    public WEASELModel(){}
+
     public WEASELModel(
         boolean normed,
         int features,
@@ -69,8 +72,13 @@ public class WEASELClassifier extends Classifier {
       this.linearModel = linearModel;
     }
 
+    // the best number of Fourier values to be used
     public int features;
+
+    // the trained WEASEL transformation
     public WEASEL weasel;
+
+    // the trained liblinear classifier
     public de.bwaldvogel.liblinear.Model linearModel;
   }
 

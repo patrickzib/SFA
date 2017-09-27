@@ -15,6 +15,7 @@ public class TimeSeries implements Serializable {
 
   protected boolean normed = false;
   protected String label = null;
+  public TimeSeries(){}
 
   public TimeSeries(double[] data) {
     this.data = data;

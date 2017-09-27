@@ -42,14 +42,22 @@ public class BOSSVSClassifier extends Classifier {
 
 
   public static class BossVSModel<E> extends Model {
+
+    public BossVSModel(){}
+
     public BossVSModel(
             boolean normed,
             int windowLength) {
       super("BOSS VS", -1, 1, -1, 1, normed, windowLength);
     }
 
+    // The inverse document frequencies learned by training
     public ObjectObjectHashMap<String, E> idf;
+
+    // the trained BOSS VS transformation
     public BOSSVS bossvs;
+
+    // the best number of Fourier values to be used
     public int features;
   }
 

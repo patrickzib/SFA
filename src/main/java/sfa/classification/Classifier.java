@@ -7,8 +7,16 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.FloatCursor;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import sfa.timeseries.TimeSeries;
+import sfa.transformation.MFT;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -60,6 +68,7 @@ public abstract class Classifier {
 
   /**
    * Build a classifier from the a training set with class labels.
+   *
    * @param trainSamples The training set
    * @return The accuracy on the train-samples
    */
@@ -67,20 +76,21 @@ public abstract class Classifier {
 
   /**
    * The predicted the classes of an array of samples.
-   * @param testSamples The training set
-   * @return The predictions for each test-sample and the test accuracy.
+   *
+   * @param testSamples The passed set
+   * @return The predictions for each passed sample and the test accuracy.
    */
   public abstract Predictions score(final TimeSeries[] testSamples);
 
   /**
    * Performs training and testing on a set of train- and test-samples.
-   * @return The predictions for each test-sample and the test accuracy.
+   *
    * @param trainSamples The training set
-   * @param testSamples The training set
+   * @param testSamples  The training set
    * @return The accuracy on the test- and train-samples
    */
   public abstract Score eval(
-      final TimeSeries[] trainSamples, final TimeSeries[] testSamples);
+          final TimeSeries[] trainSamples, final TimeSeries[] testSamples);
 
 
   public static class Words {
@@ -144,26 +154,29 @@ public abstract class Classifier {
 
     public Score score;
 
+    public Model() {
+    }
+
     public Model(
-        String name,
-        int testing,
-        int testSize,
-        int training,
-        int trainSize,
-        boolean normed,
-        int windowLength
+            String name,
+            int testing,
+            int testSize,
+            int training,
+            int trainSize,
+            boolean normed,
+            int windowLength
     ) {
-      this(   name,
+      this(name,
               new Score(name, testing, testSize, training, trainSize, windowLength),
               normed,
               windowLength);
     }
 
     public Model(
-        String name,
-        Score score,
-        boolean normed,
-        int windowLength
+            String name,
+            Score score,
+            boolean normed,
+            int windowLength
     ) {
       this.name = name;
       this.score = score;
@@ -189,13 +202,16 @@ public abstract class Classifier {
     public int testSize;
     public int windowLength;
 
+    public Score() {
+    }
+
     public Score(
-        String name,
-        int testing,
-        int testSize,
-        int training,
-        int trainSize,
-        int windowLength
+            String name,
+            int testing,
+            int testSize,
+            int training,
+            int trainSize,
+            int windowLength
     ) {
       this.name = name;
       this.training = training;
@@ -205,7 +221,7 @@ public abstract class Classifier {
       this.windowLength = windowLength;
     }
 
-    public double getTestingAccuracy(){
+    public double getTestingAccuracy() {
       return 1 - formatError(testing, testSize);
     }
 
@@ -224,8 +240,8 @@ public abstract class Classifier {
 
     public int compareTo(Score bestScore) {
       if (this.training > bestScore.training
-          || this.training == bestScore.training
-          && this.windowLength > bestScore.windowLength // on a tie, prefer the one with the larger window-length
+              || this.training == bestScore.training
+              && this.windowLength > bestScore.windowLength // on a tie, prefer the one with the larger window-length
               ) {
         return 1;
       }
@@ -313,9 +329,9 @@ public abstract class Classifier {
   }
 
   protected <E extends Model> Ensemble<E> filterByFactor(
-      List<E> results,
-      int correctTraining,
-      double factor) {
+          List<E> results,
+          int correctTraining,
+          double factor) {
 
     // sort descending
     Collections.sort(results, Collections.reverseOrder());
@@ -332,10 +348,10 @@ public abstract class Classifier {
   }
 
   protected Predictions score(
-      final String name,
-      final TimeSeries[] samples,
-      final List<Pair<String, Integer>>[] labels,
-      final List<Integer> currentWindowLengths) {
+          final String name,
+          final TimeSeries[] samples,
+          final List<Pair<String, Integer>>[] labels,
+          final List<Integer> currentWindowLengths) {
 
     String[] predictedLabels = new String[samples.length];
     //long[] maxCounts = new long[samples.length];
@@ -359,7 +375,7 @@ public abstract class Classifier {
         if (predictedLabels[i] == null
                 || maxCount < e.getValue()
                 || maxCount == e.getValue()  // break ties
-                   && Double.valueOf(predictedLabels[i]) <= Double.valueOf(e.getKey())
+                && Double.valueOf(predictedLabels[i]) <= Double.valueOf(e.getKey())
                 ) {
           maxCount = e.getValue();
           // maxCounts[i] = maxCount;
@@ -435,8 +451,8 @@ public abstract class Classifier {
   }
 
   protected IntArrayList[] getStratifiedTrainTestSplitIndices(
-      TimeSeries[] samples,
-      int splits) {
+          TimeSeries[] samples,
+          int splits) {
 
     HashMap<String, IntArrayDeque> elements = new HashMap<>();
 
@@ -505,4 +521,25 @@ public abstract class Classifier {
 
     return setData;
   }
+
+  public void save(File file) throws FileNotFoundException {
+    Output kryoOutput = new Output(new FileOutputStream(file));
+    Kryo kryo = initKryo();
+    kryo.writeClassAndObject(kryoOutput, this);
+    kryoOutput.close();
+  }
+
+  private static Kryo initKryo() {
+    Kryo kryo = new Kryo();
+    kryo.register(MFT.class, new MFT.MFTKryoSerializer(kryo));
+    return kryo;
+  }
+
+  public static <T extends Classifier> T load(File file) throws FileNotFoundException {
+    Input kryoInput = new Input(new FileInputStream(file));
+    Kryo kryo = initKryo();
+    T classifier = (T) kryo.readClassAndObject(kryoInput);
+    return classifier;
+  }
+
 }

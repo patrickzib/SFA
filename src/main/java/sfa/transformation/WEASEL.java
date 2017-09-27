@@ -44,6 +44,7 @@ public class WEASEL {
 
     //    BLOCKS = 1; // for testing purposes
   }
+  public WEASEL(){}
 
   /**
    * Create a WEASEL boss.
