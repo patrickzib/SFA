@@ -87,8 +87,8 @@ public class MFT implements Serializable {
 
     for (int u = 0; u < phis.length; u += 2) {
       double uHalve = -u / 2;
-      phis[u] = realephi(uHalve, this.windowSize);
-      phis[u + 1] = complexephi(uHalve, this.windowSize);
+      phis[u] = realPartEPhi(uHalve, this.windowSize);
+      phis[u + 1] = complexPartEPhi(uHalve, this.windowSize);
     }
 
     // means and stddev for each sliding window
@@ -110,8 +110,8 @@ public class MFT implements Serializable {
           double real1 = (mftData[k] + data[t + this.windowSize - 1] - data[t - 1]);
           double imag1 = (mftData[k + 1]);
 
-          double real = complexMulReal(real1, imag1, phis[k], phis[k + 1]);
-          double imag = complexMulImag(real1, imag1, phis[k], phis[k + 1]);
+          double real = complexMultiplyRealPart(real1, imag1, phis[k], phis[k + 1]);
+          double imag = complexMultiplyImagPart(real1, imag1, phis[k], phis[k + 1]);
 
           mftData[k] = real;
           mftData[k + 1] = imag;
@@ -139,22 +139,37 @@ public class MFT implements Serializable {
     return transformed;
   }
 
-  public static double complexMulReal(double r1, double im1, double r2, double im2) {
+  /**
+   * Calculate the real part of a multiplication of two complex numbers
+   */
+  public static double complexMultiplyRealPart(double r1, double im1, double r2, double im2) {
     return r1 * r2 - im1 * im2;
   }
 
-  public static double complexMulImag(double r1, double im1, double r2, double im2) {
+  /**
+   * Caluculate the imaginary part of a multiplication of two complex numbers
+   */
+  public static double complexMultiplyImagPart(double r1, double im1, double r2, double im2) {
     return r1 * im2 + r2 * im1;
   }
 
-  public static double realephi(double u, double M) {
+  /**
+   * Real part of e^(2*pi*u/M)
+   */
+  public static double realPartEPhi(double u, double M) {
     return Math.cos(2 * Math.PI * u / M);
   }
 
-  public static double complexephi(double u, double M) {
+  /**
+   * Imaginary part of e^(2*pi*u/M)
+   */
+  public static double complexPartEPhi(double u, double M) {
     return -Math.sin(2 * Math.PI * u / M);
   }
 
+  /**
+   * Apply normalization to the Fourier coefficients to allow lower bounding in Euclidean space
+   */
   public double[] normalizeFT(double[] copy, double std) {
     double normalisingFactor = (std > 0 ? 1.0 / std : 1.0) * this.norm;
     int sign = 1;
