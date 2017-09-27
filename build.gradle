@@ -36,6 +36,7 @@ dependencies {
     // java serialiser
     compile 'com.esotericsoftware:kryo:4.0.1'
 
+    compile 'junit:junit:4.12'
     testCompile 'junit:junit:4.12'
 }
 
