@@ -65,7 +65,7 @@ public class MFT implements Serializable {
     double[] copy = new double[l];
 
     // make it even lengthed for uneven windowSize
-    int length = Math.min(windowSize - windowSize%2 - this.startOffset, l);
+    int length = Math.min(windowSize - this.startOffset, l);
     System.arraycopy(data, this.startOffset, copy, 0, length);
 
     int sign = 1;
@@ -91,7 +91,7 @@ public class MFT implements Serializable {
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
     int wordLength = Math.min(windowSize, l + this.startOffset);
-    wordLength -= wordLength%2; // make it even
+    wordLength += wordLength%2; // make it even
     double[] phis = new double[wordLength];
 
     for (int u = 0; u < phis.length; u += 2) {

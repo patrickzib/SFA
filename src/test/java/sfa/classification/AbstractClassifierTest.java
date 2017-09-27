@@ -103,12 +103,12 @@ public abstract class AbstractClassifierTest {
             Classifier.Score scoreW = classifier.eval(trainSamples, testSamples);
             assertEquals("testing result of " +
                     dataSet.name+" does NOT match",
-                    scoreW.getTestingAccuracy(),
                     dataSet.testingAccuracy,
+                    scoreW.getTestingAccuracy(),
                     DELTA);
             assertEquals("training result of "+dataSet.name+" does NOT match",
-                    scoreW.getTrainingAccuracy(),
                     dataSet.trainingAccuracy,
+                    scoreW.getTrainingAccuracy(),
                     DELTA);
             System.out.println(scoreW.toString());
 
