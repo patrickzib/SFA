@@ -27,7 +27,11 @@ public class MFTTest {
 
     // tests for different parameter settings, if the O(n) MFT
     // returns the identical Fourier coefficients as the O(n log n) DFT
+
+    // test even and uneven window sizes
     for (int windowSize : new int[]{4,5,16,32,64}) {
+      // test l > windowSize
+      // test uneven l
       for (int l : new int[]{2, 4, 5, 6, 8, 10, 12, 14, 16}) {
         for (boolean lowerBounding : new boolean[]{true, false}) {
           for (boolean normMean : new boolean[]{true, false}) {
