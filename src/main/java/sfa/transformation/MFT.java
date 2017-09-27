@@ -2,20 +2,14 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import java.io.IOException;
-import java.io.Serializable;
-
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.BeanSerializer;
-import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import org.jtransforms.fft.DoubleFFT_1D;
-
 import sfa.timeseries.TimeSeries;
+
+import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * The Momentary Fourier Transform is alternative algorithm of
@@ -68,8 +62,8 @@ public class MFT implements Serializable {
     data[1] = 0; // DC-coefficient imag part
 
     // norming
-    double[] copy = new double[Math.min(windowSize - this.startOffset, l)];
-    System.arraycopy(data, this.startOffset, copy, 0, copy.length);
+    double[] copy = new double[l];
+    System.arraycopy(data, this.startOffset, copy, 0, Math.min(windowSize - this.startOffset, l));
 
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
@@ -93,7 +87,7 @@ public class MFT implements Serializable {
    * @return returns only the first l/2 Fourier coefficients for each window.
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
-    int wordLength = l + l % 2 + this.startOffset; // make it even
+    int wordLength = Math.min(windowSize, l + l % 2 + this.startOffset); // make it even
     double[] phis = new double[wordLength];
 
     for (int u = 0; u < phis.length; u += 2) {
@@ -142,7 +136,7 @@ public class MFT implements Serializable {
 
       // normalization for lower bounding
       double[] copy = new double[l];
-      System.arraycopy(mftData, this.startOffset, copy, 0, l);
+      System.arraycopy(mftData, this.startOffset, copy, 0, Math.min(l, mftData.length-this.startOffset));
 
       transformed[t] = normalizeFT(copy, stds[t]);
     }
