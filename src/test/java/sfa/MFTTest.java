@@ -21,24 +21,27 @@ public class MFTTest {
 
   @Test
   public void testMFT() throws IOException {
-    int windowSize = 16;
 
     // generate a random sample
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(1024, new Random());
 
-    for (int l : new int[]{2,4,5,6,8,10,12,14,16,18,20}) {
-      for (boolean lowerBounding : new boolean[]{true, false}) {
-        for (boolean normMean : new boolean[]{true, false}) {
+    // tests for different parameter settings, if the O(n) MFT
+    // returns the identical Fourier coefficients as the O(n log n) DFT
+    for (int windowSize : new int[]{4,5,16,32,64}) {
+      for (int l : new int[]{2, 4, 5, 6, 8, 10, 12, 14, 16}) {
+        for (boolean lowerBounding : new boolean[]{true, false}) {
+          for (boolean normMean : new boolean[]{true, false}) {
 
-          MFT mft = new MFT(windowSize, normMean, lowerBounding);
-          double[][] mftData = mft.transformWindowing(timeSeries, l);
-          TimeSeries[] subsequences = timeSeries.getSubsequences(windowSize, normMean);
+            MFT mft = new MFT(windowSize, normMean, lowerBounding);
+            double[][] mftData = mft.transformWindowing(timeSeries, l);
+            TimeSeries[] subsequences = timeSeries.getSubsequences(windowSize, normMean);
 
-          Assert.assertEquals("Not enough MFT transformations", mftData.length, subsequences.length);
+            Assert.assertEquals("Not enough MFT transformations", mftData.length, subsequences.length);
 
-          for (int i = 0; i < mftData.length; i++) {
-            double[] dftData = mft.transform(subsequences[i], l);
-            Assert.assertArrayEquals("DFT not equal to MFT for l: " + l, mftData[i], dftData, 0.01);
+            for (int i = 0; i < mftData.length; i++) {
+              double[] dftData = mft.transform(subsequences[i], l);
+              Assert.assertArrayEquals("DFT not equal to MFT for l: " + l, mftData[i], dftData, 0.01);
+            }
           }
         }
       }
