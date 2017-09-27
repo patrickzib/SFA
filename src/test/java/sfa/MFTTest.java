@@ -9,8 +9,6 @@ import org.junit.runners.JUnit4;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 import sfa.transformation.MFT;
-import sfa.transformation.SFA;
-import sfa.transformation.SFA.HistogramType;
 
 import java.io.IOException;
 import java.util.Random;
@@ -28,9 +26,9 @@ public class MFTTest {
     // generate a random sample
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(1024, new Random());
 
-    for (int l : new int[]{16}) {
-      for (boolean lowerBounding : new boolean[]{true}) {
-        for (boolean normMean : new boolean[]{true}) {
+    for (int l : new int[]{2,4,5,6,8,10,12,14,16,18,20}) {
+      for (boolean lowerBounding : new boolean[]{true, false}) {
+        for (boolean normMean : new boolean[]{true, false}) {
 
           MFT mft = new MFT(windowSize, normMean, lowerBounding);
           double[][] mftData = mft.transformWindowing(timeSeries, l);
@@ -40,7 +38,7 @@ public class MFTTest {
 
           for (int i = 0; i < mftData.length; i++) {
             double[] dftData = mft.transform(subsequences[i], l);
-            Assert.assertArrayEquals("DFT not equal to MFT for l: " + l, mftData[i], dftData, 0.04);
+            Assert.assertArrayEquals("DFT not equal to MFT for l: " + l, mftData[i], dftData, 0.01);
           }
         }
       }
