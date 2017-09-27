@@ -25,8 +25,8 @@ public class MFTTest {
     // generate a random sample
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(1024, new Random());
 
-    // tests for different parameter settings, if the O(n) MFT
-    // returns the identical Fourier coefficients as the O(n log n) DFT
+    // test for different parameter settings, if the O(n) MFT
+    // returns identical Fourier coefficients as the O(n log n) DFT
 
     // test even window sizes
     // test uneven window sizes
@@ -36,7 +36,6 @@ public class MFTTest {
       for (int l : new int[]{2, 4, 5, 6, 8, 10, 12, 14, 16}) {
         for (boolean lowerBounding : new boolean[]{true, false}) {
           for (boolean normMean : new boolean[]{true, false}) {
-
             MFT mft = new MFT(windowSize, normMean, lowerBounding);
             double[][] mftData = mft.transformWindowing(timeSeries, l);
             TimeSeries[] subsequences = timeSeries.getSubsequences(windowSize, normMean);
