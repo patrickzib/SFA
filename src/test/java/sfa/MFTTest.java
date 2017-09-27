@@ -30,7 +30,7 @@ public class MFTTest {
 
     // test even window sizes
     // test uneven window sizes
-    for (int windowSize : new int[]{4,16,17,19,32,33,64}) {
+    for (int windowSize : new int[]{4,16,19,32,33,64}) {
       // test l > windowSize
       // test uneven l
       for (int l : new int[]{2, 4, 5, 6, 8, 10, 12, 14, 16}) {
