@@ -130,6 +130,13 @@ public class BOSSVSClassifier extends Classifier {
     return evalLabels(testSamples, labels);
   }
 
+
+  @Override
+  public String[] predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
+
+
   protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(Integer[] windows,
                                                                boolean normMean,
                                                                TimeSeries[] samples) {
@@ -254,10 +261,6 @@ public class BOSSVSClassifier extends Classifier {
     });
 
     return p;
-  }
-
-  public String[] predict(final TimeSeries[] testSamples) {
-    return predict(this.model, testSamples);
   }
 
   protected String[] predict(final Ensemble<BossVSModel<IntFloatHashMap>> model, final TimeSeries[] testSamples) {

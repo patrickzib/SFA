@@ -142,6 +142,7 @@ public class ShotgunClassifier extends Classifier {
     return filterByFactor(results, correctTraining.get(), factor);
   }
 
+  @Override
   public String[] predict(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }
@@ -208,7 +209,7 @@ public class ShotgunClassifier extends Classifier {
     return p;
   }
 
-  public static double getEuclideanDistance(
+  protected static double getEuclideanDistance(
           TimeSeries ts,
           TimeSeries q,
           double meanTs,
@@ -235,7 +236,7 @@ public class ShotgunClassifier extends Classifier {
     return distance;
   }
 
-  public static void calcMeansStds(
+  protected static void calcMeansStds(
           final int windowLength,
           final TimeSeries[] trainSamples,
           final double[][] means,

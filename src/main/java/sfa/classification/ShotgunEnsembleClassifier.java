@@ -82,6 +82,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     return evalLabels(testSamples, labels);
   }
 
+  @Override
   public String[] predict(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }

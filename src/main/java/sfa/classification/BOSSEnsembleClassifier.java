@@ -114,6 +114,12 @@ public class BOSSEnsembleClassifier extends Classifier {
   }
 
 
+  @Override
+  public String[] predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
+
+
   protected Ensemble<BOSSModel> fitEnsemble(Integer[] windows,
                                             boolean normMean,
                                             TimeSeries[] samples) {
@@ -225,10 +231,6 @@ public class BOSSEnsembleClassifier extends Classifier {
     });
 
     return p;
-  }
-
-  public String[] predict(final TimeSeries[] testSamples) {
-    return predict(this.model, testSamples);
   }
 
   protected String[] predict(final Ensemble<BOSSModel> model, final TimeSeries[] testSamples) {
