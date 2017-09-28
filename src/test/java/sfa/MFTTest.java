@@ -27,11 +27,13 @@ public class MFTTest {
   @Test
   public void testTransform() throws IOException {
     for (int windowSize : new int[]{4,16,19,32,33,64}) {
+      TimeSeries query = TimeSeriesLoader.generateRandomWalkData(windowSize, new Random(1));
+
       for (int l : new int[]{2, 4, 5, 6, 8, 10, 12, 14, 16}) {
-        for (boolean lowerBounding : new boolean[]{true, false}) {
-          for (boolean normMean : new boolean[]{true, false}) {
+        for (boolean normMean : new boolean[]{true, false}) {
+          for (boolean lowerBounding : new boolean[]{true, false}) {
             // generate a random sample
-            TimeSeries ts = TimeSeriesLoader.generateRandomWalkData(windowSize, new Random());
+            TimeSeries ts = TimeSeriesLoader.generateRandomWalkData(windowSize, new Random(2));
 
             // transform using the Fourier Transform
             MFT mft = new MFT(windowSize, normMean, lowerBounding);
@@ -45,6 +47,26 @@ public class MFTTest {
               for (int i = l - mft.getStartOffset(); i < windowSize; i++) {
                 Assert.assertEquals("Non zero coefficients", dftData[i],0.0, 0);
               }
+            }
+
+            // if set, the DFT should lower bound the Euclidean distance on the real time series
+            if (lowerBounding) {
+              double[] queryDFTData = mft.transform(query, l);
+
+              // ED
+              double distance = 0.0;
+              for (int i = 0; i < query.getLength(); i++) {
+                distance += (query.getData(i) - ts.getData(i)) * (query.getData(i) - ts.getData(i));
+              }
+
+              // lower bounding distance
+              double distance2 = 0.0;
+              for (int i = 0; i < dftData.length; i++) {
+                distance2 += (dftData[i] - queryDFTData[i]) * (dftData[i] - queryDFTData[i]);
+              }
+
+              // System.out.println(distance + " " + distance2);
+              Assert.assertTrue("DFT distance does not lower bound true distance", distance > distance2 );
             }
           }
         }
