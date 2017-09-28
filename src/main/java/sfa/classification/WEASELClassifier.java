@@ -130,14 +130,6 @@ public class WEASELClassifier extends Classifier {
     return evalLabels(testSamples, labels);
   }
 
-  private Predictions evalLabels(TimeSeries[] testSamples, String[] labels) {
-    int correct = 0;
-    for (int ind = 0; ind < testSamples.length; ind++) {
-      correct += compareLabels(labels[ind],(testSamples[ind].getLabel()))? 1 : 0;
-    }
-    return new Predictions(labels, correct);
-  }
-
   public String[] predict(TimeSeries[] samples) {
     final int[][][] wordsTest = model.weasel.createWords(samples);
     BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);

@@ -108,7 +108,8 @@ public class BOSSVSClassifier extends Classifier {
       // train the shotgun models for different window lengths
       Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(
               windows.toArray(new Integer[]{}), normMean, trainSamples);
-      Predictions pred = predictEnsemble(model, trainSamples);
+      String[] labels = predict(model, trainSamples);
+      Predictions pred = evalLabels(trainSamples, labels);
 
       if (bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
@@ -125,9 +126,9 @@ public class BOSSVSClassifier extends Classifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    return predictEnsemble(this.model, testSamples);
+    String[] labels = predict(testSamples);
+    return evalLabels(testSamples, labels);
   }
-
 
   protected Ensemble<BossVSModel<IntFloatHashMap>> fitEnsemble(Integer[] windows,
                                                                boolean normMean,
@@ -202,7 +203,7 @@ public class BOSSVSClassifier extends Classifier {
   }
 
 
-  public Predictions predict(
+  protected Predictions predict(
           final int[] indices,
           final BagOfPattern[] bagOfPatternsTestSamples,
           final ObjectObjectHashMap<String, IntFloatHashMap> matrixTrain) {
@@ -255,17 +256,18 @@ public class BOSSVSClassifier extends Classifier {
     return p;
   }
 
+  public String[] predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
 
-  protected Predictions predictEnsemble(
-          final Ensemble<BossVSModel<IntFloatHashMap>> results,
-          final TimeSeries[] testSamples) {
+  protected String[] predict(final Ensemble<BossVSModel<IntFloatHashMap>> model, final TimeSeries[] testSamples) {
     @SuppressWarnings("unchecked")
     final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(results.size()));
+    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(model.size()));
     final int[] indicesTest = createIndices(testSamples.length);
 
     // parallel execution
@@ -273,9 +275,9 @@ public class BOSSVSClassifier extends Classifier {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify
-        for (int i = 0; i < results.size(); i++) {
+        for (int i = 0; i < model.size(); i++) {
           if (i % threads == id) {
-            final BossVSModel<IntFloatHashMap> score = results.get(i);
+            final BossVSModel<IntFloatHashMap> score = model.get(i);
             usedLengths.add(score.windowLength);
 
             BOSSVS model = score.bossvs;

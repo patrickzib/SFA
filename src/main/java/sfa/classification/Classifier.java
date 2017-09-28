@@ -75,12 +75,22 @@ public abstract class Classifier {
   public abstract Score fit(final TimeSeries[] trainSamples);
 
   /**
-   * The predicted the classes of an array of samples.
+   * The predicted classes and accuracies of an array of samples.
    *
    * @param testSamples The passed set
    * @return The predictions for each passed sample and the test accuracy.
    */
   public abstract Predictions score(final TimeSeries[] testSamples);
+
+
+  /**
+   * The predicted classes of an array of samples.
+   *
+   * @param testSamples The passed set
+   * @return The predictions for each passed sample.
+   */
+  public abstract String[] predict(final TimeSeries[] testSamples);
+
 
   /**
    * Performs training and testing on a set of train- and test-samples.
@@ -92,6 +102,14 @@ public abstract class Classifier {
   public abstract Score eval(
           final TimeSeries[] trainSamples, final TimeSeries[] testSamples);
 
+
+  protected Predictions evalLabels(TimeSeries[] testSamples, String[] labels) {
+    int correct = 0;
+    for (int ind = 0; ind < testSamples.length; ind++) {
+      correct += compareLabels(labels[ind],(testSamples[ind].getLabel()))? 1 : 0;
+    }
+    return new Predictions(labels, correct);
+  }
 
   public static class Words {
     public static int binlog(int bits) {
@@ -347,7 +365,7 @@ public abstract class Classifier {
     return new Ensemble<>(model);
   }
 
-  protected Predictions score(
+  protected String[] score(
           final String name,
           final TimeSeries[] samples,
           final List<Pair<String, Integer>>[] labels,
@@ -382,10 +400,6 @@ public abstract class Classifier {
           predictedLabels[i] = e.getKey();
         }
       }
-
-      if (compareLabels(samples[i].getLabel(), predictedLabels[i])) {
-        correctTesting++;
-      }
     }
 
     //System.out.println(Arrays.toString(predictedLabels));
@@ -396,7 +410,7 @@ public abstract class Classifier {
       System.out.println(currentWindowLengths.toString() + "\n");
     }
 
-    return new Predictions(predictedLabels, correctTesting);
+    return predictedLabels;
   }
 
 

@@ -3,12 +3,10 @@
 package sfa.classification;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import de.bwaldvogel.liblinear.Linear;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.BOSS;
 import sfa.transformation.BOSS.BagOfPattern;
@@ -94,7 +92,8 @@ public class BOSSEnsembleClassifier extends Classifier {
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
       Ensemble<BOSSModel> model = fitEnsemble(windows, normMean, trainSamples);
-      Predictions pred = predictEnsemble(model, trainSamples);
+      String[] labels = predict(model, trainSamples);
+      Predictions pred = evalLabels(trainSamples, labels);
 
       if (model == null || bestCorrectTraining < pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
@@ -110,7 +109,8 @@ public class BOSSEnsembleClassifier extends Classifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    return predictEnsemble(this.model, testSamples);
+    String[] labels = predict(testSamples);
+    return evalLabels(testSamples, labels);
   }
 
 
@@ -227,25 +227,27 @@ public class BOSSEnsembleClassifier extends Classifier {
     return p;
   }
 
-  protected Predictions predictEnsemble(
-      final Ensemble<BOSSModel> results,
-      final TimeSeries[] testSamples) {
+  public String[] predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
+
+  protected String[] predict(final Ensemble<BOSSModel> model, final TimeSeries[] testSamples) {
     @SuppressWarnings("unchecked")
     final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }
 
-    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(results.size()));
+    final List<Integer> usedLengths = Collections.synchronizedList(new ArrayList<>(model.size()));
 
     // parallel execution
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         // iterate each sample to classify
-        for (int i = 0; i < results.size(); i++) {
+        for (int i = 0; i < model.size(); i++) {
           if (i % threads == id) {
-            final BOSSModel score = results.get(i);
+            final BOSSModel score = model.get(i);
             usedLengths.add(score.windowLength);
 
             BOSS model = score.boss;

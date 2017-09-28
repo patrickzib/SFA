@@ -61,12 +61,12 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
       Ensemble<ShotgunModel> model = fitEnsemble(trainSamples, normMean, factor);
-      Score score = model.getHighestScoringModel().score;
-      Predictions pred = predictEnsemble(model, trainSamples);
+      String[] labels = predict(model, trainSamples);
+      Predictions pred = evalLabels(trainSamples, labels);
 
       if (model == null || bestCorrectTraining <= pred.correct.get()) {
         bestCorrectTraining = pred.correct.get();
-        bestScore = score;
+        bestScore = model.getHighestScoringModel().score;
         bestScore.training = pred.correct.get();
         this.model = model;
       }
@@ -78,12 +78,15 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    return predictEnsemble(this.model, testSamples);
+    String[] labels = predict(testSamples);
+    return evalLabels(testSamples, labels);
   }
 
-  protected Predictions predictEnsemble(
-      final Ensemble<ShotgunModel> model,
-      final TimeSeries[] testSamples) {
+  public String[] predict(final TimeSeries[] testSamples) {
+    return predict(this.model, testSamples);
+  }
+
+  protected String[] predict(Ensemble<ShotgunModel> model, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
@@ -105,10 +108,10 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
             usedLengths.add(score.windowLength);
 
-            Predictions p = predict(score, testSamples);
+            String[] labels = predict(score, testSamples);
 
-            for (int a = 0; a < p.labels.length; a++) {
-              testLabels[a].add(new Pair<>(p.labels[a], score.score.training));
+            for (int a = 0; a < labels.length; a++) {
+              testLabels[a].add(new Pair<>(labels[a], score.score.training));
             }
           }
         }
