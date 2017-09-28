@@ -59,12 +59,12 @@ public class MFT implements Serializable {
 
     System.arraycopy(timeSeries.getData(), 0, data, 0, this.windowSize);
     this.fft.realForward(data);
-    data[1] = 0; // DC-coefficient imag part
+    data[1] = 0; // DC-coefficient imaginary part
 
     // norming
     double[] copy = new double[l];
 
-    // make it even lengthed for uneven windowSize
+    // make it even length for uneven windowSize
     int length = Math.min(windowSize - this.startOffset, l);
     System.arraycopy(data, this.startOffset, copy, 0, length);
 
@@ -151,35 +151,35 @@ public class MFT implements Serializable {
   /**
    * Calculate the real part of a multiplication of two complex numbers
    */
-  public static double complexMultiplyRealPart(double r1, double im1, double r2, double im2) {
+  private static double complexMultiplyRealPart(double r1, double im1, double r2, double im2) {
     return r1 * r2 - im1 * im2;
   }
 
   /**
    * Caluculate the imaginary part of a multiplication of two complex numbers
    */
-  public static double complexMultiplyImagPart(double r1, double im1, double r2, double im2) {
+  private static double complexMultiplyImagPart(double r1, double im1, double r2, double im2) {
     return r1 * im2 + r2 * im1;
   }
 
   /**
    * Real part of e^(2*pi*u/M)
    */
-  public static double realPartEPhi(double u, double M) {
+  private static double realPartEPhi(double u, double M) {
     return Math.cos(2 * Math.PI * u / M);
   }
 
   /**
    * Imaginary part of e^(2*pi*u/M)
    */
-  public static double complexPartEPhi(double u, double M) {
+  private static double complexPartEPhi(double u, double M) {
     return -Math.sin(2 * Math.PI * u / M);
   }
 
   /**
    * Apply normalization to the Fourier coefficients to allow lower bounding in Euclidean space
    */
-  public double[] normalizeFT(double[] copy, double std) {
+  private double[] normalizeFT(double[] copy, double std) {
     double normalisingFactor = (std > 0 ? 1.0 / std : 1.0) * this.norm;
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
@@ -187,6 +187,10 @@ public class MFT implements Serializable {
       sign *= -1;
     }
     return copy;
+  }
+
+  public int getStartOffset() {
+    return startOffset;
   }
 
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {

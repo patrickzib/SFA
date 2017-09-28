@@ -19,14 +19,53 @@ import java.util.Random;
 @RunWith(JUnit4.class)
 public class MFTTest {
 
+  /**
+   * Tests the Fourier transform of a time series
+   *
+   * @throws IOException
+   */
   @Test
-  public void testMFT() throws IOException {
+  public void testTransform() throws IOException {
+    for (int windowSize : new int[]{4,16,19,32,33,64}) {
+      for (int l : new int[]{2, 4, 5, 6, 8, 10, 12, 14, 16}) {
+        for (boolean lowerBounding : new boolean[]{true, false}) {
+          for (boolean normMean : new boolean[]{true, false}) {
+            // generate a random sample
+            TimeSeries ts = TimeSeriesLoader.generateRandomWalkData(windowSize, new Random());
+
+            // transform using the Fourier Transform
+            MFT mft = new MFT(windowSize, normMean, lowerBounding);
+            double[] dftData = mft.transform(ts, l);
+
+            Assert.assertEquals("Not enough Fourier coefficients", dftData.length, l);
+
+            if (l > windowSize) {
+              // if more Fourier coefficients are accessed than available,
+              // the last ones should be 0
+              for (int i = l - mft.getStartOffset(); i < windowSize; i++) {
+                Assert.assertEquals("Non zero coefficients", dftData[i],0.0, 0);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    System.out.println("DFT tests done");
+  }
+
+
+  /**
+   * Test for different parameter settings, if the O(n) Momentary Fourier Tranfsorm (MFT)
+   * returns identical Fourier coefficients as the O(n log n) Discrete Fourier Transform (DFT)
+   *
+   * @throws IOException
+   */
+  @Test
+  public void testTransformWindowing() throws IOException {
 
     // generate a random sample
     TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(1024, new Random());
-
-    // test for different parameter settings, if the O(n) MFT
-    // returns identical Fourier coefficients as the O(n log n) DFT
 
     // test even window sizes
     // test uneven window sizes

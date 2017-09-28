@@ -16,17 +16,17 @@ import java.io.IOException;
 public class UCRClassificationTest {
 
   // The datasets to use
-  public static String[] datasets = new String[] {
-    "Coffee", "Beef", "CBF",
-    "ECG200", "FaceFour", "OliveOil",
-    "Gun_Point",
-    "DiatomSizeReduction",
-    "ECGFiveDays",
-    "TwoLeadECG",
-    "SonyAIBORobot SurfaceII",
-    "MoteStrain",
-    "ItalyPowerDemand",
-    "SonyAIBORobot Surface",
+  public static String[] datasets = new String[]{
+          "Coffee", "Beef", "CBF",
+          "ECG200", "FaceFour", "OliveOil",
+          "Gun_Point",
+          "DiatomSizeReduction",
+          "ECGFiveDays",
+          "TwoLeadECG",
+          "SonyAIBORobot SurfaceII",
+          "MoteStrain",
+          "ItalyPowerDemand",
+          "SonyAIBORobot Surface",
   };
 
   @Test
@@ -38,7 +38,7 @@ public class UCRClassificationTest {
     //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
 
     for (String s : datasets) {
-      File d = new File(dir.getAbsolutePath()+"/"+s);
+      File d = new File(dir.getAbsolutePath() + "/" + s);
       if (d.exists() && d.isDirectory()) {
         for (File train : d.listFiles()) {
           if (train.getName().toUpperCase().endsWith("TRAIN")) {
@@ -81,11 +81,10 @@ public class UCRClassificationTest {
             System.out.println(s + ";" + scoreShotgun.toString());
           }
         }
-      }
-      else {
+      } else {
         // not really an error. just a hint:
         System.out.println("Dataset could not be found: " + d.getAbsolutePath() + ". " +
-            "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
+                "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
       }
     }
 
