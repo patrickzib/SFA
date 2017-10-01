@@ -38,7 +38,7 @@ public abstract class Classifier {
   protected int[][] trainIndices;
   public static int folds = 10;
 
-  protected static int MAX_WINDOW_LENGTH = 250;
+  public static int MAX_WINDOW_LENGTH = 250;
 
   // Blocks for parallel execution
   public final static int BLOCKS = 8;

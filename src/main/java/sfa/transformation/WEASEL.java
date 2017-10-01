@@ -4,8 +4,10 @@ package sfa.transformation;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import sfa.classification.Classifier;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
+import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
 import com.carrotsearch.hppc.IntFloatHashMap;
@@ -142,10 +144,12 @@ public class WEASEL {
     //    final long mask = (usedBits << wordLength) - 1L;
     final long mask = (1L << (usedBits * wordLength)) - 1L;
 
-    // TODO rethink bit-shifting to make it collision free?!
-
-    //long max = 0;
-    //long prevMax = 0;
+    // get highest window length
+    int max = 0;
+    for (int w : windowLengths) {
+      max = Math.max(w,max);
+    }
+    int highestBit = Words.binlog(Integer.highestOneBit(Classifier.MAX_WINDOW_LENGTH))+1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -155,15 +159,13 @@ public class WEASEL {
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
         for (int offset = 0; offset < words[w][j].length; offset++) {
-          int word = this.dict.getWord((long) w << 32 | (words[w][j][offset] & mask));
+          int word = this.dict.getWord((words[w][j][offset] & mask) << highestBit | (long) w);
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
-          //max = Math.max(Long.highestOneBit((words[w][j][offset] & mask)), max);
 
           // add 2 grams
           if (offset - this.windowLengths[w] >= 0) {
-            long prevWord = this.dict.getWord((long) w << 32 | (words[w][j][offset - this.windowLengths[w]] & mask));
-            //prevMax = Math.max(prevWord, Long.highestOneBit(prevMax));
-            int newWord = this.dict.getWord(prevWord << 52 | word);
+            long prevWord = this.dict.getWord((words[w][j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w);
+            int newWord = this.dict.getWord((prevWord << 32 | word ) << highestBit);
             bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
           }
         }
