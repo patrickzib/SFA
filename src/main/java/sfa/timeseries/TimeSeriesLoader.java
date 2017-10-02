@@ -43,14 +43,14 @@ public class TimeSeriesLoader {
         String[] columns = line.split(" ");
         double[] data = new double[columns.length];
         int j = 0;
-        String label = null;
+        Double label = null;
 
         // first is the label
         int i = 0;
         for (; i < columns.length; i++) {
           String column = columns[i].trim();
           if (isNonEmptyColumn(column)) {
-            label = column;
+            label = Double.valueOf(column);
             break;
           }
         }

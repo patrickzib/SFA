@@ -2,12 +2,13 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
+import sfa.timeseries.TimeSeries;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import sfa.timeseries.TimeSeries;
 
 /**
  * SFA using the ANOVA F-statistic to determine the best Fourier coefficients
@@ -93,7 +94,7 @@ public class SFASupervised extends SFA {
   public static Indices<Double>[] calcBestCoefficients(
       TimeSeries[] samples,
       double[][] transformedSignal) {
-    HashMap<String, ArrayList<double[]>> classes = new HashMap<>();
+    HashMap<Double, ArrayList<double[]>> classes = new HashMap<>();
     for (int i = 0; i < samples.length; i++) {
       ArrayList<double[]> allTs = classes.get(samples[i].getLabel());
       if (allTs == null) {
@@ -132,13 +133,13 @@ public class SFASupervised extends SFA {
    */
   public static double[] getFoneway(
       int length,
-      HashMap<String, ArrayList<double[]>> classes,
+      Map<Double, ArrayList<double[]>> classes,
       double nSamples,
       double nClasses) {
     double[] ss_alldata = new double[length];
-    HashMap<String, double[]> sums_args = new HashMap<>();
+    HashMap<Double, double[]> sums_args = new HashMap<>();
 
-    for (Entry<String, ArrayList<double[]>> allTs : classes.entrySet()) {
+    for (Entry<Double, ArrayList<double[]>> allTs : classes.entrySet()) {
 
       double[] sums = new double[ss_alldata.length];
       sums_args.put(allTs.getKey(), sums);
@@ -152,8 +153,8 @@ public class SFASupervised extends SFA {
     }
 
     double[] square_of_sums_alldata = new double[ss_alldata.length];
-    HashMap<String, double[]> square_of_sums_args = new HashMap<>();
-    for (Entry<String, double[]> sums : sums_args.entrySet()) {
+    Map<Double, double[]> square_of_sums_args = new HashMap<>();
+    for (Entry<Double, double[]> sums : sums_args.entrySet()) {
       for (int i = 0; i < sums.getValue().length; i++) {
         square_of_sums_alldata[i] += sums.getValue()[i];
       }
@@ -177,7 +178,7 @@ public class SFASupervised extends SFA {
     double[] ssbn = new double[ss_alldata.length];    // sum of squares between
     double[] sswn = new double[ss_alldata.length];    // sum of squares within
 
-    for (Entry<String, double[]> sums : square_of_sums_args.entrySet()) {
+    for (Entry<Double, double[]> sums : square_of_sums_args.entrySet()) {
       double n_samples_per_class = classes.get(sums.getKey()).size();
       for (int i = 0; i < sums.getValue().length; i++) {
         ssbn[i] += sums.getValue()[i] / n_samples_per_class;

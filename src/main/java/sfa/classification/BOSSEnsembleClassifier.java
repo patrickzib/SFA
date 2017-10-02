@@ -92,7 +92,7 @@ public class BOSSEnsembleClassifier extends Classifier {
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
       Ensemble<BOSSModel> model = fitEnsemble(windows, normMean, trainSamples);
-      String[] labels = predict(model, trainSamples);
+      Double[] labels = predict(model, trainSamples);
       Predictions pred = evalLabels(trainSamples, labels);
 
       if (model == null || bestCorrectTraining < pred.correct.get()) {
@@ -109,13 +109,13 @@ public class BOSSEnsembleClassifier extends Classifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    String[] labels = predict(testSamples);
+    Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
 
 
   @Override
-  public String[] predict(final TimeSeries[] testSamples) {
+  public Double[] predict(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }
 
@@ -183,7 +183,7 @@ public class BOSSEnsembleClassifier extends Classifier {
       final BagOfPattern[] bagOfPatternsTestSamples,
       final BagOfPattern[] bagOfPatternsTrainSamples) {
 
-    Predictions p = new Predictions(new String[bagOfPatternsTestSamples.length], 0);
+    Predictions p = new Predictions(new Double[bagOfPatternsTestSamples.length], 0);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -233,9 +233,9 @@ public class BOSSEnsembleClassifier extends Classifier {
     return p;
   }
 
-  protected String[] predict(final Ensemble<BOSSModel> model, final TimeSeries[] testSamples) {
+  protected Double[] predict(final Ensemble<BOSSModel> model, final TimeSeries[] testSamples) {
     @SuppressWarnings("unchecked")
-    final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
+    final List<Pair<Double, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }

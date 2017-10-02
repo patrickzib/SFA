@@ -14,14 +14,14 @@ public class TimeSeries implements Serializable {
   protected double stddev = 1;
 
   protected boolean normed = false;
-  protected String label = null;
+  protected Double label = null;
   public TimeSeries(){}
 
   public TimeSeries(double[] data) {
     this.data = data;
   }
 
-  public TimeSeries(double[] data, String label) {
+  public TimeSeries(double[] data, Double label) {
     this(data);
     this.label = label;
   }
@@ -283,11 +283,11 @@ public class TimeSeries implements Serializable {
    *
    * @return
    */
-  public String getLabel() {
+  public Double getLabel() {
     return this.label;
   }
 
-  public void setLabel(String label) {
+  public void setLabel(Double label) {
     this.label = label;
   }
 }

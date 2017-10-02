@@ -95,7 +95,7 @@ public class ShotgunClassifier extends Classifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    String[] labels = predict(testSamples);
+    Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
 
@@ -117,7 +117,7 @@ public class ShotgunClassifier extends Classifier {
         for (int i = 0; i < windows.length; i++) {
           if (i % threads == id) {
             ShotgunModel model = new ShotgunModel(normMean, windows[i], trainSamples);
-            String[] labels = predict(model, trainSamples);
+            Double[] labels = predict(model, trainSamples);
             Predictions p = evalLabels(trainSamples, labels);
 
             model.score = new Score(model.name, -1, 1, p.correct.get(), trainSamples.length, windows[i]);
@@ -143,13 +143,13 @@ public class ShotgunClassifier extends Classifier {
   }
 
   @Override
-  public String[] predict(final TimeSeries[] testSamples) {
+  public Double[] predict(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }
 
-  protected String[] predict(ShotgunModel model, final TimeSeries[] testSamples) {
+  protected Double[] predict(ShotgunModel model, final TimeSeries[] testSamples) {
 
-    final String[] p = new String[testSamples.length];
+    final Double[] p = new Double[testSamples.length];
 
     // calculate means and stds for each sample
     final double[][] means = new double[model.samples.length][];

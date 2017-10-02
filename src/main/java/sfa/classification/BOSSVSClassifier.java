@@ -2,10 +2,7 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sfa.timeseries.TimeSeries;
@@ -52,7 +49,7 @@ public class BOSSVSClassifier extends Classifier {
     }
 
     // The inverse document frequencies learned by training
-    public ObjectObjectHashMap<String, E> idf;
+    public ObjectObjectHashMap<Double, E> idf;
 
     // the trained BOSS VS transformation
     public BOSSVS bossvs;
@@ -108,7 +105,7 @@ public class BOSSVSClassifier extends Classifier {
       // train the shotgun models for different window lengths
       Ensemble<BossVSModel<IntFloatHashMap>> model = fitEnsemble(
               windows.toArray(new Integer[]{}), normMean, trainSamples);
-      String[] labels = predict(model, trainSamples);
+      Double[] labels = predict(model, trainSamples);
       Predictions pred = evalLabels(trainSamples, labels);
 
       if (bestCorrectTraining <= pred.correct.get()) {
@@ -126,13 +123,13 @@ public class BOSSVSClassifier extends Classifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    String[] labels = predict(testSamples);
+    Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
 
 
   @Override
-  public String[] predict(final TimeSeries[] testSamples) {
+  public Double[] predict(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }
 
@@ -145,7 +142,7 @@ public class BOSSVSClassifier extends Classifier {
     final AtomicInteger correctTraining = new AtomicInteger(0);
 
     ParallelFor.withIndex(exec, threads, new ParallelFor.Each() {
-      HashSet<String> uniqueLabels = uniqueClassLabels(samples);
+      Set<Double> uniqueLabels = uniqueClassLabels(samples);
 
       @Override
       public void run(int id, AtomicInteger processed) {
@@ -163,7 +160,7 @@ public class BOSSVSClassifier extends Classifier {
                 int correct = 0;
                 for (int s = 0; s < folds; s++) {
                   // calculate the tf-idf for each class
-                  ObjectObjectHashMap<String, IntFloatHashMap> idf = bossvs.createTfIdf(bag,
+                  ObjectObjectHashMap<Double, IntFloatHashMap> idf = bossvs.createTfIdf(bag,
                           BOSSVSClassifier.this.trainIndices[s], this.uniqueLabels);
 
                   correct += predict(BOSSVSClassifier.this.testIndices[s], bag, idf).correct.get();
@@ -213,9 +210,9 @@ public class BOSSVSClassifier extends Classifier {
   protected Predictions predict(
           final int[] indices,
           final BagOfPattern[] bagOfPatternsTestSamples,
-          final ObjectObjectHashMap<String, IntFloatHashMap> matrixTrain) {
+          final ObjectObjectHashMap<Double, IntFloatHashMap> matrixTrain) {
 
-    Predictions p = new Predictions(new String[bagOfPatternsTestSamples.length], 0);
+    Predictions p = new Predictions(new Double[bagOfPatternsTestSamples.length], 0);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -226,9 +223,9 @@ public class BOSSVSClassifier extends Classifier {
             double bestDistance = 0.0;
 
             // for each class
-            for (ObjectObjectCursor<String, IntFloatHashMap> classEntry : matrixTrain) {
+            for (ObjectObjectCursor<Double, IntFloatHashMap> classEntry : matrixTrain) {
 
-              String label = classEntry.key;
+              Double label = classEntry.key;
               IntFloatHashMap stat = classEntry.value;
 
               // determine cosine similarity
@@ -263,9 +260,9 @@ public class BOSSVSClassifier extends Classifier {
     return p;
   }
 
-  protected String[] predict(final Ensemble<BossVSModel<IntFloatHashMap>> model, final TimeSeries[] testSamples) {
+  protected Double[] predict(final Ensemble<BossVSModel<IntFloatHashMap>> model, final TimeSeries[] testSamples) {
     @SuppressWarnings("unchecked")
-    final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
+    final List<Pair<Double, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }

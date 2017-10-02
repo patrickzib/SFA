@@ -61,7 +61,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
     for (boolean normMean : NORMALIZATION) {
       // train the shotgun models for different window lengths
       Ensemble<ShotgunModel> model = fitEnsemble(trainSamples, normMean, factor);
-      String[] labels = predict(model, trainSamples);
+      Double[] labels = predict(model, trainSamples);
       Predictions pred = evalLabels(trainSamples, labels);
 
       if (model == null || bestCorrectTraining <= pred.correct.get()) {
@@ -78,20 +78,20 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    String[] labels = predict(testSamples);
+    Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
 
   @Override
-  public String[] predict(final TimeSeries[] testSamples) {
+  public Double[] predict(final TimeSeries[] testSamples) {
     return predict(this.model, testSamples);
   }
 
-  protected String[] predict(Ensemble<ShotgunModel> model, final TimeSeries[] testSamples) {
+  protected Double[] predict(Ensemble<ShotgunModel> model, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
-    final List<Pair<String, Integer>>[] testLabels = new List[testSamples.length];
+    final List<Pair<Double, Integer>>[] testLabels = new List[testSamples.length];
     for (int i = 0; i < testLabels.length; i++) {
       testLabels[i] = new ArrayList<>();
     }
@@ -109,7 +109,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
             usedLengths.add(score.windowLength);
 
-            String[] labels = predict(score, testSamples);
+            Double[] labels = predict(score, testSamples);
 
             for (int a = 0; a < labels.length; a++) {
               testLabels[a].add(new Pair<>(labels[a], score.score.training));

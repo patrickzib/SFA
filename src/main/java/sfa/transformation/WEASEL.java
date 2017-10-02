@@ -76,9 +76,9 @@ public class WEASEL {
    */
   public static class BagOfBigrams {
     public IntIntHashMap bob;
-    public String label;
+    public Double label;
 
-    public BagOfBigrams(int size, String label) {
+    public BagOfBigrams(int size, Double label) {
       this.bob = new IntIntHashMap(size);
       this.label = label;
     }

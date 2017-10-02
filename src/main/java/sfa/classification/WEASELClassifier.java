@@ -126,11 +126,11 @@ public class WEASELClassifier extends Classifier {
 
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
-    String[] labels = predict(testSamples);
+    Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
 
-  public String[] predict(TimeSeries[] samples) {
+  public Double[] predict(TimeSeries[] samples) {
     final int[][][] wordsTest = model.weasel.createWords(samples);
     BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);
 
@@ -139,11 +139,10 @@ public class WEASELClassifier extends Classifier {
 
     FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
 
-    String[] labels = new String[samples.length];
+    Double[] labels = new Double[samples.length];
 
     for (int ind = 0; ind < features.length; ind++) {
-      double label = Linear.predict(model.linearModel, features[ind]);
-      labels[ind] = String.valueOf(label);
+      labels[ind] = Linear.predict(model.linearModel, features[ind]);
     }
 
     return labels;

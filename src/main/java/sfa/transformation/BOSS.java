@@ -2,14 +2,13 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.carrotsearch.hppc.IntIntHashMap;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.SFA.HistogramType;
 
-import com.carrotsearch.hppc.IntIntHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The Bag-of-SFA-Symbols boss as published in
@@ -62,11 +61,11 @@ public class BOSS {
    */
   public static class BagOfPattern {
     public IntIntHashMap bag;
-    public String label;
+    public Double label;
 
     public BagOfPattern(){}
 
-    public BagOfPattern(int size, String label) {
+    public BagOfPattern(int size, Double label) {
       this.bag = new IntIntHashMap(size);
       this.label = label;
     }

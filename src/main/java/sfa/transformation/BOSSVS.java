@@ -2,16 +2,12 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import java.util.HashSet;
-
 import com.carrotsearch.hppc.IntFloatHashMap;
 import com.carrotsearch.hppc.IntShortHashMap;
 import com.carrotsearch.hppc.ObjectObjectHashMap;
-import com.carrotsearch.hppc.cursors.FloatCursor;
-import com.carrotsearch.hppc.cursors.IntFloatCursor;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
-import com.carrotsearch.hppc.cursors.ObjectCursor;
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.carrotsearch.hppc.cursors.*;
+
+import java.util.Set;
 
 /**
  * The Bag-of-SFA-Symbols in Vector Space boss as published in
@@ -22,6 +18,7 @@ import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 public class BOSSVS extends BOSS {
 
   public BOSSVS(){}
+
   /**
    * Create a BOSS VS boss.
    *
@@ -35,9 +32,9 @@ public class BOSSVS extends BOSS {
     super(maxF, maxS, windowLength, normMean);
   }
 
-  public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
+  public ObjectObjectHashMap<Double, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
-      final HashSet<String> uniqueLabels) {
+      final Set<Double> uniqueLabels) {
     int[] sampleIndices = createIndices(bagOfPatterns.length);
     return createTfIdf(bagOfPatterns, sampleIndices, uniqueLabels);
   }
@@ -59,17 +56,17 @@ public class BOSSVS extends BOSS {
    * @param uniqueLabels  The unique class labels in the data set
    * @return              returns the tf-idf boss for the time series
    */
-  public ObjectObjectHashMap<String, IntFloatHashMap> createTfIdf(
+  public ObjectObjectHashMap<Double, IntFloatHashMap> createTfIdf(
       final BagOfPattern[] bagOfPatterns,
       final int[] sampleIndices,
-      final HashSet<String> uniqueLabels) {
+      final Set<Double> uniqueLabels) {
 
-    ObjectObjectHashMap<String, IntFloatHashMap> matrix = new ObjectObjectHashMap<>(
+    ObjectObjectHashMap<Double, IntFloatHashMap> matrix = new ObjectObjectHashMap<>(
         uniqueLabels.size());
     initMatrix(matrix, uniqueLabels, bagOfPatterns);
 
     for (int j : sampleIndices) {
-      String label = bagOfPatterns[j].label;
+      Double label = bagOfPatterns[j].label;
       IntFloatHashMap wordInBagFreq = matrix.get(label);
       for (IntIntCursor key : bagOfPatterns[j].bag) {
         wordInBagFreq.putOrAdd(key.key, key.value, key.value);
@@ -87,7 +84,7 @@ public class BOSSVS extends BOSS {
     }
 
     // calculate the tfIDF value for each class
-    for (ObjectObjectCursor<String, IntFloatHashMap> stat : matrix) {
+    for (ObjectObjectCursor<Double, IntFloatHashMap> stat : matrix) {
       IntFloatHashMap tfIDFs = stat.value;
       // calculate the tfIDF value for each word
       for (IntFloatCursor patternFrequency : tfIDFs) {
@@ -114,10 +111,10 @@ public class BOSSVS extends BOSS {
   }
 
   protected void initMatrix(
-      final ObjectObjectHashMap<String, IntFloatHashMap> matrix,
-      final HashSet<String> uniqueLabels,
+      final ObjectObjectHashMap<Double, IntFloatHashMap> matrix,
+      final Set<Double> uniqueLabels,
       final BagOfPattern[] bag) {
-    for (String label : uniqueLabels) {
+    for (Double label : uniqueLabels) {
       IntFloatHashMap stat = matrix.get(label);
       if (stat == null) {
         matrix.put(label, new IntFloatHashMap(bag[0].bag.size() * bag.length));
@@ -132,7 +129,7 @@ public class BOSSVS extends BOSS {
    *
    * @param classStatistics
    */
-  public void normalizeTfIdf(final ObjectObjectHashMap<String, IntFloatHashMap> classStatistics) {
+  public void normalizeTfIdf(final ObjectObjectHashMap<Double, IntFloatHashMap> classStatistics) {
     for (ObjectCursor<IntFloatHashMap> classStat : classStatistics.values()) {
       double squareSum = 0.0;
       for (FloatCursor entry : classStat.value.values()) {

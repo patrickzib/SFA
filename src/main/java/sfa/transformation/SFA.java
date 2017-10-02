@@ -2,23 +2,13 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
+import com.carrotsearch.hppc.ObjectIntHashMap;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import sfa.classification.Classifier.Words;
 import sfa.timeseries.TimeSeries;
 
-import com.carrotsearch.hppc.ObjectIntHashMap;
-import com.carrotsearch.hppc.cursors.IntCursor;
+import java.io.*;
+import java.util.*;
 
 /**
  * Symbolic Fourier Approximation as published in
@@ -56,11 +46,11 @@ public class SFA implements Serializable {
     private static final long serialVersionUID = 4392333771929261697L;
 
     public double value;
-    public String label;
+    public Double label;
 
     public ValueLabel(){}
 
-    public ValueLabel(double key, String label) {
+    public ValueLabel(double key, Double label) {
       this.value = key;
       this.label = label;
     }
@@ -442,7 +432,7 @@ public class SFA implements Serializable {
     }
   }
 
-  protected static double entropy(ObjectIntHashMap<String> frequency, double total) {
+  protected static double entropy(ObjectIntHashMap<Double> frequency, double total) {
     double entropy = 0;
     double log2 = 1.0 / Math.log(2.0);
     for (IntCursor element : frequency.values()) {
@@ -455,7 +445,7 @@ public class SFA implements Serializable {
   }
 
   protected static double calculateInformationGain(
-      ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
+      ObjectIntHashMap<Double> cIn, ObjectIntHashMap<Double> cOut,
       double class_entropy,
       double total_c_in,
       double total) {
@@ -478,19 +468,19 @@ public class SFA implements Serializable {
 
     // class entropy
     int total = end - start;
-    ObjectIntHashMap<String> cIn = new ObjectIntHashMap<>();
-    ObjectIntHashMap<String> cOut = new ObjectIntHashMap<>();
+    ObjectIntHashMap<Double> cIn = new ObjectIntHashMap<>();
+    ObjectIntHashMap<Double> cOut = new ObjectIntHashMap<>();
     for (int pos = start; pos < end; pos++) {
       cOut.putOrAdd(element.get(pos).label, 1, 1);
     }
     double class_entropy = entropy(cOut, total);
 
     int i = start;
-    String lastLabel = element.get(i).label;
+    Double lastLabel = element.get(i).label;
     i += moveElement(element, cIn, cOut, start);
 
     for (int split = start + 1; split < end - 1; split++) {
-      String label = element.get(i).label;
+      Double label = element.get(i).label;
       i += moveElement(element, cIn, cOut, split);
 
       // only inspect changes of the label
@@ -527,7 +517,7 @@ public class SFA implements Serializable {
 
   protected int moveElement(
       List<ValueLabel> element,
-      ObjectIntHashMap<String> cIn, ObjectIntHashMap<String> cOut,
+      ObjectIntHashMap<Double> cIn, ObjectIntHashMap<Double> cOut,
       int pos) {
     cIn.putOrAdd(element.get(pos).label, 1, 1);
     cOut.putOrAdd(element.get(pos).label, -1, -1);

@@ -89,7 +89,7 @@ public abstract class Classifier {
    * @param testSamples The passed set
    * @return The predictions for each passed sample.
    */
-  public abstract String[] predict(final TimeSeries[] testSamples);
+  public abstract Double[] predict(final TimeSeries[] testSamples);
 
 
   /**
@@ -103,7 +103,7 @@ public abstract class Classifier {
           final TimeSeries[] trainSamples, final TimeSeries[] testSamples);
 
 
-  protected Predictions evalLabels(TimeSeries[] testSamples, String[] labels) {
+  protected Predictions evalLabels(TimeSeries[] testSamples, Double[] labels) {
     int correct = 0;
     for (int ind = 0; ind < testSamples.length; ind++) {
       correct += compareLabels(labels[ind],(testSamples[ind].getLabel()))? 1 : 0;
@@ -273,10 +273,10 @@ public abstract class Classifier {
   }
 
   public static class Predictions {
-    public String[] labels;
+    public Double[] labels;
     public AtomicInteger correct;
 
-    public Predictions(String[] labels, int bestCorrect) {
+    public Predictions(Double[] labels, int bestCorrect) {
       this.labels = labels;
       this.correct = new AtomicInteger(bestCorrect);
     }
@@ -340,10 +340,9 @@ public abstract class Classifier {
   }
 
 
-  protected boolean compareLabels(String label1, String label2) {
+  protected boolean compareLabels(Double label1, Double label2) {
     // compare 1.0000 to 1.0 in String returns false, hence the conversion to double
-    return label1 != null && label2 != null
-            && Double.valueOf(label1).equals(Double.valueOf(label2));
+    return label1 != null && label2 != null && label1.equals(label2);
   }
 
   protected <E extends Model> Ensemble<E> filterByFactor(
@@ -365,22 +364,22 @@ public abstract class Classifier {
     return new Ensemble<>(model);
   }
 
-  protected String[] score(
+  protected Double[] score(
           final String name,
           final TimeSeries[] samples,
-          final List<Pair<String, Integer>>[] labels,
+          final List<Pair<Double, Integer>>[] labels,
           final List<Integer> currentWindowLengths) {
 
-    String[] predictedLabels = new String[samples.length];
+    Double[] predictedLabels = new Double[samples.length];
     //long[] maxCounts = new long[samples.length];
 
     int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
-      HashMap<String, Long> counts = new HashMap<>();
+      Map<Double, Long> counts = new HashMap<>();
 
-      for (Pair<String, Integer> k : labels[i]) {
+      for (Pair<Double, Integer> k : labels[i]) {
         if (k != null && k.key != null) {
-          String label = k.key;
+          Double label = k.key;
           Long count = counts.get(label);
           long increment = ENSEMBLE_WEIGHTS ? k.value : 1;
           count = (count == null) ? increment : count + increment;
@@ -389,7 +388,7 @@ public abstract class Classifier {
       }
 
       long maxCount = -1;
-      for (Entry<String, Long> e : counts.entrySet()) {
+      for (Entry<Double, Long> e : counts.entrySet()) {
         if (predictedLabels[i] == null
                 || maxCount < e.getValue()
                 || maxCount == e.getValue()  // break ties
@@ -430,8 +429,8 @@ public abstract class Classifier {
     return max;
   }
 
-  protected static HashSet<String> uniqueClassLabels(TimeSeries[] ts) {
-    HashSet<String> labels = new HashSet<>();
+  protected static Set<Double> uniqueClassLabels(TimeSeries[] ts) {
+    Set<Double> labels = new HashSet<>();
     for (TimeSeries t : ts) {
       labels.add(t.getLabel());
     }
@@ -468,10 +467,10 @@ public abstract class Classifier {
           TimeSeries[] samples,
           int splits) {
 
-    HashMap<String, IntArrayDeque> elements = new HashMap<>();
+    Map<Double, IntArrayDeque> elements = new HashMap<>();
 
     for (int i = 0; i < samples.length; i++) {
-      String label = samples[i].getLabel();
+      Double label = samples[i].getLabel();
       IntArrayDeque sameLabel = elements.get(label);
       if (sameLabel == null) {
         sameLabel = new IntArrayDeque();
@@ -487,7 +486,7 @@ public abstract class Classifier {
     }
 
     // all but one
-    for (Entry<String, IntArrayDeque> data : elements.entrySet()) {
+    for (Entry<Double, IntArrayDeque> data : elements.entrySet()) {
       IntArrayDeque d = data.getValue();
       separate:
       while (true) {
