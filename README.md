@@ -159,7 +159,7 @@ Finally, predict test labels:
 TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(...);
 
 // predict labels
-String[] labels = boss.predict(testSamples);
+Double[] labels = boss.predict(testSamples);
 
 // predict and score
 Predicions predictions = boss.score(testSamples);
@@ -205,7 +205,7 @@ Finally, predict test labels:
 TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(...);
 
 // predict labels
-String[] labels = bossvs.predict(testSamples);
+Double[] labels = bossvs.predict(testSamples);
 
 // predict and score
 Predicions predictions = bossvs.score(testSamples);
@@ -245,7 +245,7 @@ Finally, predict test labels:
 TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(...);
 
 // predict labels
-String[] labels = weasel.predict(testSamples);
+Double[] labels = weasel.predict(testSamples);
 
 // predict and score
 Predicions predictions = weasel.score(testSamples);
