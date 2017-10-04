@@ -142,7 +142,8 @@ public class WEASELClassifier extends Classifier {
     Double[] labels = new Double[samples.length];
 
     for (int ind = 0; ind < features.length; ind++) {
-      labels[ind] = Linear.predict(model.linearModel, features[ind]);
+      double label = Linear.predict(model.linearModel, features[ind]);
+      labels[ind] = label;
     }
 
     return labels;

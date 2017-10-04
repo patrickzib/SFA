@@ -19,6 +19,11 @@ public class SFASupervised extends SFA {
   private static final long serialVersionUID = -6435016083374045799L;
   public int[] bestValues;
 
+  public SFASupervised(HistogramType histType) {
+    super(histType);
+    this.lowerBounding = false;
+  }
+
   public SFASupervised() {
     super(HistogramType.INFORMATION_GAIN);
     this.lowerBounding = false;
@@ -64,7 +69,6 @@ public class SFASupervised extends SFA {
    */
   @Override
   public short[][] fitTransform(TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
-    // TODO maxWordLength = samples[0].getLength();???
     int length = samples[0].getLength();
     double[][] transformedSignal = fitTransformDouble(samples, length, symbols, normMean);
 

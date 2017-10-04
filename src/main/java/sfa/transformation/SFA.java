@@ -315,7 +315,7 @@ public class SFA implements Serializable {
     if (!this.initialized) {
       init(wordLength, symbols);
 
-      if (this.transformation == null) { // TODO!!
+      if (this.transformation == null) {
         this.transformation = new MFT(samples[0].getLength(), normMean, this.lowerBounding);
       }
     }
