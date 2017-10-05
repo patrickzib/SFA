@@ -295,7 +295,7 @@ public class WEASEL {
     public void remap(final BagOfBigrams[] bagOfPatterns) {
       for (int j = 0; j < bagOfPatterns.length; j++) {
         IntIntHashMap oldMap = bagOfPatterns[j].bob;
-        bagOfPatterns[j].bob = new IntIntHashMap(oldMap.size());
+        bagOfPatterns[j].bob = new IntIntHashMap();
         for (IntIntCursor word : oldMap) {
           if (word.value > 0) {
             bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
