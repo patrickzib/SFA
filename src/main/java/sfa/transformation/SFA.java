@@ -20,7 +20,7 @@ public class SFA implements Serializable {
   private static final long serialVersionUID = -3903361341617350743L;
 
   // distribution of Fourier values
-  public ArrayList<ValueLabel>[] orderLine;
+  public transient ArrayList<ValueLabel>[] orderLine;
 
   public HistogramType histogramType = HistogramType.EQUI_DEPTH;
 
