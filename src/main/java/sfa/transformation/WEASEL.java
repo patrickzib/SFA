@@ -117,7 +117,8 @@ public class WEASEL {
     // SFA quantization
     if (this.signature[index] == null) {
       this.signature[index] = new SFASupervised();
-      this.signature[index].fitWindowing(samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
+      this.signature[index].fitWindowing(
+          samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
 
     // create words

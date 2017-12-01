@@ -45,6 +45,7 @@ public class MUSEClassifier extends Classifier {
 
   public MUSEClassifier() {
     super();
+    TimeSeries.NORM = false;
     Linear.resetRandom();
   }
 
@@ -145,7 +146,6 @@ public class MUSEClassifier extends Classifier {
   }
 
   public Score fit(final MultiVariateTimeSeries[] trainSamples) {
-
     // train the shotgun models for different window lengths
     this.model = fitMuse(trainSamples);
 
@@ -205,9 +205,9 @@ public class MUSEClassifier extends Classifier {
               bestNorm = mean;
               bestHistType = histType;
             }
-            if (correct == samples.length) {
-              break optimize;
-            }
+//            if (correct == samples.length) {
+//              break optimize;
+//            }
           }
         }
       }
@@ -308,90 +308,4 @@ public class MUSEClassifier extends Classifier {
     return featuresTrain;
   }
 
-  protected static MultiVariateTimeSeries[] getDerivatives(MultiVariateTimeSeries[] mtsSamples) {
-    for (MultiVariateTimeSeries mts : mtsSamples) {
-      TimeSeries[] deltas = new TimeSeries[2 * mts.timeSeries.length];
-      TimeSeries[] samples = mts.timeSeries;
-      for (int a = 0; a < samples.length; a++) {
-        TimeSeries s = samples[a];
-        double[] d = new double[s.getLength() - 1];
-        for (int i = 1; i < s.getLength(); i++) {
-          d[i - 1] = s.getData()[i] - s.getData()[i - 1];
-        }
-        deltas[2 * a] = samples[a];
-        deltas[2 * a + 1] = new TimeSeries(d, mts.getLabel());
-      }
-      mts.timeSeries = deltas;
-    }
-    return mtsSamples;
-  }
-
-  public static String[] datasets = new String[]{
-      "LP1",
-      "LP2",
-      "LP3",
-      "LP4",
-      "LP5",
-      "PenDigits",
-      "ShapesRandom",
-      "DigitShapeRandom",
-      "CMUsubject16",
-      "ECG",
-      "JapaneseVowels",
-      "KickvsPunch",
-      "Libras",
-      "UWave",
-      "Wafer",
-      "WalkvsRun",
-      "CharacterTrajectories",
-      "ArabicDigits",
-      "AUSLAN",
-      "NetFlow",
-  };
-
-  public static void main(String argv[]) throws IOException {
-    try {
-      // the relative path to the datasets
-      ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-
-      File dir = new File(classLoader.getResource("datasets/multivariate/").getFile());
-
-      for (String s : datasets) {
-        File d = new File(dir.getAbsolutePath() + "/" + s);
-        if (d.exists() && d.isDirectory()) {
-          for (File train : d.listFiles()) {
-            if (train.getName().toUpperCase().endsWith("TRAIN3")) {
-              File test = new File(train.getAbsolutePath().replaceFirst("TRAIN3", "TEST3"));
-
-              if (!test.exists()) {
-                System.err.println("File " + test.getName() + " does not exist");
-                test = null;
-              }
-
-              Classifier.DEBUG = false;
-
-              MultiVariateTimeSeries[] trainSamples = TimeSeriesLoader.loadMultivariateDatset(train);
-              MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test);
-
-              boolean useDeltas = true;
-              if (useDeltas) {
-                trainSamples = getDerivatives(trainSamples);
-                testSamples = getDerivatives(testSamples);
-              }
-
-              MUSEClassifier weasel = new MUSEClassifier();
-              MUSEClassifier.lowerBounding = true;
-              MUSEClassifier.folds = 10;
-              MUSEClassifier.NORMALIZATION = new boolean[]{true, false};
-
-              MUSEClassifier.Score weaselScore = weasel.eval(trainSamples, testSamples);
-              System.out.println(s + ";" + weaselScore.toString());
-            }
-          }
-        }
-      }
-    } finally {
-      ParallelFor.shutdown();
-    }
-  }
 }

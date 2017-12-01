@@ -15,6 +15,9 @@ public class TimeSeries implements Serializable {
 
   protected boolean normed = false;
   protected Double label = null;
+
+  public static boolean NORM = true;
+
   public TimeSeries(){}
 
   public TimeSeries(double[] data) {
@@ -54,7 +57,7 @@ public class TimeSeries implements Serializable {
     this.mean = calculateMean();
     this.stddev = calculateStddev();
 
-    if (!isNormed()) {
+    if (NORM && !isNormed()) {
       norm(norm, this.mean, this.stddev);
     }
   }
@@ -68,7 +71,7 @@ public class TimeSeries implements Serializable {
     this.mean = mean;
     this.stddev = stddev;
 
-    if (!isNormed()) {
+    if (NORM && !isNormed()) {
       double inverseStddev = (this.stddev != 0) ? 1.0 / this.stddev : 1.0;
 
       if (normMean) {
@@ -271,7 +274,7 @@ public class TimeSeries implements Serializable {
       double subsequenceData[] = new double[windowSize];
       System.arraycopy(this.data, i * windowSize, subsequenceData, 0, windowSize);
       subsequences[i] = new TimeSeries(subsequenceData);
-      subsequences[i].norm(normMean); // FIXME disable for MUSE
+      subsequences[i].norm(normMean);
       subsequences[i].setLabel(getLabel());
     }
 

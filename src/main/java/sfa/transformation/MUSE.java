@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MUSE {
 
-  public int maxS;
+  public int alphabetSize;
   public int maxF;
   public SFA.HistogramType histogramType = SFA.HistogramType.EQUI_FREQUENCY;
 
@@ -46,7 +46,7 @@ public class MUSE {
       boolean normMean,
       boolean lowerBounding) {
     this.maxF = maxF + maxF % 2; // even number
-    this.maxS = maxS;
+    this.alphabetSize = maxS;
     this.windowLengths = windowLengths;
     this.normMean = normMean;
     this.lowerBounding = lowerBounding;
@@ -101,9 +101,8 @@ public class MUSE {
     // SFA quantization
     if (this.signature[index] == null) {
       this.signature[index] = new SFA(this.histogramType);
-
       this.signature[index].fitWindowing(
-          mtsSamples, this.windowLengths[index], this.maxS, this.maxF, this.normMean, this.lowerBounding);
+          mtsSamples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
 
     // create words
@@ -133,7 +132,7 @@ public class MUSE {
       final int wordLength) {
     List<BagOfBigrams> bagOfPatterns = new ArrayList<BagOfBigrams>(2 * samples.length);
 
-    final byte usedBits = (byte) Classifier.Words.binlog(this.maxS);
+    final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
 //    final long mask = (usedBits << wordLength) - 1l;
     final long mask = (1l << (usedBits * wordLength)) - 1l;
 
@@ -146,7 +145,7 @@ public class MUSE {
       for (int w = 0; w < this.windowLengths.length; w++) {
         if (this.windowLengths[w] >= wordLength) {
           for (int d = 0; d < dimensionality; d++) {
-            String dLabel = "" + d;
+            String dLabel = String.valueOf(d);
             for (int offset = 0; offset < words[w][j + d].length; offset++) {
               String word = w + "_" + dLabel + "_" + ((words[w][j + d][offset] & mask));
               int dict = this.dict.getWord(word);

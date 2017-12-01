@@ -81,7 +81,9 @@ public class TimeSeriesLoader {
     return samples.toArray(new TimeSeries[]{});
   }
 
-  public static MultiVariateTimeSeries[] loadMultivariateDatset(File dataset) throws IOException {
+  public static MultiVariateTimeSeries[] loadMultivariateDatset(
+      File dataset, boolean derivatives) throws IOException {
+
     List<MultiVariateTimeSeries> samples = new ArrayList<>();
     List<Double>[] mts = null;
     int lastId = -1;
@@ -131,7 +133,26 @@ public class TimeSeriesLoader {
         + " samples " + samples.size()
         + " dimensions " + samples.get(0).getDimensions());
 
-    return samples.toArray(new MultiVariateTimeSeries[]{});
+    MultiVariateTimeSeries[] m = samples.toArray(new MultiVariateTimeSeries[]{});
+    return (derivatives)? getDerivatives(m) : m;
+  }
+
+  protected static MultiVariateTimeSeries[] getDerivatives(MultiVariateTimeSeries[] mtsSamples) {
+    for (MultiVariateTimeSeries mts : mtsSamples) {
+      TimeSeries[] deltas = new TimeSeries[2 * mts.timeSeries.length];
+      TimeSeries[] samples = mts.timeSeries;
+      for (int a = 0; a < samples.length; a++) {
+        TimeSeries s = samples[a];
+        double[] d = new double[s.getLength() - 1];
+        for (int i = 1; i < s.getLength(); i++) {
+          d[i - 1] = s.getData()[i] - s.getData()[i - 1];
+        }
+        deltas[2 * a] = samples[a];
+        deltas[2 * a + 1] = new TimeSeries(d, mts.getLabel());
+      }
+      mts.timeSeries = deltas;
+    }
+    return mtsSamples;
   }
 
   protected static void addMTS(List<MultiVariateTimeSeries> samples, List<Double>[] mts, double label) {

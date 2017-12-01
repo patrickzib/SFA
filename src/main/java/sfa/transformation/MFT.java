@@ -180,7 +180,7 @@ public class MFT implements Serializable {
    * Apply normalization to the Fourier coefficients to allow lower bounding in Euclidean space
    */
   private double[] normalizeFT(double[] copy, double std) {
-    double normalisingFactor = (std > 0 ? 1.0 / std : 1.0) * this.norm;
+    double normalisingFactor = (TimeSeries.NORM && std > 0 ? 1.0 / std : 1.0) * this.norm;
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
       copy[i] *= sign * normalisingFactor;
