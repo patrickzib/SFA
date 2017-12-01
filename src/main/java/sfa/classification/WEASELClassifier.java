@@ -66,7 +66,7 @@ public class WEASELClassifier extends Classifier {
         int training,
         int trainSize
     ) {
-      super("Weasel", testing, testSize, training, trainSize, normed, -1);
+      super("WEASEL", testing, testSize, training, trainSize, normed, -1);
       this.features = features;
       this.weasel = model;
       this.linearModel = linearModel;
@@ -95,17 +95,17 @@ public class WEASELClassifier extends Classifier {
       outputResult((int) score.training, startTime, trainSamples.length);
     }
 
-    // determine label based on the majority of predictions
+    // determine score
     int correctTesting = score(testSamples).correct.get();
 
     if (DEBUG) {
-      System.out.println("Weasel Testing:\t");
+      System.out.println("WEASEL Testing:\t");
       outputResult(correctTesting, startTime, testSamples.length);
       System.out.println("");
     }
 
     return new Score(
-        "Weasel",
+        "WEASEL",
         correctTesting, testSamples.length,
         score.training, trainSamples.length,
         score.windowLength
@@ -250,91 +250,6 @@ public class WEASELClassifier extends Classifier {
       featuresTrain[j] = featuresArray;
     }
     return featuresTrain;
-  }
-
-
-  @SuppressWarnings("static-access")
-  protected static int trainLibLinear(
-      final Problem prob, final SolverType solverType, double c,
-      int iter, double p, int nr_fold) {
-    final Parameter param = new Parameter(solverType, c, iter, p);
-
-    ThreadLocal<Random> myRandom = new ThreadLocal<>();
-    myRandom.set(new Random(1));
-    Random random = myRandom.get();
-
-    int i;
-    final int l = prob.l;
-    final int[] perm = new int[l];
-
-    if (nr_fold > l) {
-      nr_fold = l;
-    }
-    final int[] fold_start = new int[nr_fold + 1];
-
-    for (i = 0; i < l; i++) {
-      perm[i] = i;
-    }
-    for (i = 0; i < l; i++) {
-      int j = i + random.nextInt(l - i);
-      swap(perm, i, j);
-    }
-    for (i = 0; i <= nr_fold; i++) {
-      fold_start[i] = i * l / nr_fold;
-    }
-
-    final AtomicInteger correct = new AtomicInteger(0);
-
-    final int fold = nr_fold;
-    ParallelFor.withIndex(threads, new ParallelFor.Each() {
-      @Override
-      public void run(int id, AtomicInteger processed) {
-        ThreadLocal<Linear> myLinear = new ThreadLocal<>();
-        myLinear.set(new Linear());
-        myLinear.get().disableDebugOutput();
-        myLinear.get().resetRandom(); // reset random component of liblinear for reproducibility
-
-        for (int i = 0; i < fold; i++) {
-          if (i % threads == id) {
-
-            int begin = fold_start[i];
-            int end = fold_start[i + 1];
-            int j, k;
-            Problem subprob = new Problem();
-
-            subprob.bias = prob.bias;
-            subprob.n = prob.n;
-            subprob.l = l - (end - begin);
-            subprob.x = new Feature[subprob.l][];
-            subprob.y = new double[subprob.l];
-
-            k = 0;
-            for (j = 0; j < begin; j++) {
-              subprob.x[k] = prob.x[perm[j]];
-              subprob.y[k] = prob.y[perm[j]];
-              ++k;
-            }
-            for (j = end; j < l; j++) {
-              subprob.x[k] = prob.x[perm[j]];
-              subprob.y[k] = prob.y[perm[j]];
-              ++k;
-            }
-
-            de.bwaldvogel.liblinear.Model submodel = myLinear.get().train(subprob, param);
-            for (j = begin; j < end; j++) {
-              correct.addAndGet(prob.y[perm[j]] == myLinear.get().predict(submodel, prob.x[perm[j]]) ? 1 : 0);
-            }
-          }
-        }
-      }
-    });
-    return correct.get();
-  }
-
-  private static void swap(int[] array, int idxA, int idxB) {
-    int temp = array[idxA];
-    array[idxA] = array[idxB];
-    array[idxB] = temp;
   }
 
   protected static double[] getLabels(final BagOfBigrams[] bagOfPatternsTestSamples) {

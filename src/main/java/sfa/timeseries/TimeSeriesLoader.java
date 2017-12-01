@@ -81,6 +81,75 @@ public class TimeSeriesLoader {
     return samples.toArray(new TimeSeries[]{});
   }
 
+  public static MultiVariateTimeSeries[] loadMultivariateDatset(File dataset) throws IOException {
+    List<MultiVariateTimeSeries> samples = new ArrayList<>();
+    List<Double>[] mts = null;
+    int lastId = -1;
+
+    try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {
+      String line = null;
+      double label = -1;
+      while ((line = br.readLine()) != null) {
+        String[] columns = line.split(" ");
+
+        // id
+        int id = Integer.valueOf(columns[0].trim());
+        if (id != lastId) {
+          addMTS(samples, mts, label);
+
+          // initialize
+          lastId = id;
+          mts = new ArrayList[columns.length - 3];
+          for (int i = 0; i < mts.length; i++) {
+            mts[i] = new ArrayList<>();
+          }
+          // label
+          label = Double.valueOf(columns[2].trim());
+        }
+
+        // timeStamp
+        /* int timeStamp = Integer.valueOf(columns[1].trim()); */
+
+        // the data
+        for (int dim = 0; dim < columns.length - 3; dim++) { // all dimensions
+          String column = columns[dim + 3].trim();
+          try {
+            double d = Double.parseDouble(column);
+            mts[dim].add(d);
+          } catch (NumberFormatException nfe) {
+            nfe.printStackTrace();
+          }
+        }
+      }
+
+      addMTS(samples, mts, label);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    System.out.println("Done reading from " + dataset
+        + " samples " + samples.size()
+        + " dimensions " + samples.get(0).getDimensions());
+
+    return samples.toArray(new MultiVariateTimeSeries[]{});
+  }
+
+  protected static void addMTS(List<MultiVariateTimeSeries> samples, List<Double>[] mts, double label) {
+    if (mts != null && mts[0].size() > 0) {
+      TimeSeries[] dimensions = new TimeSeries[mts.length];
+      for (int i = 0; i < dimensions.length; i++) {
+        double[] rawdata = new double[mts[i].size()];
+        int j = 0;
+        for (double d : mts[i]) {
+          rawdata[j++] = d;
+        }
+        dimensions[i] = new TimeSeries(rawdata, label);
+      }
+
+      MultiVariateTimeSeries ts = new MultiVariateTimeSeries(dimensions, label);
+      samples.add(ts);
+    }
+  }
 
   public static TimeSeries readSampleSubsequence(File dataset) throws IOException {
     try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {

@@ -5,6 +5,7 @@ package sfa.transformation;
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import sfa.classification.Classifier.Words;
+import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 
 import java.io.*;
@@ -221,6 +222,29 @@ public class SFA implements Serializable {
         }
       });
     }
+  }
+
+  /**
+   * Extracts sliding windows from the multivariate time series and
+   * trains SFA based on the sliding windows.
+   * At the end of this call, the quantization bins are set.
+   *
+   * @param mts
+   * @param windowLength The queryLength of each sliding window
+   * @param wordLength   the SFA word-queryLength
+   * @param symbols      the SFA alphabet size
+   * @param normMean     if set, the mean is subtracted from each sliding window
+   */
+  public void fitWindowing(MultiVariateTimeSeries[] mts, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
+    ArrayList<TimeSeries> sa = new ArrayList<TimeSeries>(
+        mts.length * mts[0].getDimensions() * mts[0].timeSeries[0].getLength() / windowLength);
+
+    for (MultiVariateTimeSeries timeSeries : mts) {
+      for (TimeSeries t : timeSeries.timeSeries) {
+        sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
+      }
+    }
+    fitWindowing(sa.toArray(new TimeSeries[]{}), windowLength, wordLength, symbols, normMean, lowerBounding);
   }
 
   /**

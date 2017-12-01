@@ -10,6 +10,8 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import de.bwaldvogel.liblinear.*;
+import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.MFT;
 
@@ -104,6 +106,14 @@ public abstract class Classifier {
 
 
   protected Predictions evalLabels(TimeSeries[] testSamples, Double[] labels) {
+    int correct = 0;
+    for (int ind = 0; ind < testSamples.length; ind++) {
+      correct += compareLabels(labels[ind],(testSamples[ind].getLabel()))? 1 : 0;
+    }
+    return new Predictions(labels, correct);
+  }
+
+  protected Predictions evalLabels(MultiVariateTimeSeries[] testSamples, Double[] labels) {
     int correct = 0;
     for (int ind = 0; ind < testSamples.length; ind++) {
       correct += compareLabels(labels[ind],(testSamples[ind].getLabel()))? 1 : 0;
@@ -296,6 +306,90 @@ public abstract class Classifier {
     return Math.round(1000 * (testSize - correct) / (double) (testSize)) / 1000.0;
   }
 
+
+  @SuppressWarnings("static-access")
+  protected static int trainLibLinear(
+      final Problem prob, final SolverType solverType, double c,
+      int iter, double p, int nr_fold) {
+    final Parameter param = new Parameter(solverType, c, iter, p);
+
+    ThreadLocal<Random> myRandom = new ThreadLocal<>();
+    myRandom.set(new Random(1));
+    Random random = myRandom.get();
+
+    int i;
+    final int l = prob.l;
+    final int[] perm = new int[l];
+
+    if (nr_fold > l) {
+      nr_fold = l;
+    }
+    final int[] fold_start = new int[nr_fold + 1];
+
+    for (i = 0; i < l; i++) {
+      perm[i] = i;
+    }
+    for (i = 0; i < l; i++) {
+      int j = i + random.nextInt(l - i);
+      swap(perm, i, j);
+    }
+    for (i = 0; i <= nr_fold; i++) {
+      fold_start[i] = i * l / nr_fold;
+    }
+
+    final AtomicInteger correct = new AtomicInteger(0);
+
+    final int fold = nr_fold;
+    ParallelFor.withIndex(threads, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        ThreadLocal<Linear> myLinear = new ThreadLocal<>();
+        myLinear.set(new Linear());
+        myLinear.get().disableDebugOutput();
+        myLinear.get().resetRandom(); // reset random component of liblinear for reproducibility
+
+        for (int i = 0; i < fold; i++) {
+          if (i % threads == id) {
+
+            int begin = fold_start[i];
+            int end = fold_start[i + 1];
+            int j, k;
+            Problem subprob = new Problem();
+
+            subprob.bias = prob.bias;
+            subprob.n = prob.n;
+            subprob.l = l - (end - begin);
+            subprob.x = new Feature[subprob.l][];
+            subprob.y = new double[subprob.l];
+
+            k = 0;
+            for (j = 0; j < begin; j++) {
+              subprob.x[k] = prob.x[perm[j]];
+              subprob.y[k] = prob.y[perm[j]];
+              ++k;
+            }
+            for (j = end; j < l; j++) {
+              subprob.x[k] = prob.x[perm[j]];
+              subprob.y[k] = prob.y[perm[j]];
+              ++k;
+            }
+
+            de.bwaldvogel.liblinear.Model submodel = myLinear.get().train(subprob, param);
+            for (j = begin; j < end; j++) {
+              correct.addAndGet(prob.y[perm[j]] == myLinear.get().predict(submodel, prob.x[perm[j]]) ? 1 : 0);
+            }
+          }
+        }
+      }
+    });
+    return correct.get();
+  }
+
+  private static void swap(int[] array, int idxA, int idxB) {
+    int temp = array[idxA];
+    array[idxA] = array[idxB];
+    array[idxB] = temp;
+  }
 
 //  public static Map<String, LinkedList<Integer>> splitByLabel(TimeSeries[] samples) {
 //    Map<String, LinkedList<Integer>> elements = new HashMap<>();
