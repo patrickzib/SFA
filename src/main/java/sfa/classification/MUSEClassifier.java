@@ -39,7 +39,7 @@ public class MUSEClassifier extends Classifier {
   // the trained weasel
   MUSEModel model;
 
-  public static boolean lowerBounding = false;
+  public static boolean lowerBounding = true;
 
   public static final int MAX_WINDOW_SIZE = 450;
 
@@ -325,25 +325,6 @@ public class MUSEClassifier extends Classifier {
     }
     return mtsSamples;
   }
-
-//  protected static void extend(TimeSeries[] samples) {
-//    for (int a = 0; a < samples.length; a++) {
-//      TimeSeries s = samples[a];
-//      int ext = 10;
-//      double[] d = new double[s.getSize() + 2 * ext];
-//      for (int i = 0; i < ext; i++) {
-//        d[i] = s.getData(0);
-//      }
-//      for (int i = 0; i < s.getSize(); i++) {
-//        d[i + ext] = s.getData(i);
-//      }
-//      for (int i = 0; i < ext; i++) {
-//        d[i + ext + s.getSize()] = s.getData(s.getSize() - 1);
-//      }
-//      samples[a] = new TimeSeries(d, d.length, s.getLabel());
-//    }
-//  }
-
 
   public static String[] datasets = new String[]{
       "LP1",

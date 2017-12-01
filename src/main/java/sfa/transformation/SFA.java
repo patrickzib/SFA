@@ -377,7 +377,7 @@ public class SFA implements Serializable {
 
     for (int i = 0; i < samples.length; i++) {
       // z-normalization
-      samples[i].norm();
+      samples[i].norm(); // FIXME Disable normalization for MUSE
 
       // approximation
       transformedSamples[i] = this.transformation.transform(samples[i], l);

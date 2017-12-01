@@ -271,7 +271,7 @@ public class TimeSeries implements Serializable {
       double subsequenceData[] = new double[windowSize];
       System.arraycopy(this.data, i * windowSize, subsequenceData, 0, windowSize);
       subsequences[i] = new TimeSeries(subsequenceData);
-      subsequences[i].norm(normMean);
+      subsequences[i].norm(normMean); // FIXME disable for MUSE
       subsequences[i].setLabel(getLabel());
     }
 
