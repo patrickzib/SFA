@@ -15,6 +15,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * The WEASEL+MUSE-Model as published in
+ * <p>
+ * Schäfer, P., Leser, U.: Multivariate Time Series Classification
+ * with WEASEL+MUSE. arXiv 2017
+ * http://arxiv.org/abs/1711.11343
+ */
 public class MUSE {
 
   public int alphabetSize;

@@ -19,7 +19,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
- * TODO
+ * The WEASEL+MUSE classifier as published in
+ * <p>
+ * Schäfer, P., Leser, U.: Multivariate Time Series Classification
+ * with WEASEL+MUSE. arXiv 2017
+ * http://arxiv.org/abs/1711.11343
  */
 public class MUSEClassifier extends Classifier {
 

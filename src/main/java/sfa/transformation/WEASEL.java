@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.cursors.LongFloatCursor;
  * The WEASEL-Model as published in
  * <p>
  * Schäfer, P., Leser, U.: Fast and Accurate Time Series
- * Classification with WEASEL." CIKM 2017
+ * Classification with WEASEL. CIKM 2017
  */
 public class WEASEL {
 
