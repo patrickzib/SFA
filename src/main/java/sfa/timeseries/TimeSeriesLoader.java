@@ -166,9 +166,7 @@ public class TimeSeriesLoader {
         }
         dimensions[i] = new TimeSeries(rawdata, label);
       }
-
-      MultiVariateTimeSeries ts = new MultiVariateTimeSeries(dimensions, label);
-      samples.add(ts);
+      samples.add(new MultiVariateTimeSeries(dimensions, label));
     }
   }
 

@@ -2,21 +2,22 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import com.carrotsearch.hppc.cursors.IntLongCursor;
-import de.bwaldvogel.liblinear.*;
-import sfa.SFAWordsTest;
-import sfa.timeseries.MultiVariateTimeSeries;
-import sfa.timeseries.TimeSeries;
-import sfa.timeseries.TimeSeriesLoader;
-import sfa.transformation.MUSE;
-import sfa.transformation.SFA;
-import sfa.transformation.WEASEL;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+
+import sfa.timeseries.MultiVariateTimeSeries;
+import sfa.timeseries.TimeSeries;
+import sfa.transformation.MUSE;
+import sfa.transformation.SFA;
+
+import com.carrotsearch.hppc.cursors.IntLongCursor;
+
+import de.bwaldvogel.liblinear.FeatureNode;
+import de.bwaldvogel.liblinear.Linear;
+import de.bwaldvogel.liblinear.Parameter;
+import de.bwaldvogel.liblinear.Problem;
+import de.bwaldvogel.liblinear.SolverType;
 
 /**
  * The WEASEL+MUSE classifier as published in
@@ -50,23 +51,8 @@ public class MUSEClassifier extends Classifier {
   public MUSEClassifier() {
     super();
     TimeSeries.NORM = false;
-    Linear.resetRandom();
+    //Linear.resetRandom();
   }
-
-//  public MUSEClassifier(MultiVariateTimeSeries[] train, MultiVariateTimeSeries[] test, boolean useDeltas) throws IOException {
-//    super();
-//
-//    if (useDeltas) {
-//      this.mtsTrainSamples = getDerivatives(train);
-//      this.mtsTestSamples = getDerivatives(test);
-//    }
-//    else {
-//      this.mtsTestSamples = test;
-//      this.mtsTrainSamples = train;
-//    }
-//    dimensionality = this.mtsTrainSamples[0].getDimensions();
-//  }
-
 
   public static class MUSEModel extends Model {
 
@@ -83,7 +69,7 @@ public class MUSEClassifier extends Classifier {
         int training,
         int trainSize
     ) {
-      super("WEASEL", testing, testSize, training, trainSize, normed, -1);
+      super("WEASEL+MUSE", testing, testSize, training, trainSize, normed, -1);
       this.features = features;
       this.muse = model;
       this.linearModel = linearModel;
@@ -209,9 +195,9 @@ public class MUSEClassifier extends Classifier {
               bestNorm = mean;
               bestHistType = histType;
             }
-//            if (correct == samples.length) {
-//              break optimize;
-//            }
+            if (correct == samples.length) {
+              break optimize;
+            }
           }
         }
       }
@@ -243,18 +229,18 @@ public class MUSEClassifier extends Classifier {
     return null;
   }
 
-  public Double[] predict(final MultiVariateTimeSeries[] testSamples) {
+  public Double[] predict(final MultiVariateTimeSeries[] samples) {
     // iterate each sample to classify
-    int dimensionality = testSamples[0].getDimensions();
-    final int[][][] wordsTest = model.muse.createWords(testSamples);
-    MUSE.BagOfBigrams[] bagTest = model.muse.createBagOfPatterns(wordsTest, testSamples, dimensionality, model.features);
+    int dimensionality = samples[0].getDimensions();
+    final int[][][] wordsTest = model.muse.createWords(samples);
+    MUSE.BagOfBigrams[] bagTest = model.muse.createBagOfPatterns(wordsTest, samples, dimensionality, model.features);
 
     // chi square changes key mappings => remap
     model.muse.dict.remap(bagTest);
 
     FeatureNode[][] features = initLibLinear(bagTest);
 
-    Double[] labels = new Double[testSamples.length];
+    Double[] labels = new Double[samples.length];
 
     for (int ind = 0; ind < features.length; ind++) {
       double label = Linear.predict(model.linearModel, features[ind]);
