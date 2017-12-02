@@ -62,6 +62,7 @@ public class MUSEClassifier extends Classifier {
     public MUSEModel(
         boolean normed,
         int features,
+        SFA.HistogramType histType,
         MUSE model,
         de.bwaldvogel.liblinear.Model linearModel,
         int testing,
@@ -73,6 +74,7 @@ public class MUSEClassifier extends Classifier {
       this.features = features;
       this.muse = model;
       this.linearModel = linearModel;
+      this.histType = histType;
     }
 
     // the best number of Fourier values to be used
@@ -83,6 +85,8 @@ public class MUSEClassifier extends Classifier {
 
     // the trained liblinear classifier
     public de.bwaldvogel.liblinear.Model linearModel;
+
+    public SFA.HistogramType histType;
   }
 
   @Override
@@ -216,6 +220,7 @@ public class MUSEClassifier extends Classifier {
       return new MUSEModel(
           bestNorm,
           bestF,
+          bestHistType,
           model,
           linearModel,
           0,

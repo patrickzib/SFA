@@ -45,6 +45,18 @@ public class MUSE {
     }
   }
 
+  /**
+   * Create a WEASEL model.
+   *
+   * @param maxF          Length of the SFA words
+   * @param maxS          alphabet size
+   * @param histogramType histogram types (EQUI-Depth and/or EQUI-Frequency) to use
+   * @param windowLengths the set of window lengths to use for extracting SFA words from
+   *                      time series.
+   * @param normMean      set to true, if mean should be set to 0 for a window
+   * @param lowerBounding set to true, if the Fourier transform should be normed (typically
+   *                      used to lower bound / mimic Euclidean distance).
+   */
   public MUSE(
       int maxF,
       int maxS,
@@ -67,9 +79,9 @@ public class MUSE {
    */
   public static class BagOfBigrams {
     public IntLongHashMap bob;
-    public double label;
+    public Double label;
 
-    public BagOfBigrams(int size, double label) {
+    public BagOfBigrams(int size, Double label) {
       this.bob = new IntLongHashMap(size);
       this.label = label;
     }
@@ -137,9 +149,11 @@ public class MUSE {
       final MultiVariateTimeSeries[] samples,
       final int dimensionality,
       final int wordLength) {
-    List<BagOfBigrams> bagOfPatterns = new ArrayList<BagOfBigrams>(2 * samples.length);
+    List<BagOfBigrams> bagOfPatterns = new ArrayList<BagOfBigrams>(
+        samples[0].getDimensions() * samples.length);
 
     final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
+
 //    final long mask = (usedBits << wordLength) - 1l;
     final long mask = (1l << (usedBits * wordLength)) - 1l;
 
@@ -169,7 +183,6 @@ public class MUSE {
         }
       }
       bagOfPatterns.add(bop);
-
     }
     return bagOfPatterns.toArray(new BagOfBigrams[]{});
   }

@@ -49,9 +49,9 @@ public class WEASEL {
   public WEASEL(){}
 
   /**
-   * Create a WEASEL boss.
+   * Create a WEASEL model.
    *
-   * @param maxF          queryLength of the SFA words
+   * @param maxF          Length of the SFA words
    * @param maxS          alphabet size
    * @param windowLengths the set of window lengths to use for extracting SFA words from
    *                      time series.
@@ -72,7 +72,7 @@ public class WEASEL {
   }
 
   /**
-   * The Weasel-boss: a histogram of SFA word and bi-gram frequencies
+   * The WEASEL-model: a histogram of SFA word and bi-gram frequencies
    */
   public static class BagOfBigrams {
     public IntIntHashMap bob;
@@ -144,12 +144,6 @@ public class WEASEL {
     // FIXME
     //    final long mask = (usedBits << wordLength) - 1L;
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-
-    // get highest window length
-    int max = 0;
-    for (int w : windowLengths) {
-      max = Math.max(w,max);
-    }
     int highestBit = Words.binlog(Integer.highestOneBit(Classifier.MAX_WINDOW_LENGTH))+1;
 
     // iterate all samples
@@ -172,8 +166,6 @@ public class WEASEL {
         }
       }
     }
-
-    //System.out.println(max + "\t" + prevMax);
 
     return bagOfPatterns;
   }
