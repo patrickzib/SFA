@@ -262,7 +262,7 @@ CIKM 2017, (accepted), [[LINK arXiv]](https://arxiv.org/abs/1701.07681), [[LINK 
 
 
 
-# WEASEL+MUSE: Word ExtrAction for time SEries cLassification + MUltivariate Symbols and dErivatives
+# WEASEL+MUSE: WEASEL + MUltivariate Symbols and dErivatives
 
 
 WEASEL+MUSE is an extension of the univariate WEASEL classifier to allow for
