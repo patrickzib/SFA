@@ -266,13 +266,13 @@ CIKM 2017, (accepted), [[LINK arXiv]](https://arxiv.org/abs/1701.07681), [[LINK 
 
 
 WEASEL+MUSE is an extension of the univariate WEASEL classifier to allow for
-MTSC. WEASEL is highly optimized to extract discriminative words to ease classification. We observed that WEASEL tends to overfit for MTS due to their high dimensionality. Thus, WEASEL+MUSE makes use of the unsupervised symbolic representation SFA, which generates words irrelevant of the labels, and adds derivatives to each sensor stream of the MTS. To distinguish between the sensor steams, their identifiers are appended to each word.
+multivariate time series classification. We observed that WEASEL tends to overfit for multivariate time series due to their high dimensionality. Thus, WEASEL+MUSE makes use of the unsupervised symbolic representation SFA, which generates words irrelevant of the labels, and adds derivatives to each sensor stream of the multivariate time series. To distinguish between the sensor steams, their identifiers are appended to each word.
 
-In our experimental evaluation on 20 public benchmark MTS datasets and a use case on motion capture data, WEASEL+MUSE is constantly among the most accurate methods, when compared to state of the art domain agnostic MTS classifiers, and performs best for motion sensor data, followed by speech or hand-written letter recognition tasks.
+In our experimental evaluation on 20 public benchmark multivariate datasets and a use case on motion capture data, WEASEL+MUSE is constantly among the most accurate methods, when compared to state of the art domain agnostic multivariate classifiers, and performs best for motion sensor data, followed by speech or hand-written letter recognition tasks.
 
 **Usage:**
 
-First, load datasets, set parameters (or keep defaults), and train the MUSE model.
+First, load datasets, set parameters (or keep defaults), and train the WEASEL+MUSE model.
 
 ```java
 // Load the train data
