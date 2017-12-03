@@ -266,9 +266,9 @@ CIKM 2017, (accepted), [[LINK arXiv]](https://arxiv.org/abs/1701.07681), [[LINK 
 
 
 WEASEL+MUSE is an extension of the univariate WEASEL classifier to allow for
-multivariate time series classification. We observed that WEASEL tends to overfit for multivariate time series due to their high dimensionality. Thus, WEASEL+MUSE makes use of the unsupervised symbolic representation SFA, which generates words irrelevant of the labels, and adds derivatives to each sensor stream of the multivariate time series. To distinguish between the sensor steams, their identifiers are appended to each word.
+multivariate time series classification. We observed that WEASEL tends to overfit for multivariate time series due to their high dimensionality. Thus, WEASEL+MUSE makes use of the unsupervised symbolic representation SFA, which generates words irrelevant of the labels, and adds derivatives to each sensor stream of the multivariate time series. To distinguish between the sensor streams, their identifiers are appended to each word.
 
-In our experimental evaluation on 20 public benchmark multivariate datasets and a use case on motion capture data, WEASEL+MUSE is constantly among the most accurate methods, when compared to state of the art domain agnostic multivariate classifiers, and performs best for motion sensor data, followed by speech or hand-written letter recognition tasks.
+In our experimental evaluation on 20 public multivariate datasets [[LINK]](http://www.mustafabaydogan.com/multivariate-time-series-discretization-for-classification.html) and a use case on motion capture data, WEASEL+MUSE is constantly among the most accurate methods, when compared to state of the art domain agnostic multivariate classifiers, and performs best for motion sensor data, followed by speech or hand-written letter recognition tasks.
 
 **Usage:**
 
