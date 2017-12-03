@@ -9,7 +9,7 @@ the UCR time series classification benchmark has led to two pitfalls, namely: (a
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
 
-This repository contains a symbolic time series representation (**SFA**) and three time series models (**WEASEL**, **BOSS** and **BOSSVS**) for alignment-free, noise-robust and scalable time series data analytics. 
+This repository contains a symbolic time series representation (**SFA**) and three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics.  
 
 The implemented algorithms are in the context of:
 
@@ -17,8 +17,10 @@ The implemented algorithms are in the context of:
 
 2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]](https://arxiv.org/abs/1701.07681).
 
-3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]](https://arxiv.org/abs/1701.07681).
+3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]](https://dl.acm.org/citation.cfm?doid=3132847.3132980).
 The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[5]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y). 
+
+4. **Multivariate classification**: WEASEL+MUSE is a multivariate time series classifier that offers state of art classification accuracy [[6]](https://arxiv.org/abs/1711.11343).
 
 ![SFA](images/classifiers2.png)
 
@@ -255,7 +257,59 @@ Predicions predictions = weasel.score(testSamples);
 **References**
 
 "Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with WEASEL."
-CIKM 2017, (accepted), [[LINK]](https://arxiv.org/abs/1701.07681)
+CIKM 2017, (accepted), [[LINK arXiv]](https://arxiv.org/abs/1701.07681), [[LINK ACM]](https://dl.acm.org/citation.cfm?doid=3132847.3132980)
+
+
+
+
+# WEASEL+MUSE: Word ExtrAction for time SEries cLassification + MUltivariate Symbols and dErivatives
+
+
+WEASEL+MUSE is an extension of the univariate WEASEL classifier to allow for
+MTSC. WEASEL is highly optimized to extract discriminative words to ease classification. We observed that WEASEL tends to overfit for MTS due to their high dimensionality. Thus, WEASEL+MUSE makes use of the unsupervised symbolic representation SFA, which generates words irrelevant of the labels, and adds derivatives to each sensor stream of the MTS. To distinguish between the sensor steams, their identifiers are appended to each word.
+
+In our experimental evaluation on 20 public benchmark MTS datasets and a use case on motion capture data, WEASEL+MUSE is constantly among the most accurate methods, when compared to state of the art domain agnostic MTS classifiers, and performs best for motion sensor data, followed by speech or hand-written letter recognition tasks.
+
+**Usage:**
+
+First, load datasets, set parameters (or keep defaults), and train the MUSE model.
+
+```java
+// Load the train data
+boolean useDerivatives = true;
+MultiVariateTimeSeries[] trainSamples = TimeSeriesLoader.loadMultivariateDatset(..., useDerivatives);
+
+MUSEClassifier muse = new MUSEClassifier();
+weasel.minF   = 4;	// represents the minimal length for training SFA words. default: 4.
+weasel.maxF   = 6;	// represents the maximal length for training SFA words. default: 6.
+weasel.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
+SFA.HistogramType[] histTypes = ...; // the binning method(s) to use for discretization
+
+
+// train the BOSS VS model
+Score score = muse.fit(trainSamples);
+```
+
+Finally, predict test labels:
+
+```java
+// Load the test data
+MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(...,useDerivatives);
+
+// predict labels
+Double[] labels = muse.predict(testSamples);
+
+// predict and score
+Predicions predictions = muse.score(testSamples);
+```
+
+
+**References**
+
+"Schäfer, P., Leser, U.: Multivariate Time Series Classification with WEASEL+MUSE."
+arXiv 2017, [[LINK]](https://arxiv.org/abs/1711.11343)
+
+
 
 
 # Use Cases / Tests

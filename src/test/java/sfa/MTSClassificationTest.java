@@ -9,6 +9,7 @@ import sfa.classification.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
+import sfa.transformation.MFT;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,13 +64,14 @@ public class MTSClassificationTest {
 
               Classifier.DEBUG = false;
 
-              boolean useDeltas = true;
-              MultiVariateTimeSeries[] trainSamples = TimeSeriesLoader.loadMultivariateDatset(train, useDeltas);
-              MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test, useDeltas);
+              boolean useDerivatives = true;
+              MultiVariateTimeSeries[] trainSamples = TimeSeriesLoader.loadMultivariateDatset(train, useDerivatives);
+              MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test, useDerivatives);
 
-              MUSEClassifier weasel = new MUSEClassifier();
-              MUSEClassifier.Score weaselScore = weasel.eval(trainSamples, testSamples);
-              System.out.println(s + ";" + weaselScore.toString());
+              MFT.maxOrMin = true; // FIXME needs to be refactored
+              MUSEClassifier muse = new MUSEClassifier();
+              MUSEClassifier.Score museScore = muse.eval(trainSamples, testSamples);
+              System.out.println(s + ";" + museScore.toString());
             }
           }
         } else{

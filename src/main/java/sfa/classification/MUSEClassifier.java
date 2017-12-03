@@ -41,7 +41,7 @@ public class MUSEClassifier extends Classifier {
   public static double p = 0.1;
   public static double c = 1;
 
-  // the trained weasel
+  // the trained muse model
   MUSEModel model;
 
   public static boolean lowerBounding = true;
@@ -198,6 +198,10 @@ public class MUSEClassifier extends Classifier {
               bestF = f;
               bestNorm = mean;
               bestHistType = histType;
+
+              if (DEBUG) {
+                System.out.println("New best model" + maxCorrect + " " + bestF + " " + bestNorm + " " + bestHistType);
+              }
             }
             if (correct == samples.length) {
               break optimize;

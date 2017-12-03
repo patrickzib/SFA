@@ -235,7 +235,8 @@ public class SFA implements Serializable {
    * @param symbols      the SFA alphabet size
    * @param normMean     if set, the mean is subtracted from each sliding window
    */
-  public void fitWindowing(MultiVariateTimeSeries[] mts, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
+  public void fitWindowing(
+      MultiVariateTimeSeries[] mts, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
     ArrayList<TimeSeries> sa = new ArrayList<TimeSeries>(
         mts.length * mts[0].getDimensions() * mts[0].timeSeries[0].getLength() / windowLength);
 

@@ -26,7 +26,7 @@ public class MUSE {
 
   public int alphabetSize;
   public int maxF;
-  public SFA.HistogramType histogramType = SFA.HistogramType.EQUI_FREQUENCY;
+  public SFA.HistogramType histogramType = null;
 
   public int[] windowLengths;
   public boolean normMean;

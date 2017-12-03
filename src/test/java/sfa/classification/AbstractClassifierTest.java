@@ -24,7 +24,7 @@ public abstract class AbstractClassifierTest {
 
     private static final double DELTA = 0.05;
     protected static final File DATASETS_DIRECTORY = new File(
-            AbstractClassifierTest.class.getClassLoader().getResource("datasets/").getFile());
+            AbstractClassifierTest.class.getClassLoader().getResource("datasets/univariate/").getFile());
 
     @Test
     public void testClassificationOnUCRData() {

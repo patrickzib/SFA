@@ -32,6 +32,7 @@ public class MFT implements Serializable {
   private double norm = 0;
 
   private transient DoubleFFT_1D fft = null;
+  public static boolean maxOrMin = false; // FIXME: needs to be refactored!!
 
   public MFT() {
   }
@@ -90,7 +91,9 @@ public class MFT implements Serializable {
    * @return returns only the first l/2 Fourier coefficients for each window.
    */
   public double[][] transformWindowing(TimeSeries timeSeries, int l) {
-    int wordLength = Math.min(windowSize, l + this.startOffset);
+    int wordLength = maxOrMin ?
+        Math.max(windowSize, l + this.startOffset) : // MUSE uses 'max'
+        Math.min(windowSize, l + this.startOffset); // WEASEL uses 'min'
     wordLength += wordLength%2; // make it even
     double[] phis = new double[wordLength];
 

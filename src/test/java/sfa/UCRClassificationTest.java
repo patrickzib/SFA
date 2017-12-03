@@ -34,7 +34,7 @@ public class UCRClassificationTest {
     // the relative path to the datasets
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-    File dir = new File(classLoader.getResource("datasets/").getFile());
+    File dir = new File(classLoader.getResource("datasets/univariate/").getFile());
     //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
 
     for (String s : datasets) {
