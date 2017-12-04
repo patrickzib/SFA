@@ -17,7 +17,7 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class MTSClassificationTest {
 
-  // The datasets to use
+  // The multivariate datasets to use
   public static String[] datasets = new String[]{
       "LP1",
       "LP2",
@@ -43,7 +43,7 @@ public class MTSClassificationTest {
 
 
   @Test
-  public void testUCRClassification() throws IOException {
+  public void testMultiVariatelassification() throws IOException {
     try {
       // the relative path to the datasets
       ClassLoader classLoader = SFAWordsTest.class.getClassLoader();

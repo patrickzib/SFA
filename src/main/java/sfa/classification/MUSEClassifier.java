@@ -2,22 +2,16 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-
+import com.carrotsearch.hppc.cursors.IntLongCursor;
+import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.MUSE;
 import sfa.transformation.SFA;
 
-import com.carrotsearch.hppc.cursors.IntLongCursor;
-
-import de.bwaldvogel.liblinear.FeatureNode;
-import de.bwaldvogel.liblinear.Linear;
-import de.bwaldvogel.liblinear.Parameter;
-import de.bwaldvogel.liblinear.Problem;
-import de.bwaldvogel.liblinear.SolverType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * The WEASEL+MUSE classifier as published in
@@ -41,17 +35,16 @@ public class MUSEClassifier extends Classifier {
   public static double p = 0.1;
   public static double c = 1;
 
+  public static boolean lowerBounding = true;
+
   // the trained muse model
   MUSEModel model;
-
-  public static boolean lowerBounding = true;
 
   public static final int MAX_WINDOW_SIZE = 450;
 
   public MUSEClassifier() {
     super();
     TimeSeries.NORM = false;
-    //Linear.resetRandom();
   }
 
   public static class MUSEModel extends Model {
@@ -247,7 +240,7 @@ public class MUSEClassifier extends Classifier {
     // chi square changes key mappings => remap
     model.muse.dict.remap(bagTest);
 
-    FeatureNode[][] features = initLibLinear(bagTest);
+    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
 
     Double[] labels = new Double[samples.length];
 
@@ -262,12 +255,13 @@ public class MUSEClassifier extends Classifier {
   public static Problem initLibLinearProblem(
       final MUSE.BagOfBigrams[] bob, final MUSE.Dictionary dict, final double bias) {
     Linear.resetRandom();
-    final FeatureNode[][] features = initLibLinear(bob);
 
     Problem problem = new Problem();
     problem.bias = bias;
     problem.n = dict.size() + 2 + 1;
     problem.y = getLabels(bob);
+
+    final FeatureNode[][] features = initLibLinear(bob, problem.n);
     problem.l = features.length;
     problem.x = features;
 
@@ -282,15 +276,13 @@ public class MUSEClassifier extends Classifier {
     return labels;
   }
 
-  // FIXME : maxFeature??? refactor with WEASELClassifier
-  public static FeatureNode[][] initLibLinear(final MUSE.BagOfBigrams[] bob) {
+  protected static FeatureNode[][] initLibLinear(final MUSE.BagOfBigrams[] bob, int max_feature) {
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
       MUSE.BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<FeatureNode>(bop.bob.size());
-
       for (IntLongCursor word : bop.bob) {
-        if (word.value > 0) {
+        if (word.value > 0 && word.key <= max_feature) {
           features.add(new FeatureNode(word.key, word.value));
         }
       }

@@ -2,26 +2,16 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.carrotsearch.hppc.cursors.IntIntCursor;
+import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.WEASEL;
 import sfa.transformation.WEASEL.BagOfBigrams;
 import sfa.transformation.WEASEL.Dictionary;
 
-import com.carrotsearch.hppc.cursors.IntIntCursor;
-
-import de.bwaldvogel.liblinear.Feature;
-import de.bwaldvogel.liblinear.FeatureNode;
-import de.bwaldvogel.liblinear.Linear;
-import de.bwaldvogel.liblinear.Parameter;
-import de.bwaldvogel.liblinear.Problem;
-import de.bwaldvogel.liblinear.SolverType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as published in
