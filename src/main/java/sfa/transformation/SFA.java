@@ -100,7 +100,7 @@ public class SFA implements Serializable {
   /**
    * Transforms a single time series to its SFA word
    *
-   * @param timeSeries
+   * @param timeSeries a sample
    * @return
    */
   public short[] transform(TimeSeries timeSeries) {
@@ -110,7 +110,7 @@ public class SFA implements Serializable {
   /**
    * Transforms a single time series to its SFA word
    *
-   * @param timeSeries
+   * @param timeSeries a sample
    * @param approximation the DFT approximation, if available, else pass 'null'
    * @return
    */
@@ -148,7 +148,7 @@ public class SFA implements Serializable {
   /**
    * Transforms a set of time series to SFA words.
    *
-   * @param samples
+   * @param samples a set of samples
    * @param approximation the DFT approximations, if available, else pass 'null'
    * @return
    */
@@ -229,7 +229,7 @@ public class SFA implements Serializable {
    * trains SFA based on the sliding windows.
    * At the end of this call, the quantization bins are set.
    *
-   * @param mts
+   * @param mts          A set of multivariate sample time series
    * @param windowLength The queryLength of each sliding window
    * @param wordLength   the SFA word-queryLength
    * @param symbols      the SFA alphabet size
@@ -252,7 +252,7 @@ public class SFA implements Serializable {
    * Extracts sliding windows from the time series and trains SFA based on the sliding windows.
    * At the end of this call, the quantization bins are set.
    *
-   * @param timeSeries
+   * @param timeSeries   A set of samples
    * @param windowLength The queryLength of each sliding window
    * @param wordLength   the SFA word-queryLength
    * @param symbols      the SFA alphabet size
@@ -277,11 +277,11 @@ public class SFA implements Serializable {
    * Returns the SFA words as short[] (from Fourier transformed windows). Each
    * short corresponds to one character.
    *
-   * @param ts
+   * @param timeSeries a sample
    * @return
    */
-  public short[][] transformWindowing(TimeSeries ts) {
-    double[][] mft = this.transformation.transformWindowing(ts, this.maxWordLength);
+  public short[][] transformWindowing(TimeSeries timeSeries) {
+    double[][] mft = this.transformation.transformWindowing(timeSeries, this.maxWordLength);
 
     short[][] words = new short[mft.length][];
     for (int i = 0; i < mft.length; i++) {
@@ -297,11 +297,11 @@ public class SFA implements Serializable {
    * <p>
    * Returns the Fourier transformed windows.
    *
-   * @param ts
+   * @param timeSeries a sample
    * @return
    */
-  public double[][] transformWindowingDouble(TimeSeries ts) {
-    return this.transformation.transformWindowing(ts, this.maxWordLength);
+  public double[][] transformWindowingDouble(TimeSeries timeSeries) {
+    return this.transformation.transformWindowing(timeSeries, this.maxWordLength);
   }
 
   /**
@@ -373,7 +373,7 @@ public class SFA implements Serializable {
   /**
    * Fills data in the orderline
    *
-   * @param samples
+   * @param samples A set of samples
    */
   protected double[][] fillOrderline(TimeSeries[] samples, int l) {
     double[][] transformedSamples = new double[samples.length][];

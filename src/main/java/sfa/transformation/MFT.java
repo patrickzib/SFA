@@ -31,7 +31,7 @@ public class MFT implements Serializable {
   private double norm = 0;
 
   private transient DoubleFFT_1D fft = null;
-  public static boolean maxOrMin = false; // FIXME: needs to be refactored!!
+  private boolean maxOrMin = false; // FIXME: needs to be refactored!!
 
   public MFT() {
   }

@@ -1,4 +1,4 @@
-package sfa;
+package sfa.index;
 
 import java.io.IOException;
 import java.util.List;
@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import sfa.SFAWordsTest;
 import sfa.index.SFATrie;
 import sfa.index.SortedListMap;
 import sfa.timeseries.TimeSeries;
