@@ -113,7 +113,7 @@ public class MUSEClassifier extends Classifier {
     // training score
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, trainSamples.length);
+      outputResult(score.training, startTime, trainSamples.length);
     }
 
     // determine score
@@ -271,7 +271,7 @@ public class MUSEClassifier extends Classifier {
   public static double[] getLabels(final MUSE.BagOfBigrams[] bagOfPatternsTestSamples) {
     double[] labels = new double[bagOfPatternsTestSamples.length];
     for (int i = 0; i < bagOfPatternsTestSamples.length; i++) {
-      labels[i] = Double.valueOf(bagOfPatternsTestSamples[i].label);
+      labels[i] = bagOfPatternsTestSamples[i].label;
     }
     return labels;
   }

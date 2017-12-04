@@ -68,7 +68,7 @@ public class BOSSVSClassifier extends Classifier {
 
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, testSamples.length);
+      outputResult(score.training, startTime, testSamples.length);
       System.out.println("");
     }
 

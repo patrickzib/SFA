@@ -254,7 +254,7 @@ public abstract class Classifier {
     }
 
     public double getTrainingAccuracy() {
-      return 1 - formatError((int) training, trainSize);
+      return 1 - formatError(training, trainSize);
     }
 
     @Override
@@ -467,7 +467,7 @@ public abstract class Classifier {
     Double[] predictedLabels = new Double[samples.length];
     //long[] maxCounts = new long[samples.length];
 
-    int correctTesting = 0;
+    //int correctTesting = 0;
     for (int i = 0; i < labels.length; i++) {
       Map<Double, Long> counts = new HashMap<>();
 
@@ -486,7 +486,7 @@ public abstract class Classifier {
         if (predictedLabels[i] == null
                 || maxCount < e.getValue()
                 || maxCount == e.getValue()  // break ties
-                && Double.valueOf(predictedLabels[i]) <= Double.valueOf(e.getKey())
+                && predictedLabels[i] <= e.getKey()
                 ) {
           maxCount = e.getValue();
           // maxCounts[i] = maxCount;

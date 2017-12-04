@@ -22,7 +22,6 @@ import java.io.Serializable;
  * derived from recursive matrix transformations. In: Digital Signal Processing
  * Proceedings, 1997., IEEE (1997)
  *
- * @author bzcschae
  */
 public class MFT implements Serializable {
   private static final long serialVersionUID = 8508604292241736378L;

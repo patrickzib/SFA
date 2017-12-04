@@ -50,7 +50,7 @@ public class ShotgunClassifier extends Classifier {
     // training score
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, trainSamples.length);
+      outputResult(score.training, startTime, trainSamples.length);
     }
 
     // Classify: testing score
@@ -76,14 +76,14 @@ public class ShotgunClassifier extends Classifier {
     int bestCorrectTraining = 0;
 
     for (boolean normMean : NORMALIZATION) {
-      long startTime = System.currentTimeMillis();
+      //long startTime = System.currentTimeMillis();
 
       // train the shotgun models for different window lengths
       ShotgunModel model = fitEnsemble(trainSamples, normMean, 1.0).getHighestScoringModel();
       Score score = model.score;
 
       if (this.model == null || bestCorrectTraining < score.training) {
-        bestCorrectTraining = (int) score.training;
+        bestCorrectTraining = score.training;
         bestScore = score;
         this.model = model;
       }
@@ -165,7 +165,6 @@ public class ShotgunClassifier extends Classifier {
             final TimeSeries query = testSamples[i];
 
             double distanceTo1NN = Double.MAX_VALUE;
-            String predictedLabel = "";
 
             int wQueryLen = Math.min(query.getLength(), model.windowLength);
             TimeSeries[] disjointWindows = query.getDisjointSequences(wQueryLen, model.normed); // possible without copying!?

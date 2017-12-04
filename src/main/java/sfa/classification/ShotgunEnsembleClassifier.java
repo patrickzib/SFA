@@ -38,7 +38,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
 
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, testSamples.length);
+      outputResult(score.training, startTime, testSamples.length);
       System.out.println("");
     }
 
@@ -88,7 +88,7 @@ public class ShotgunEnsembleClassifier extends ShotgunClassifier {
   }
 
   protected Double[] predict(Ensemble<ShotgunModel> model, final TimeSeries[] testSamples) {
-    long startTime = System.currentTimeMillis();
+    //long startTime = System.currentTimeMillis();
 
     @SuppressWarnings("unchecked")
     final List<Pair<Double, Integer>>[] testLabels = new List[testSamples.length];

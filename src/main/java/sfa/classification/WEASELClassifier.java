@@ -82,7 +82,7 @@ public class WEASELClassifier extends Classifier {
     // training score
     if (DEBUG) {
       System.out.println(score.toString());
-      outputResult((int) score.training, startTime, trainSamples.length);
+      outputResult(score.training, startTime, trainSamples.length);
     }
 
     // determine score

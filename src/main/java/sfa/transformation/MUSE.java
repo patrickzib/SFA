@@ -155,7 +155,7 @@ public class MUSE {
     final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
 
 //    final long mask = (usedBits << wordLength) - 1l;
-    final long mask = (1l << (usedBits * wordLength)) - 1l;
+    final long mask = (1L << (usedBits * wordLength)) - 1L;
 
     // iterate all samples in pairs of 'dimensionality'
     // and create a bag of bigrams each
@@ -195,7 +195,7 @@ public class MUSE {
     // class frequencies
     LongIntHashMap classFrequencies = new LongIntHashMap();
     for (BagOfBigrams ts : bob) {
-      long label = Double.valueOf(ts.label).longValue();
+      long label = ts.label.longValue();
       classFrequencies.putOrAdd(label, 1, 1);
     }
 
@@ -207,7 +207,7 @@ public class MUSE {
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
-      long label = Double.valueOf(bagOfPattern.label).longValue();
+      long label = bagOfPattern.label.longValue();
       for (IntLongCursor word : bagOfPattern.bob) {
         if (word.value > 0) {
           featureCount.putOrAdd(word.key, 1, 1);
@@ -219,7 +219,7 @@ public class MUSE {
 
     // samples per class
     for (BagOfBigrams bagOfPattern : bob) {
-      long label = Double.valueOf(bagOfPattern.label).longValue();
+      long label = bagOfPattern.label.longValue();
       classProb.putOrAdd(label, 1, 1);
     }
 

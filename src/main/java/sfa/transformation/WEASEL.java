@@ -2,20 +2,18 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import sfa.classification.Classifier;
-import sfa.classification.Classifier.Words;
-import sfa.classification.ParallelFor;
-import sfa.classification.WEASELClassifier;
-import sfa.timeseries.TimeSeries;
-
 import com.carrotsearch.hppc.IntFloatHashMap;
 import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.LongFloatHashMap;
 import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
+import sfa.classification.Classifier;
+import sfa.classification.Classifier.Words;
+import sfa.classification.ParallelFor;
+import sfa.timeseries.TimeSeries;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The WEASEL-Model as published in
@@ -178,7 +176,7 @@ public class WEASEL {
     // class frequencies
     LongIntHashMap classFrequencies = new LongIntHashMap();
     for (BagOfBigrams ts : bob) {
-      long label = Double.valueOf(ts.label).longValue();
+      long label = ts.label.longValue();
       classFrequencies.putOrAdd(label, 1, 1);
     }
 
@@ -190,7 +188,7 @@ public class WEASEL {
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
-      long label = Double.valueOf(bagOfPattern.label).longValue();
+      long label = bagOfPattern.label.longValue();
       for (IntIntCursor word : bagOfPattern.bob) {
         if (word.value > 0) {
           featureCount.putOrAdd(word.key, 1, 1);
@@ -202,7 +200,7 @@ public class WEASEL {
 
     // samples per class
     for (BagOfBigrams bagOfPattern : bob) {
-      long label = Double.valueOf(bagOfPattern.label).longValue();
+      long label = bagOfPattern.label.longValue();
       classProb.putOrAdd(label, 1, 1);
     }
 

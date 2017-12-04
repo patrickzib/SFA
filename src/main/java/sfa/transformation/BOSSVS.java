@@ -13,7 +13,6 @@ import java.util.Set;
  * The Bag-of-SFA-Symbols in Vector Space boss as published in
  * Schäfer, P.: Scalable time series classification. DMKD (Preprint)
  *
- * @author bzcschae
  */
 public class BOSSVS extends BOSS {
 
