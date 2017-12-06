@@ -119,7 +119,7 @@ public class MUSE {
 
     // SFA quantization
     if (this.signature[index] == null) {
-      this.signature[index] = new SFA(this.histogramType);
+      this.signature[index] = new SFA(this.histogramType, true);
       this.signature[index].fitWindowing(
           mtsSamples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }

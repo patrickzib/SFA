@@ -43,6 +43,9 @@ public class SFA implements Serializable {
     EQUI_FREQUENCY, EQUI_DEPTH, INFORMATION_GAIN
   }
 
+  // for the MFT classifier
+  private boolean mftUseMaxOrMin = false;
+
   static class ValueLabel implements Serializable {
     private static final long serialVersionUID = 4392333771929261697L;
 
@@ -65,8 +68,13 @@ public class SFA implements Serializable {
   public SFA(){}
 
   public SFA(HistogramType histogramType) {
+    this(histogramType, false);
+  }
+
+  public SFA(HistogramType histogramType, boolean mftUseMaxOrMin) {
     reset();
     this.histogramType = histogramType;
+    this.mftUseMaxOrMin = mftUseMaxOrMin;
   }
 
   public void reset() {
@@ -259,7 +267,7 @@ public class SFA implements Serializable {
    * @param normMean     if set, the mean is subtracted from each sliding window
    */
   public void fitWindowing(TimeSeries[] timeSeries, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
-    this.transformation = new MFT(windowLength, normMean, lowerBounding);
+    this.transformation = new MFT(windowLength, normMean, lowerBounding, this.mftUseMaxOrMin);
 
     ArrayList<TimeSeries> sa = new ArrayList<>(
         timeSeries.length * timeSeries[0].getLength() / windowLength);
@@ -343,7 +351,7 @@ public class SFA implements Serializable {
       init(wordLength, symbols);
 
       if (this.transformation == null) {
-        this.transformation = new MFT(samples[0].getLength(), normMean, this.lowerBounding);
+        this.transformation = new MFT(samples[0].getLength(), normMean, this.lowerBounding, this.mftUseMaxOrMin);
       }
     }
 

@@ -68,7 +68,6 @@ public class MTSClassificationTest {
               MultiVariateTimeSeries[] trainSamples = TimeSeriesLoader.loadMultivariateDatset(train, useDerivatives);
               MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test, useDerivatives);
 
-              MFT.maxOrMin = true; // FIXME needs to be refactored
               MUSEClassifier muse = new MUSEClassifier();
               MUSEClassifier.Score museScore = muse.eval(trainSamples, testSamples);
               System.out.println(s + ";" + museScore.toString());
