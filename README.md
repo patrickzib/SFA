@@ -331,6 +331,13 @@ There are 7 implemented use cases:
 7. Time series bulk loading and similarity search: 
 [SFABulkLoadTest.java](https://github.com/patrickzib/SFA/blob/master/src/test/java/sfa/SFABulkLoadTest.java)
 
+# Alternative Implementations
+
+1) Python: Thanks to the the PROMINENT Team at the University of Illinois at Chicago there is a python port of the BOSS code.
+[Python port](https://github.com/sharford5/SFA_Python)
+
+2) JAVA:  The UEA & UCR Time Series Classification Repository provides an alternative implementation of BOSS as well as other state-of-the-art classifiers.
+[Java port](http://timeseriesclassification.com/code.php)
 
 # References & Acknowledgements
 
