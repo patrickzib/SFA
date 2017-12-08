@@ -337,7 +337,7 @@ There are 7 implemented use cases:
 [Python port](https://github.com/sharford5/SFA_Python)
 
 2) JAVA:  The UEA & UCR Time Series Classification Repository provides an alternative implementation of BOSS as well as other state-of-the-art classifiers.
-[Java port](http://timeseriesclassification.com/code.php)
+[Time Series Classification Repository](http://timeseriesclassification.com/code.php)
 
 # References & Acknowledgements
 
@@ -349,5 +349,5 @@ Read more about Scalable Time Series Data Analytics in the [Dissertation](http:/
 
 [The Great Time Series Classification Bake Off: An Experimental Evaluation of Recently Proposed Algorithms. Extended Version](http://arxiv.org/abs/1602.01711)
 
-Many thanks to @ChristianSch for porting the project to gradle.
+Many thanks to @ChristianSch for porting the project to gradle, and to @mohataher for providing save/load functionality as well as JUNIT tests.
 
