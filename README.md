@@ -333,7 +333,7 @@ There are 7 implemented use cases:
 
 # Alternative Implementations
 
-1) Python: Thanks to the the PROMINENT Team at the University of Illinois at Chicago there is a python port of the BOSS code.
+1) Python: Thanks to Samuel Harford, Houshang Darabi (University of Illinois at Chicago) there is a python port of the code.
 [Python port](https://github.com/sharford5/SFA_Python)
 
 2) JAVA:  The UEA & UCR Time Series Classification Repository provides an alternative implementation of BOSS as well as other state-of-the-art classifiers.
