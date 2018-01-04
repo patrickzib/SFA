@@ -9,7 +9,6 @@ import sfa.classification.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
-import sfa.transformation.MFT;
 import sfa.transformation.MUSE;
 
 import java.io.File;
@@ -81,7 +80,7 @@ public class MTSClassificationTest {
         }
       }
     } finally {
-      TimeSeries.NORM = true; // FIXME static variable breaks some test cases!
+      TimeSeries.APPLY_Z_NORM = true; // FIXME static variable breaks some test cases!
     }
   }
 }

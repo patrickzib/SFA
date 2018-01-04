@@ -16,7 +16,7 @@ public class TimeSeries implements Serializable {
   protected boolean normed = false;
   protected Double label = null;
 
-  public static boolean NORM = true;
+  public static boolean APPLY_Z_NORM = true;
 
   public TimeSeries(){}
 
@@ -53,25 +53,32 @@ public class TimeSeries implements Serializable {
     norm(true);
   }
 
-  public void norm(boolean norm) {
+  /**
+   * After zero-mean-normalization the following holds:
+   *  mean = 0
+   *  stddev = 1
+   * @param normMean defines, if the mean should be subtracted from the time series
+   */
+  public void norm(boolean normMean) {
     this.mean = calculateMean();
     this.stddev = calculateStddev();
 
-    if (NORM && !isNormed()) {
-      norm(norm, this.mean, this.stddev);
+    if (!isNormed()) {
+      norm(normMean, this.mean, this.stddev);
     }
   }
 
   /**
-   * Zero-mean normalization. After normalization the following holds:
-   * mean = 0
-   * stddev = 1
+   * Used for zero-mean normalization.
+   * @param normMean defines, if the mean should be subtracted from the time series
+   * @param mean the mean to set (usually set to 0)
+   * @param stddev the stddev to set (usually set to 1)
    */
   public void norm(boolean normMean, double mean, double stddev) {
     this.mean = mean;
     this.stddev = stddev;
 
-    if (NORM && !isNormed()) {
+    if (APPLY_Z_NORM && !isNormed()) {
       double inverseStddev = (this.stddev != 0) ? 1.0 / this.stddev : 1.0;
 
       if (normMean) {
@@ -85,7 +92,8 @@ public class TimeSeries implements Serializable {
         }
       }
 
-//      this.stddev = 1.0;
+      //      this.mean = 0.0;
+      //      this.stddev = 1.0;
       this.normed = true;
     }
   }
@@ -173,25 +181,10 @@ public class TimeSeries implements Serializable {
   }
 
   /**
-   * Get a subsequence starting at offset with queryLength windowSize.
-   *
-   * @param windowSize
-   * @return
-   */
-  public TimeSeries getSubsequence(int offset, int windowSize, double mean, double stddev) {
-    double[] subsequenceData = Arrays.copyOfRange(this.data, offset, offset + windowSize);
-    if (subsequenceData.length != windowSize) {
-      System.err.println("Wrong size!!");
-    }
-    TimeSeries sequence = new TimeSeries(subsequenceData);
-    sequence.norm(true, mean, stddev);
-    return sequence;
-  }
-
-  /**
    * Get sliding windows with windowSize.
    *
    * @param windowSize
+   * @param normMean defines, if the mean should be subtracted from the time series
    * @return
    */
   public TimeSeries[] getSubsequences(int windowSize, boolean normMean) {
