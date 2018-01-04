@@ -13,6 +13,7 @@ import sfa.timeseries.TimeSeries;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,6 +34,8 @@ public class MUSE {
   public boolean lowerBounding;
   public SFA[] signature;
   public Dictionary dict;
+
+  public static boolean BIGRAMS = true;
 
   public final static int BLOCKS;
 
@@ -141,6 +144,40 @@ public class MUSE {
     return words;
   }
 
+  class MuseWord {
+    int w = 0;
+    int dim = 0;
+    int word = 0;
+    int word2 = 0;
+    public MuseWord(int w, int dim, int word, int word2) {
+      this.w = w;
+      this.dim = dim;
+      this.word = word;
+      this.word2 = word2;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      MuseWord museWord = (MuseWord) o;
+      return w == museWord.w &&
+          dim == museWord.dim &&
+          word == museWord.word &&
+          word2 == museWord.word2;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = 1;
+      result = 31 * result + Integer.hashCode(word);
+      result = 31 * result + Integer.hashCode(word2);
+      result = 31 * result + Integer.hashCode(w);
+      result = 31 * result + Integer.hashCode(dim);
+      return result;
+    }
+  }
+
+
   /**
    * Create words and bi-grams for all window lengths
    */
@@ -153,9 +190,8 @@ public class MUSE {
         samples[0].getDimensions() * samples.length);
 
     final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
-
 //    final long mask = (usedBits << wordLength) - 1l;
-    final long mask = (1L << (usedBits * wordLength)) - 1L;
+    final int mask = (1 << (usedBits * wordLength)) - 1;
 
     // iterate all samples in pairs of 'dimensionality'
     // and create a bag of bigrams each
@@ -166,16 +202,17 @@ public class MUSE {
       for (int w = 0; w < this.windowLengths.length; w++) {
         if (this.windowLengths[w] >= wordLength) {
           for (int d = 0; d < dimensionality; d++) {
-            String dLabel = String.valueOf(d);
             for (int offset = 0; offset < words[w][j + d].length; offset++) {
-              String word = w + "_" + dLabel + "_" + ((words[w][j + d][offset] & mask));
+              MuseWord word = new MuseWord(w, d, words[w][j + d][offset] & mask, 0);
               int dict = this.dict.getWord(word);
               bop.bob.putOrAdd(dict, 1, 1);
 
               // add 2-grams
-              if (offset - this.windowLengths[w] >= 0) {
-                String prevWord = w + "_" + dLabel + "_" + ((words[w][j + d][offset - this.windowLengths[w]] & mask));
-                int newWord = this.dict.getWord(prevWord + "_" + word);
+              if (BIGRAMS && (offset - this.windowLengths[w] >= 0)) {
+                MuseWord bigram = new MuseWord(w, d,
+                    (words[w][j + d][offset - this.windowLengths[w]] & mask),
+                    words[w][j + d][offset] & mask);
+                int newWord = this.dict.getWord(bigram);
                 bop.bob.putOrAdd(newWord, 1, 1);
               }
             }
@@ -259,20 +296,20 @@ public class MUSE {
    * Condenses the SFA word space.
    */
   public static class Dictionary {
-    ObjectIntHashMap<String> dict;
+    ObjectIntHashMap<MuseWord> dict;
     IntIntHashMap dictChi;
 
     public Dictionary() {
-      this.dict = new ObjectIntHashMap<String>();
+      this.dict = new ObjectIntHashMap<MuseWord>();
       this.dictChi = new IntIntHashMap();
     }
 
     public void reset() {
-      this.dict = new ObjectIntHashMap<String>();
+      this.dict = new ObjectIntHashMap<MuseWord>();
       this.dictChi = new IntIntHashMap();
     }
 
-    public int getWord(String word) {
+    public int getWord(MuseWord word) {
       int index = 0;
       int newWord = -1;
       if ((index = this.dict.indexOf(word)) > -1) {

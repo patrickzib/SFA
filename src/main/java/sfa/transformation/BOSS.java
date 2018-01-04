@@ -63,6 +63,8 @@ public class BOSS {
     public IntIntHashMap bag;
     public Double label;
 
+    public BagOfPattern() { }
+
     public BagOfPattern(int size, Double label) {
       this.bag = new IntIntHashMap(size);
       this.label = label;

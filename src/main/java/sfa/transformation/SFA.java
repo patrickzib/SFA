@@ -50,11 +50,11 @@ public class SFA implements Serializable {
     private static final long serialVersionUID = 4392333771929261697L;
 
     public double value;
-    public Double label;
+    public double label;
 
     public ValueLabel(){}
 
-    public ValueLabel(double key, Double label) {
+    public ValueLabel(double key, double label) {
       this.value = key;
       this.label = label;
     }
@@ -226,7 +226,7 @@ public class SFA implements Serializable {
           if (comp != 0) {
             return comp;
           }
-          return o1.label != null ? o1.label.compareTo(o2.label) : 0;
+          return Double.compare(o1.label,o2.label);
         }
       });
     }

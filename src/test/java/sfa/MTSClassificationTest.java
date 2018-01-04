@@ -10,6 +10,7 @@ import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 import sfa.transformation.MFT;
+import sfa.transformation.MUSE;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +70,7 @@ public class MTSClassificationTest {
               MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test, useDerivatives);
 
               MUSEClassifier muse = new MUSEClassifier();
+              MUSE.BIGRAMS = true;
               MUSEClassifier.Score museScore = muse.eval(trainSamples, testSamples);
               System.out.println(s + ";" + museScore.toString());
             }
