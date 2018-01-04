@@ -54,9 +54,9 @@ public class SFA implements Serializable {
 
     public ValueLabel(){}
 
-    public ValueLabel(double key, double label) {
+    public ValueLabel(double key, Double label) {
       this.value = key;
-      this.label = label;
+      this.label = label != null? label : 0;
     }
 
     @Override

@@ -81,7 +81,7 @@ public class MTSClassificationTest {
         }
       }
     } finally {
-      ParallelFor.shutdown();
+      TimeSeries.NORM = true; // FIXME static variable breaks some test cases!
     }
   }
 }

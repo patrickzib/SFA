@@ -44,7 +44,7 @@ public class MUSEClassifier extends Classifier {
 
   public MUSEClassifier() {
     super();
-    TimeSeries.NORM = false;
+    TimeSeries.NORM = false; // FIXME static variable breaks some test cases!
   }
 
   public static class MUSEModel extends Model {
