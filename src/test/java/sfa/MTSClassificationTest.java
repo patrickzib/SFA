@@ -19,6 +19,7 @@ public class MTSClassificationTest {
 
   // The multivariate datasets to use
   public static String[] datasets = new String[]{
+      //"AReM",
       "LP1",
       "LP2",
       "LP3",
@@ -69,7 +70,7 @@ public class MTSClassificationTest {
               MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test, useDerivatives);
 
               MUSEClassifier muse = new MUSEClassifier();
-              MUSE.BIGRAMS = true;
+              MUSEClassifier.BIGRAMS = true;
               MUSEClassifier.Score museScore = muse.eval(trainSamples, testSamples);
               System.out.println(s + ";" + museScore.toString());
             }

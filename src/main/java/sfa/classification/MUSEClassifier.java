@@ -35,13 +35,13 @@ public class MUSEClassifier extends Classifier {
   public static double p = 0.1;
   public static double c = 1;
 
-  public static boolean BIGRAMS;
+  public static boolean BIGRAMS = true;
   public static boolean lowerBounding = true;
 
   // the trained muse model
   MUSEModel model;
 
-  public static final int MAX_WINDOW_SIZE = 450;
+  //public static final int MAX_WINDOW_SIZE = 450;
 
   public MUSEClassifier() {
     super();
@@ -167,7 +167,7 @@ public class MUSEClassifier extends Classifier {
       SFA.HistogramType bestHistType = null;
 
       int min = 4;
-      int max = getMax(samples, MAX_WINDOW_SIZE);
+      int max = getMax(samples, MAX_WINDOW_LENGTH);
       final int[] windowLengths = new int[max - min + 1];
       for (int w = min, a = 0; w <= max; w++, a++) {
         windowLengths[a] = w;
