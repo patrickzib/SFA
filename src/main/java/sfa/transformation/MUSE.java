@@ -228,18 +228,10 @@ public class MUSE {
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
   public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
-    // class frequencies
-    LongIntHashMap classFrequencies = new LongIntHashMap();
-    for (BagOfBigrams ts : bob) {
-      long label = ts.label.longValue();
-      classFrequencies.putOrAdd(label, 1, 1);
-    }
-
-    // Chi2 Test
+    // Chi^2 Test
     IntIntHashMap featureCount = new IntIntHashMap(bob[0].bob.size());
     LongDoubleHashMap classProb = new LongDoubleHashMap(10);
     LongIntHashMap observed = new LongIntHashMap(bob[0].bob.size());
-    IntDoubleHashMap chiSquare = new IntDoubleHashMap(bob[0].bob.size());
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
@@ -260,18 +252,19 @@ public class MUSE {
     }
 
     // chi square: observed minus expected occurence
-    for (LongDoubleCursor prob : classProb) {
-      prob.value /= (double) bob.length; // (double) frequencies.get(prob.key);
+    IntHashSet chiSquare = new IntHashSet(featureCount.size());
+    for (LongDoubleCursor classLabel : classProb) {
+      classLabel.value /= (double) bob.length; // (double) frequencies.get(classLabel.key);
 
       for (IntIntCursor feature : featureCount) {
-        long key = prob.key << 32 | feature.key;
-        double expected = prob.value * feature.value;
+        long key = classLabel.key << 32 | feature.key;
+        double expected = classLabel.value * feature.value;
 
         double chi = observed.get(key) - expected;
         double newChi = chi * chi / expected;
         if (newChi >= chi_limit
-            && newChi > chiSquare.get(feature.key)) {
-          chiSquare.put(feature.key, newChi);
+            && !chiSquare.contains(feature.key)) {
+          chiSquare.add(feature.key);
         }
       }
     }
@@ -279,7 +272,7 @@ public class MUSE {
     // best elements above limit
     for (int j = 0; j < bob.length; j++) {
       for (IntIntCursor cursor : bob[j].bob) {
-        if (chiSquare.get(cursor.key) < chi_limit) {
+        if (!chiSquare.contains(cursor.key)) {
           bob[j].bob.values[cursor.index] = 0;
         }
       }

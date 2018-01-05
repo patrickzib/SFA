@@ -2,10 +2,7 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import com.carrotsearch.hppc.IntFloatHashMap;
-import com.carrotsearch.hppc.IntIntHashMap;
-import com.carrotsearch.hppc.LongFloatHashMap;
-import com.carrotsearch.hppc.LongIntHashMap;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import sfa.classification.Classifier;
@@ -173,18 +170,19 @@ public class WEASEL {
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
   public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
-    // class frequencies
-    LongIntHashMap classFrequencies = new LongIntHashMap();
-    for (BagOfBigrams ts : bob) {
-      long label = ts.label.longValue();
-      classFrequencies.putOrAdd(label, 1, 1);
-    }
+//    // class frequencies
+//    LongIntHashMap classFrequencies = new LongIntHashMap();
+//    for (BagOfBigrams ts : bob) {
+//      long label = ts.label.longValue();
+//      classFrequencies.putOrAdd(label, 1, 1);
+//    }
 
     // Chi2 Test
     IntIntHashMap featureCount = new IntIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
     LongIntHashMap observed = new LongIntHashMap(bob[0].bob.size());
-    IntFloatHashMap chiSquare = new IntFloatHashMap(bob[0].bob.size());
+    //IntFloatHashMap chiSquare = new IntFloatHashMap(bob[0].bob.size());
+    IntHashSet chiSquare = new IntHashSet(bob[0].bob.size());
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
@@ -214,9 +212,9 @@ public class WEASEL {
 
         float chi = observed.get(key) - expected;
         float newChi = chi * chi / expected;
-        if (newChi >= chi_limit
-            && newChi > chiSquare.get(feature.key)) {
-          chiSquare.put(feature.key, newChi);
+        if (newChi >= chi_limit) {
+          //chiSquare.put(feature.key, newChi);
+          chiSquare.add(feature.key);
         }
       }
     }
@@ -224,7 +222,7 @@ public class WEASEL {
     // best elements above limit
     for (int j = 0; j < bob.length; j++) {
       for (IntIntCursor cursor : bob[j].bob) {
-        if (chiSquare.get(cursor.key) < chi_limit) {
+        if (!chiSquare.contains(cursor.key)) {
           bob[j].bob.values[cursor.index] = 0;
         }
       }
