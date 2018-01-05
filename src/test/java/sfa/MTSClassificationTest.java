@@ -19,7 +19,7 @@ public class MTSClassificationTest {
 
   // The multivariate datasets to use
   public static String[] datasets = new String[]{
-      //"AReM",
+//      "AReM",
       "LP1",
       "LP2",
       "LP3",

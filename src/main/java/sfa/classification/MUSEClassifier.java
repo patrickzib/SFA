@@ -41,8 +41,6 @@ public class MUSEClassifier extends Classifier {
   // the trained muse model
   MUSEModel model;
 
-  //public static final int MAX_WINDOW_SIZE = 450;
-
   public MUSEClassifier() {
     super();
     TimeSeries.APPLY_Z_NORM = false; // FIXME static variable breaks some test cases!
