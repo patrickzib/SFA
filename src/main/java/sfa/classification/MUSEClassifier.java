@@ -2,7 +2,7 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import com.carrotsearch.hppc.cursors.IntLongCursor;
+import com.carrotsearch.hppc.cursors.IntIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -281,7 +281,7 @@ public class MUSEClassifier extends Classifier {
     for (int j = 0; j < bob.length; j++) {
       MUSE.BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<FeatureNode>(bop.bob.size());
-      for (IntLongCursor word : bop.bob) {
+      for (IntIntCursor word : bop.bob) {
         if (word.value > 0 && word.key <= max_feature) {
           features.add(new FeatureNode(word.key, word.value));
         }

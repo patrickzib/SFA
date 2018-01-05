@@ -4,7 +4,6 @@ package sfa.transformation;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
-import com.carrotsearch.hppc.cursors.IntLongCursor;
 import com.carrotsearch.hppc.cursors.LongDoubleCursor;
 import sfa.classification.Classifier;
 import sfa.classification.ParallelFor;
@@ -81,11 +80,11 @@ public class MUSE {
    * The MUSE model: a histogram of SFA word and bi-gram frequencies
    */
   public static class BagOfBigrams {
-    public IntLongHashMap bob;
+    public IntIntHashMap bob;
     public Double label;
 
     public BagOfBigrams(int size, Double label) {
-      this.bob = new IntLongHashMap(size);
+      this.bob = new IntIntHashMap(size);
       this.label = label;
     }
   }
@@ -195,23 +194,23 @@ public class MUSE {
 
     // iterate all samples in pairs of 'dimensionality'
     // and create a bag of bigrams each
-    for (int dim = 0, j = 0; dim < samples.length; dim++, j += dimensionality) {
-      BagOfBigrams bop = new BagOfBigrams(100, samples[dim].getLabel());
+    for (int i = 0, j = 0; i < samples.length; i++, j += dimensionality) {
+      BagOfBigrams bop = new BagOfBigrams(100, samples[i].getLabel());
 
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
         if (this.windowLengths[w] >= wordLength) {
-          for (int d = 0; d < dimensionality; d++) {
-            for (int offset = 0; offset < words[w][j + d].length; offset++) {
-              MuseWord word = new MuseWord(w, d, words[w][j + d][offset] & mask, 0);
+          for (int dim = 0; dim < dimensionality; dim++) {
+            for (int offset = 0; offset < words[w][j + dim].length; offset++) {
+              MuseWord word = new MuseWord(w, dim, words[w][j + dim][offset] & mask, 0);
               int dict = this.dict.getWord(word);
               bop.bob.putOrAdd(dict, 1, 1);
 
               // add 2-grams
               if (BIGRAMS && (offset - this.windowLengths[w] >= 0)) {
-                MuseWord bigram = new MuseWord(w, d,
-                    (words[w][j + d][offset - this.windowLengths[w]] & mask),
-                    words[w][j + d][offset] & mask);
+                MuseWord bigram = new MuseWord(w, dim,
+                    (words[w][j + dim][offset - this.windowLengths[w]] & mask),
+                    words[w][j + dim][offset] & mask);
                 int newWord = this.dict.getWord(bigram);
                 bop.bob.putOrAdd(newWord, 1, 1);
               }
@@ -245,7 +244,7 @@ public class MUSE {
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
       long label = bagOfPattern.label.longValue();
-      for (IntLongCursor word : bagOfPattern.bob) {
+      for (IntIntCursor word : bagOfPattern.bob) {
         if (word.value > 0) {
           featureCount.putOrAdd(word.key, 1, 1);
           long key = label << 32 | word.key;
@@ -279,7 +278,7 @@ public class MUSE {
 
     // best elements above limit
     for (int j = 0; j < bob.length; j++) {
-      for (IntLongCursor cursor : bob[j].bob) {
+      for (IntIntCursor cursor : bob[j].bob) {
         if (chiSquare.get(cursor.key) < chi_limit) {
           bob[j].bob.values[cursor.index] = 0;
         }
@@ -342,9 +341,9 @@ public class MUSE {
 
     public void remap(final BagOfBigrams[] bagOfPatterns) {
       for (int j = 0; j < bagOfPatterns.length; j++) {
-        IntLongHashMap oldMap = bagOfPatterns[j].bob;
-        bagOfPatterns[j].bob = new IntLongHashMap(oldMap.size());
-        for (IntLongCursor word : oldMap) {
+        IntIntHashMap oldMap = bagOfPatterns[j].bob;
+        bagOfPatterns[j].bob = new IntIntHashMap(oldMap.size());
+        for (IntIntCursor word : oldMap) {
           if (word.value > 0) {
             bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
           }
