@@ -35,6 +35,7 @@ public class MUSEClassifier extends Classifier {
   public static double p = 0.1;
   public static double c = 1;
 
+  public static boolean BIGRAMS;
   public static boolean lowerBounding = true;
 
   // the trained muse model

@@ -6,6 +6,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongDoubleCursor;
 import sfa.classification.Classifier;
+import sfa.classification.MUSEClassifier;
 import sfa.classification.ParallelFor;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -32,8 +33,6 @@ public class MUSE {
   public boolean lowerBounding;
   public SFA[] signature;
   public Dictionary dict;
-
-  public static boolean BIGRAMS = true;
 
   public final static int BLOCKS;
 
@@ -206,7 +205,7 @@ public class MUSE {
               bop.bob.putOrAdd(dict, 1, 1);
 
               // add 2-grams
-              if (BIGRAMS && (offset - this.windowLengths[w] >= 0)) {
+              if (MUSEClassifier.BIGRAMS && (offset - this.windowLengths[w] >= 0)) {
                 MuseWord bigram = new MuseWord(w, dim,
                     (words[w][j + dim][offset - this.windowLengths[w]] & mask),
                     words[w][j + dim][offset] & mask);
