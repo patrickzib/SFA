@@ -46,7 +46,7 @@ public class MUSE {
   }
 
   /**
-   * Create a WEASEL model.
+   * Create a WEASEL+MUSE model.
    *
    * @param maxF          Length of the SFA words
    * @param maxS          alphabet size
@@ -190,8 +190,7 @@ public class MUSE {
 //    final long mask = (usedBits << wordLength) - 1l;
     final int mask = (1 << (usedBits * wordLength)) - 1;
 
-    // iterate all samples in pairs of 'dimensionality'
-    // and create a bag of bigrams each
+    // iterate all samples and create a muse model for each
     for (int i = 0, j = 0; i < samples.length; i++, j += dimensionality) {
       BagOfBigrams bop = new BagOfBigrams(100, samples[i].getLabel());
 
@@ -204,7 +203,7 @@ public class MUSE {
               int dict = this.dict.getWord(word);
               bop.bob.putOrAdd(dict, 1, 1);
 
-              // add 2-grams
+              // add bigrams
               if (MUSEClassifier.BIGRAMS && (offset - this.windowLengths[w] >= 0)) {
                 MuseWord bigram = new MuseWord(w, dim,
                     (words[w][j + dim][offset - this.windowLengths[w]] & mask),
@@ -249,7 +248,7 @@ public class MUSE {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // chi square: observed minus expected occurence
+    // chi-squared: observed minus expected occurence
     IntHashSet chiSquare = new IntHashSet(featureCount.size());
     for (LongDoubleCursor classLabel : classProb) {
       classLabel.value /= (double) bob.length; // (double) frequencies.get(classLabel.key);
@@ -276,7 +275,7 @@ public class MUSE {
       }
     }
 
-    // chi square reduces keys substantially => remap
+    // chi-squared reduces keys substantially => remap
     this.dict.remap(bob);
   }
 
