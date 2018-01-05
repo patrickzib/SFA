@@ -170,19 +170,10 @@ public class WEASEL {
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
   public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
-//    // class frequencies
-//    LongIntHashMap classFrequencies = new LongIntHashMap();
-//    for (BagOfBigrams ts : bob) {
-//      long label = ts.label.longValue();
-//      classFrequencies.putOrAdd(label, 1, 1);
-//    }
-
     // Chi2 Test
     IntIntHashMap featureCount = new IntIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
     LongIntHashMap observed = new LongIntHashMap(bob[0].bob.size());
-    //IntFloatHashMap chiSquare = new IntFloatHashMap(bob[0].bob.size());
-    IntHashSet chiSquare = new IntHashSet(bob[0].bob.size());
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
@@ -202,7 +193,8 @@ public class WEASEL {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // chi square: observed minus expected occurrence
+    // chi-squared: observed minus expected occurrence
+    IntHashSet chiSquare = new IntHashSet(featureCount.size());
     for (LongFloatCursor prob : classProb) {
       prob.value /= bob.length; // (float) frequencies.get(prob.key);
 
@@ -212,8 +204,8 @@ public class WEASEL {
 
         float chi = observed.get(key) - expected;
         float newChi = chi * chi / expected;
-        if (newChi >= chi_limit) {
-          //chiSquare.put(feature.key, newChi);
+        if (newChi >= chi_limit
+            && !chiSquare.contains(feature.key)) {
           chiSquare.add(feature.key);
         }
       }
@@ -228,7 +220,7 @@ public class WEASEL {
       }
     }
 
-    // chi square reduces keys substantially => remap
+    // chi-squared reduces keys substantially => remap
     this.dict.remap(bob);
   }
 

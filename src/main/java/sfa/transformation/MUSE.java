@@ -248,7 +248,7 @@ public class MUSE {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // chi-squared: observed minus expected occurence
+    // chi-squared: observed minus expected occurrence
     IntHashSet chiSquare = new IntHashSet(featureCount.size());
     for (LongDoubleCursor classLabel : classProb) {
       classLabel.value /= (double) bob.length; // (double) frequencies.get(classLabel.key);
