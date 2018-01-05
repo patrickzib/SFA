@@ -31,7 +31,7 @@ public class WEASELClassifier extends Classifier {
   public static double chi = 2;
   public static double bias = 1;
   public static double p = 0.1;
-  public static int iterations = 5000;
+  public static int iterations = 1000;
   public static double c = 1;
 
   // the trained weasel
