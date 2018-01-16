@@ -12,7 +12,7 @@ apply plugin: 'java'
 // apply plugin: 'checkstyle'
 
 // add support for eclipse
-apply plugin : 'eclipse'
+apply plugin: 'eclipse'
 
 apply plugin: 'idea'
 
@@ -30,7 +30,7 @@ dependencies {
     // multithreaded FFT
     compile 'com.github.wendykierp:JTransforms:3.1'
     // liblinear in java
-    compile 'de.bwaldvogel:liblinear:2.11'
+    compile 'de.bwaldvogel:liblinear:2.20'
     // efficient collection implementation without "object boxing"
     compile 'com.carrotsearch:hppc:0.7.2'
     // java serialiser
