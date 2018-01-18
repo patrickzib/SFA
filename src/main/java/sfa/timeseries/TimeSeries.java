@@ -233,7 +233,7 @@ public class TimeSeries implements Serializable {
     // it is faster to multiply than to divide
     double rWindowLength = 1.0 / (double) windowLength;
 
-    for (int ww = 0; ww < windowLength; ww++) {
+    for (int ww = 0; ww < Math.min(tsData.length, windowLength); ww++) {
       sum += tsData[ww];
       squareSum += tsData[ww] * tsData[ww];
     }
