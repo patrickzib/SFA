@@ -137,7 +137,7 @@ public class MFT implements Serializable {
       // use the DFT for the first offset
       else {
         double[] dft = new double[this.windowSize];
-        System.arraycopy(timeSeries.getData(), 0, dft, 0, this.windowSize);
+        System.arraycopy(timeSeries.getData(), 0, dft, 0, Math.min(this.windowSize, timeSeries.getLength()));
 
         this.fft.realForward(dft);
         dft[1] = 0; // DC-coefficient imag part

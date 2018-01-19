@@ -516,11 +516,11 @@ public abstract class Classifier {
   }
 
   protected int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {
-    int max = MAX_WINDOW_SIZE;
+    int max = 0;
     for (TimeSeries ts : samples) {
-      max = Math.min(ts.getLength(), max);
+      max = Math.max(ts.getLength(), max);
     }
-    return max;
+    return Math.min(MAX_WINDOW_SIZE,max);
   }
 
   protected static Set<Double> uniqueClassLabels(TimeSeries[] ts) {

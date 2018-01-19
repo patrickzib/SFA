@@ -7,6 +7,8 @@ public class ShotgunClassifierTest extends AbstractClassifierTest{
     @Override
     protected List<DataSet> getDataSets() {
         List<DataSet> dataSets=new ArrayList<>();
+        //variable_length;Shotgun;1.0;0.929
+        dataSets.add(new DataSet("variable_length", 1.0, 0.929));
         //Coffee;Shotgun;1.0;1.0
         dataSets.add(new DataSet("Coffee", 1.0, 1.0));
         //Beef;Shotgun;0.633;0.8
