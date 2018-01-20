@@ -61,9 +61,7 @@ public class MFT implements Serializable {
    */
   public double[] transform(TimeSeries timeSeries, int l) {
     double[] data = new double[this.windowSize];
-    int windowSize = timeSeries.getLength();
-
-    System.arraycopy(timeSeries.getData(), 0, data, 0, this.windowSize); // TODO why not windowSize here?
+    System.arraycopy(timeSeries.getData(), 0, data, 0, Math.min(this.windowSize, timeSeries.getLength()));
     this.fft.realForward(data);
     data[1] = 0; // DC-coefficient imaginary part
 
@@ -71,7 +69,7 @@ public class MFT implements Serializable {
     double[] copy = new double[l];
 
     // make it even length for uneven windowSize
-    int length = Math.min(windowSize - this.startOffset, l);
+    int length = Math.min(this.windowSize - this.startOffset, l);
     System.arraycopy(data, this.startOffset, copy, 0, length);
 
     int sign = 1;

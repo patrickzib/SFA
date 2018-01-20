@@ -188,11 +188,11 @@ public class TimeSeries implements Serializable {
    * @return
    */
   public TimeSeries[] getSubsequences(int windowSize, boolean normMean) {
-    // Window offset
-    int offset = 1;
+    // windowSize should not be larger than the data size
+    int ws = Math.min(windowSize, this.data.length);
 
     // extract subsequences
-    int size = (this.data.length - windowSize) / offset + 1;
+    int size = (this.data.length - ws) + 1;
     TimeSeries[] subsequences = new TimeSeries[size];
 
     double[] means = new double[size];
@@ -200,21 +200,14 @@ public class TimeSeries implements Serializable {
 
     calcIncrementalMeanStddev(windowSize, this.data, means, stddevs);
 
-    int pos = 0;
     for (int i = 0; i < subsequences.length; i++) {
       double subsequenceData[] = new double[windowSize];
-      System.arraycopy(this.data, pos, subsequenceData, 0, windowSize);
+      System.arraycopy(this.data, i, subsequenceData, 0, ws);
 
       // The newly created time series have queryLength windowSize and offset i
       subsequences[i] = new TimeSeries(subsequenceData);
-      if (offset == 1) {
-        subsequences[i].norm(normMean, means[i], stddevs[i]);
-      } else {
-        subsequences[i].norm(normMean);
-      }
+      subsequences[i].norm(normMean, means[i], stddevs[i]);
       subsequences[i].setLabel(getLabel());
-
-      pos += offset;
     }
     return subsequences;
   }
@@ -227,6 +220,9 @@ public class TimeSeries implements Serializable {
       double[] tsData,
       double[] means,
       double[] stds) {
+    // we cannot calculate windows larger than the length of the data
+    int ws = Math.min(tsData.length, windowLength);
+
     double sum = 0;
     double squareSum = 0;
 
@@ -237,10 +233,13 @@ public class TimeSeries implements Serializable {
       sum += tsData[ww];
       squareSum += tsData[ww] * tsData[ww];
     }
+
+    // first window
     means[0] = sum * rWindowLength;
     double buf = squareSum * rWindowLength - means[0] * means[0];
     stds[0] = buf > 0 ? Math.sqrt(buf) : 0;
 
+    // remaining windows
     for (int w = 1, end = tsData.length - windowLength + 1; w < end; w++) {
       sum += tsData[w + windowLength - 1] - tsData[w - 1];
       means[w] = sum * rWindowLength;
