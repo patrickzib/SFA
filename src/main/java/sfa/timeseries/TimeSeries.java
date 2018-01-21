@@ -220,9 +220,6 @@ public class TimeSeries implements Serializable {
       double[] tsData,
       double[] means,
       double[] stds) {
-    // we cannot calculate windows larger than the length of the data
-    int ws = Math.min(tsData.length, windowLength);
-
     double sum = 0;
     double squareSum = 0;
 
