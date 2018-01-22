@@ -19,11 +19,26 @@ apply plugin: 'idea'
 // Apply the application plugin to add support for building an application
 apply plugin: 'application'
 
+apply plugin: 'maven-publish'
+
+group = 'sfa'
+version = '0.1'
 // In this section you declare where to find the dependencies of your project
 repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     mavenCentral()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'sfa'
+            artifactId 'sfa'
+            version '0.1'
+            from components.java
+        }
+    }
 }
 
 dependencies {
