@@ -33,7 +33,7 @@ repositories {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId 'sfa'
+            groupId 'com.github.patrickzib'
             artifactId 'sfa'
             version '0.1'
             from components.java
