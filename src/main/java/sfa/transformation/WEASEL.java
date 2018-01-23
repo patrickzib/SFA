@@ -231,16 +231,16 @@ public class WEASEL {
    */
   public static class Dictionary {
     LongIntHashMap dict;
-    LongIntHashMap dictChi;
+    IntIntHashMap dictChi;
 
     public Dictionary() {
       this.dict = new LongIntHashMap();
-      this.dictChi = new LongIntHashMap();
+      this.dictChi = new IntIntHashMap();
     }
 
     public void reset() {
       this.dict = new LongIntHashMap();
-      this.dictChi = new LongIntHashMap();
+      this.dictChi = new IntIntHashMap();
     }
 
     public int getWord(long word) {
@@ -254,7 +254,7 @@ public class WEASEL {
       }
     }
 
-    public int getWordChi(long word) {
+    public int getWordChi(int word) {
       int index = 0;
       if ((index = this.dictChi.indexOf(word)) > -1) {
         return this.dictChi.indexGet(index);
