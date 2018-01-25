@@ -45,7 +45,7 @@ There is always a trade-off between accuracy and prediction times.  However, WEA
 
 Step 1. Add the JitPack repository to your gradle build file:
 
-```
+```Gradle
 	allprojects {
 		repositories {
 			...
@@ -56,7 +56,7 @@ Step 1. Add the JitPack repository to your gradle build file:
 
 Step 2. Add the dependency:
 
-```
+```Gradle
 	dependencies {
 	        compile 'com.github.patrickzib:SFA:v0.1'
 	}
