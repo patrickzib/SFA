@@ -8,7 +8,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
-import sfa.transformation.MFT;
 
 import java.io.IOException;
 import java.util.Random;

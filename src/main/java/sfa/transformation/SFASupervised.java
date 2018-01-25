@@ -55,7 +55,7 @@ public class SFASupervised extends SFA {
   }
 
   /**
-   * Trains the SFA boss based on a set of samples. At the end of this call,
+   * Trains the SFA representation based on a set of samples. At the end of this call,
    * the quantization bins are set.
    *
    * @param samples    the samples to use for training.
@@ -69,7 +69,7 @@ public class SFASupervised extends SFA {
    */
   @Override
   public short[][] fitTransform(TimeSeries[] samples, int wordLength, int symbols, boolean normMean) {
-    int length = samples[0].getLength();
+    int length = getMaxLength(samples);
     double[][] transformedSignal = fitTransformDouble(samples, length, symbols, normMean);
 
     Indices<Double>[] best = calcBestCoefficients(samples, transformedSignal);
@@ -86,6 +86,14 @@ public class SFASupervised extends SFA {
     this.maxWordLength += this.maxWordLength % 2;
 
     return transform(samples, transformedSignal);
+  }
+
+  protected int getMaxLength(TimeSeries[] samples) {
+    int length = 0;
+    for (int i = 0; i < samples.length; i++) {
+      length = Math.max(samples[i].getLength(), length);
+    }
+    return length;
   }
 
   /**
@@ -110,7 +118,11 @@ public class SFASupervised extends SFA {
 
     double nSamples = transformedSignal.length;
     double nClasses = classes.keySet().size();
-    int length = transformedSignal[0].length;
+
+    int length = 0;
+    for (int i = 0; i < transformedSignal.length; i++) {
+      length = Math.max(transformedSignal[i].length, length);
+    }
 
     double[] f = getFoneway(length, classes, nSamples, nClasses);
 
