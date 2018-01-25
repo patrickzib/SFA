@@ -72,3 +72,4 @@ public class WEASELTest {
     Assert.assertNotNull("BagOfBigrams is null:", bag2);
   }
 }
+
