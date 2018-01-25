@@ -213,6 +213,31 @@ Double[] labels = bossvs.predict(testSamples);
 Predicions predictions = bossvs.score(testSamples);
 ```
 
+**How to include this project**
+
+
+Step 1. Add the JitPack repository to your gradle build file:
+
+```
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+
+Step 2. Add the dependency:
+
+```
+	dependencies {
+	        compile 'com.github.patrickzib:SFA:v0.1'
+	}
+```
+
+See [[LINK]](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
+
+
 **References**
 
 "Schäfer, P.: Scalable Time Series Classification. DMKD (2016) and ECML/PKDD 2016
