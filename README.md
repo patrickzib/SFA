@@ -213,8 +213,7 @@ Double[] labels = bossvs.predict(testSamples);
 Predicions predictions = bossvs.score(testSamples);
 ```
 
-**How to include this project**
-
+# How to include this project
 
 Step 1. Add the JitPack repository to your gradle build file:
 
