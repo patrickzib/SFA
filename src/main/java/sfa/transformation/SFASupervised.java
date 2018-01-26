@@ -119,10 +119,11 @@ public class SFASupervised extends SFA {
     double nSamples = transformedSignal.length;
     double nClasses = classes.keySet().size();
 
-    int length = 0;
-    for (int i = 0; i < transformedSignal.length; i++) {
-      length = Math.max(transformedSignal[i].length, length);
-    }
+//    int length = 0;
+//    for (int i = 0; i < transformedSignal.length; i++) {
+//      length = Math.max(transformedSignal[i].length, length);
+//    }
+    int length = transformedSignal[0].length;
 
     double[] f = getFoneway(length, classes, nSamples, nClasses);
 
