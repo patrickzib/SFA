@@ -62,7 +62,7 @@ Step 2. Add the dependency:
 	}
 ```
 
-See [[LINK]](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
+See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
 
 
 # SFA: Symbolic Fourier Approximation
