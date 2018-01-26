@@ -40,6 +40,31 @@ There are fast time series classifiers (BOSS VS, TSBF, LS, DTW CV) that require 
 
 There is always a trade-off between accuracy and prediction times.  However, WEASEL is consistently among the best and fastest predicting methods, and competitors are (a) either at the same level of quality (COTE) but much slower or (b) faster but much worse in accuracy (LS, DTW CV, TSBF, or BOSS VS).
 
+
+# How to include this project
+
+Step 1. Add the JitPack repository to your gradle build file:
+
+```Gradle
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+
+Step 2. Add the dependency:
+
+```Gradle
+	dependencies {
+	        compile 'com.github.patrickzib:SFA:v0.1'
+	}
+```
+
+See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
+
+
 # SFA: Symbolic Fourier Approximation
 
 The symbolic time series representation Symbolic Fourier Approximation (SFA) represents each real-valued time series by a 
@@ -212,31 +237,6 @@ Double[] labels = bossvs.predict(testSamples);
 // predict and score
 Predicions predictions = bossvs.score(testSamples);
 ```
-
-**How to include this project**
-
-
-Step 1. Add the JitPack repository to your gradle build file:
-
-```
-	allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
-	}
-```
-
-Step 2. Add the dependency:
-
-```
-	dependencies {
-	        compile 'com.github.patrickzib:SFA:v0.1'
-	}
-```
-
-See [[LINK]](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
-
 
 **References**
 
