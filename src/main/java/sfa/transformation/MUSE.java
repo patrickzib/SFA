@@ -5,6 +5,7 @@ package sfa.transformation;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongDoubleCursor;
+
 import sfa.classification.Classifier;
 import sfa.classification.MUSEClassifier;
 import sfa.classification.ParallelFor;
@@ -31,7 +32,7 @@ public class MUSE {
   public int[] windowLengths;
   public boolean normMean;
   public boolean lowerBounding;
-  public SFA[] signature;
+  public SFA[][] signature;
   public Dictionary dict;
 
   public final static int BLOCKS;
@@ -70,7 +71,7 @@ public class MUSE {
     this.normMean = normMean;
     this.lowerBounding = lowerBounding;
     this.dict = new Dictionary();
-    this.signature = new SFA[windowLengths.length];
+    this.signature = new SFA[windowLengths.length][];
     this.histogramType = histogramType;
   }
 
@@ -119,21 +120,26 @@ public class MUSE {
 
     // SFA quantization
     if (this.signature[index] == null) {
-      this.signature[index] = new SFA(this.histogramType, true);
-      this.signature[index].fitWindowing(
-          mtsSamples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
+      this.signature[index] = new SFA[mtsSamples[0].getDimensions()]; 
+      for (int i = 0; i < this.signature[index].length; i++) {
+        this.signature[index][i] = new SFA(this.histogramType, false);
+        this.signature[index][i].fitWindowing(
+            mtsSamples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding, i);
+      }
     }
 
     // create words
     final int[][] words = new int[mtsSamples.length * mtsSamples[0].getDimensions()][];
     int pos = 0;
     for (MultiVariateTimeSeries mts : mtsSamples) {
+      int i = 0;      
       for (TimeSeries timeSeries : mts.timeSeries) {
         if (timeSeries.getLength() >= this.windowLengths[index]) {
-          words[pos] = this.signature[index].transformWindowingInt(timeSeries, this.maxF);
+          words[pos] = this.signature[index][i].transformWindowingInt(timeSeries, this.maxF);
         } else {
           words[pos] = new int[]{};
         }
+        i++;
         pos++;
       }
     }
@@ -204,7 +210,9 @@ public class MUSE {
               bop.bob.putOrAdd(dict, 1, 1);
 
               // add bigrams
-              if (MUSEClassifier.BIGRAMS && (offset - this.windowLengths[w] >= 0)) {
+              if (this.windowLengths[this.windowLengths.length-1] < 200 // avoid for large datasets
+                  && MUSEClassifier.BIGRAMS 
+                  && (offset - this.windowLengths[w] >= 0)) {
                 MuseWord bigram = new MuseWord(w, dim,
                     (words[w][j + dim][offset - this.windowLengths[w]] & mask),
                     words[w][j + dim][offset] & mask);

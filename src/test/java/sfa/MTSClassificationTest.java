@@ -70,6 +70,7 @@ public class MTSClassificationTest {
 
               MUSEClassifier muse = new MUSEClassifier();
               MUSEClassifier.BIGRAMS = true;
+              MUSEClassifier.MAX_WINDOW_LENGTH = 450;
               MUSEClassifier.Score museScore = muse.eval(trainSamples, testSamples);
               System.out.println(s + ";" + museScore.toString());
             }

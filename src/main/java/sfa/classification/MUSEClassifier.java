@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
+
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -23,15 +24,15 @@ import java.util.Comparator;
 public class MUSEClassifier extends Classifier {
 
   public static int maxF = 6;
-  public static int minF = 4;
+  public static int minF = 2;
   public static int maxS = 4;
   public static SFA.HistogramType[] histTypes
       = new SFA.HistogramType[]{SFA.HistogramType.EQUI_DEPTH, SFA.HistogramType.EQUI_FREQUENCY};
 
   public static double chi = 2;
   public static double bias = 1;
-  public static SolverType solverType = SolverType.L2R_LR_DUAL;
-  public static int iterations = 1000;
+  public static SolverType solverType = SolverType.L2R_LR;
+  public static int iterations = 5000;
   public static double p = 0.1;
   public static double c = 1;
 
@@ -211,7 +212,9 @@ public class MUSEClassifier extends Classifier {
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
-      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+      Parameter par = new Parameter(solverType, c, iterations, p);
+      //par.setThreadCount(Math.min(Runtime.getRuntime().availableProcessors(),10));
+      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, par);
 
       return new MUSEModel(
           bestNorm,
@@ -257,7 +260,7 @@ public class MUSEClassifier extends Classifier {
 
     Problem problem = new Problem();
     problem.bias = bias;
-    problem.n = dict.size() + 2 + 1;
+    problem.n = dict.size() + 1;
     problem.y = getLabels(bob);
 
     final FeatureNode[][] features = initLibLinear(bob, problem.n);

@@ -4,6 +4,7 @@ package sfa.transformation;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
+
 import sfa.classification.Classifier.Words;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -242,16 +243,18 @@ public class SFA implements Serializable {
    * @param wordLength   the SFA word-queryLength
    * @param symbols      the SFA alphabet size
    * @param normMean     if set, the mean is subtracted from each sliding window
+   * @param dim          the dimension of the multivariate time series to use
    */
   public void fitWindowing(
-      MultiVariateTimeSeries[] mts, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding) {
+      MultiVariateTimeSeries[] mts, int windowLength, int wordLength, int symbols, boolean normMean, boolean lowerBounding, int dim) {
     ArrayList<TimeSeries> sa = new ArrayList<TimeSeries>(
         mts.length * mts[0].getDimensions() * mts[0].timeSeries[0].getLength() / windowLength);
 
     for (MultiVariateTimeSeries timeSeries : mts) {
-      for (TimeSeries t : timeSeries.timeSeries) {
-        sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
-      }
+//      for (TimeSeries t : timeSeries.timeSeries) {
+//        sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
+//      }
+      sa.addAll(Arrays.asList(timeSeries.timeSeries[dim].getDisjointSequences(windowLength, normMean)));
     }
     fitWindowing(sa.toArray(new TimeSeries[]{}), windowLength, wordLength, symbols, normMean, lowerBounding);
   }
