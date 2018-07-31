@@ -122,7 +122,7 @@ public class MUSE {
     if (this.signature[index] == null) {
       this.signature[index] = new SFA[mtsSamples[0].getDimensions()]; 
       for (int i = 0; i < this.signature[index].length; i++) {
-        this.signature[index][i] = new SFA(this.histogramType, false);
+        this.signature[index][i] = new SFA(this.histogramType, false); // TODO true?
         this.signature[index][i].fitWindowing(
             mtsSamples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding, i);
       }
@@ -259,7 +259,7 @@ public class MUSE {
     // chi-squared: observed minus expected occurrence
     IntHashSet chiSquare = new IntHashSet(featureCount.size());
     for (LongDoubleCursor classLabel : classProb) {
-      classLabel.value /= (double) bob.length; // (double) frequencies.get(classLabel.key);
+      classLabel.value /= (double) bob.length;
 
       for (IntIntCursor feature : featureCount) {
         long key = classLabel.key << 32 | feature.key;

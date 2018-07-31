@@ -2,6 +2,28 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import sfa.timeseries.MultiVariateTimeSeries;
+import sfa.timeseries.TimeSeries;
+import sfa.transformation.MFT;
+
 import com.carrotsearch.hppc.FloatContainer;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
@@ -10,21 +32,12 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import de.bwaldvogel.liblinear.*;
-import sfa.timeseries.MultiVariateTimeSeries;
-import sfa.timeseries.TimeSeries;
-import sfa.transformation.MFT;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import de.bwaldvogel.liblinear.Feature;
+import de.bwaldvogel.liblinear.Linear;
+import de.bwaldvogel.liblinear.Parameter;
+import de.bwaldvogel.liblinear.Problem;
+import de.bwaldvogel.liblinear.SolverType;
 
 public abstract class Classifier {
   transient ExecutorService exec;
@@ -40,6 +53,7 @@ public abstract class Classifier {
   protected int[][] trainIndices;
   public static int folds = 10;
 
+  public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 250;
 
   // Blocks for parallel execution

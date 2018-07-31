@@ -251,9 +251,6 @@ public class SFA implements Serializable {
         mts.length * mts[0].getDimensions() * mts[0].timeSeries[0].getLength() / windowLength);
 
     for (MultiVariateTimeSeries timeSeries : mts) {
-//      for (TimeSeries t : timeSeries.timeSeries) {
-//        sa.addAll(Arrays.asList(t.getDisjointSequences(windowLength, normMean)));
-//      }
       sa.addAll(Arrays.asList(timeSeries.timeSeries[dim].getDisjointSequences(windowLength, normMean)));
     }
     fitWindowing(sa.toArray(new TimeSeries[]{}), windowLength, wordLength, symbols, normMean, lowerBounding);
