@@ -65,13 +65,12 @@ public class MFT implements Serializable {
     this.fft.realForward(data);
     data[1] = 0; // DC-coefficient imaginary part
 
-    // norming
-    double[] copy = new double[l];
-
     // make it even length for uneven windowSize
+    double[] copy = new double[l];
     int length = Math.min(this.windowSize - this.startOffset, l);
     System.arraycopy(data, this.startOffset, copy, 0, length);
 
+    // norming
     int sign = 1;
     for (int i = 0; i < copy.length; i++) {
       copy[i] *= this.norm * sign;

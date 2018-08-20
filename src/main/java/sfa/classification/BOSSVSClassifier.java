@@ -30,6 +30,8 @@ public class BOSSVSClassifier extends Classifier {
 
   public static boolean normMagnitudes = false;
 
+  public static int MAX_WINDOW_LENGTH = 250;
+
   // the trained weasel
   public Ensemble<BossVSModel<IntFloatHashMap>> model;
 

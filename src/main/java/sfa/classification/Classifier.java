@@ -7,18 +7,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import libsvm.*;
 
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -52,9 +47,6 @@ public abstract class Classifier {
   protected int[][] testIndices;
   protected int[][] trainIndices;
   public static int folds = 10;
-
-  public static int MIN_WINDOW_LENGTH = 2;
-  public static int MAX_WINDOW_LENGTH = 250;
 
   // Blocks for parallel execution
   public final static int BLOCKS = 8;
@@ -126,6 +118,15 @@ public abstract class Classifier {
     }
     return new Predictions(labels, correct);
   }
+
+  protected Predictions evalLabels(double[] sampleLabels, Double[] labels) {
+    int correct = 0;
+    for (int ind = 0; ind < sampleLabels.length; ind++) {
+      correct += compareLabels(labels[ind],(sampleLabels[ind]))? 1 : 0;
+    }
+    return new Predictions(labels, correct);
+  }
+
 
   protected Predictions evalLabels(MultiVariateTimeSeries[] testSamples, Double[] labels) {
     int correct = 0;
@@ -244,6 +245,8 @@ public abstract class Classifier {
     public int testSize;
     public int windowLength;
 
+    public Double avgOffset; // For earliness
+
     public Score() {
     }
 
@@ -271,11 +274,23 @@ public abstract class Classifier {
       return 1 - formatError(training, trainSize);
     }
 
+    public Double getTestEarliness() {
+      return this.avgOffset;
+    }
+
+    public String getEarliness() {
+      return String.format(Locale.ENGLISH, "%.2f", this.avgOffset);
+    }
+
     @Override
     public String toString() {
       double test = getTestingAccuracy();
       double train = getTrainingAccuracy();
 
+      if (avgOffset != null) {
+          String earliness = getEarliness();
+          return this.name+";"+train+";"+test+ ";" + earliness;
+      }
       return this.name + ";" + train + ";" + test;
     }
 
@@ -300,9 +315,22 @@ public abstract class Classifier {
     public Double[] labels;
     public AtomicInteger correct;
 
+    double[][] probabilities;
+    int[] realLabels;
+
+
     public Predictions(Double[] labels, int bestCorrect) {
       this.labels = labels;
       this.correct = new AtomicInteger(bestCorrect);
+    }
+
+    public Predictions(
+        Double[] predictions,
+        double[][] probabilities,
+        int[] realLabels) {
+      this.labels = predictions;
+      this.probabilities = probabilities;
+      this.realLabels = realLabels;
     }
   }
 
@@ -403,6 +431,77 @@ public abstract class Classifier {
     int temp = array[idxA];
     array[idxA] = array[idxB];
     array[idxB] = temp;
+  }
+
+  // Stratified cross validation
+  public static void trainSVMOneClass(
+      final svm_problem prob,
+      final svm_parameter param,
+      int nr_fold,
+      final Double[] target,
+      Random rand) {
+    final int[] fold_start = new int[nr_fold + 1];
+    final int l = prob.l;
+    final int[] perm = new int[l];
+
+    for (int i = 0; i < l; i++) {
+      perm[i] = i;
+    }
+    for (int i = 0; i < l; i++) {
+      int j = i + rand.nextInt(l - i);
+      do {
+        int tmp = perm[i];
+        perm[i] = perm[j];
+        perm[j] = tmp;
+      } while (false);
+    }
+    for (int i = 0; i <= nr_fold; i++) {
+      fold_start[i] = i * l / nr_fold;
+    }
+
+    final int fold = nr_fold;
+    ParallelFor.withIndex(threads, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        final ThreadLocal<svm> mySVM = new ThreadLocal<svm>();
+        mySVM.set(new svm());
+
+        for (int i = 0; i < fold; i++) {
+          if (i % threads == id) {
+            final int begin = fold_start[i];
+            final int end = fold_start[i + 1];
+            final svm_problem subprob = new svm_problem();
+
+            subprob.l = l - (end - begin);
+            subprob.x = new svm_node[subprob.l][];
+            subprob.y = new double[subprob.l];
+
+            int k = 0;
+            for (int j = 0; j < begin; j++) {
+              subprob.x[k] = prob.x[perm[j]];
+              subprob.y[k] = prob.y[perm[j]];
+              ++k;
+            }
+            for (int j = end; j < l; j++) {
+              subprob.x[k] = prob.x[perm[j]];
+              subprob.y[k] = prob.y[perm[j]];
+              ++k;
+            }
+            final svm_model submodel = mySVM.get().svm_train(subprob, param);
+            ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+              @Override
+              public void run(int id, AtomicInteger processed) {
+                for (int j = begin; j < end; j++) {
+                  if (j % BLOCKS == id) {
+                    target[perm[j]] = mySVM.get().svm_predict(submodel, prob.x[perm[j]]);
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    });
   }
 
 //  public static Map<String, LinkedList<Integer>> splitByLabel(TimeSeries[] samples) {
@@ -529,12 +628,12 @@ public abstract class Classifier {
     return windows.toArray(new Integer[]{});
   }
 
-  protected int getMax(TimeSeries[] samples, int MAX_WINDOW_SIZE) {
+  protected int getMax(TimeSeries[] samples, int maxWindowSize) {
     int max = 0;
     for (TimeSeries ts : samples) {
       max = Math.max(ts.getLength(), max);
     }
-    return Math.min(MAX_WINDOW_SIZE,max);
+    return Math.min(maxWindowSize,max);
   }
 
   protected static Set<Double> uniqueClassLabels(TimeSeries[] ts) {

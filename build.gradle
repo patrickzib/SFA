@@ -50,6 +50,8 @@ dependencies {
     compile 'com.carrotsearch:hppc:0.7.2'
     // java serialiser
     compile 'com.esotericsoftware:kryo:4.0.1'
+    // libSVM in java
+    compile "tw.edu.ntu.csie:libsvm:3.17"
 
     compile 'junit:junit:4.12'
     testCompile 'junit:junit:4.12'

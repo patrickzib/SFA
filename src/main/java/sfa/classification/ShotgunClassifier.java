@@ -20,6 +20,8 @@ public class ShotgunClassifier extends Classifier {
   // the trained boss
   ShotgunModel model;
 
+  public static int MAX_WINDOW_LENGTH = 250;
+
   public ShotgunClassifier() {
     super();
   }

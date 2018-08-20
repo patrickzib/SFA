@@ -8,6 +8,7 @@ import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import sfa.classification.Classifier;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
+import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -119,7 +120,11 @@ public class WEASEL {
     // create words
     final int[][] words = new int[samples.length][];
     for (int i = 0; i < samples.length; i++) {
-      words[i] = this.signature[index].transformWindowingInt(samples[i], this.maxF);
+      if (samples[i].getLength() >= this.windowLengths[index]) {
+        words[i] = this.signature[index].transformWindowingInt(samples[i], this.maxF);
+      } else {
+        words[i] = new int[]{};
+      }
     }
 
     return words;
@@ -136,10 +141,10 @@ public class WEASEL {
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
 
-    // FIXME
+    // TODO
     //    final long mask = (usedBits << wordLength) - 1L;
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(Classifier.MAX_WINDOW_LENGTH))+1;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -211,14 +216,13 @@ public class WEASEL {
       }
     }
 
-    // best elements above limit
-    for (int j = 0; j < bob.length; j++) {
-      for (IntIntCursor cursor : bob[j].bob) {
-        if (!chiSquare.contains(cursor.key)) {
-          bob[j].bob.values[cursor.index] = 0;
+        for (int j = 0; j < bob.length; j++) {
+          for (IntIntCursor cursor : bob[j].bob) {
+            if (!chiSquare.contains(cursor.key)) {
+              bob[j].bob.values[cursor.index] = 0;
+            }
+          }
         }
-      }
-    }
 
     // chi-squared reduces keys substantially => remap
     this.dict.remap(bob);

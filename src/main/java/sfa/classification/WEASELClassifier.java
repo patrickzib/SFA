@@ -12,6 +12,7 @@ import sfa.transformation.WEASEL.Dictionary;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as published in
@@ -26,7 +27,7 @@ public class WEASELClassifier extends Classifier {
   public static int minF = 4;
   public static int maxS = 4;
 
-  public static SolverType solverType = SolverType.L2R_LR_DUAL;
+  public static SolverType solverType = SolverType.L2R_LR_DUAL; // ???;
 
   public static double chi = 2;
   public static double bias = 1;
@@ -34,12 +35,16 @@ public class WEASELClassifier extends Classifier {
   public static int iterations = 1000;
   public static double c = 1;
 
+  public static boolean lowerBounding = false;
+
+  public static int MIN_WINDOW_LENGTH = 2;
+  public static int MAX_WINDOW_LENGTH = 250;
+
   // the trained weasel
   WEASELModel model;
 
   public WEASELClassifier() {
     super();
-    Linear.resetRandom();
   }
 
   public static class WEASELModel extends Model {
@@ -105,7 +110,6 @@ public class WEASELClassifier extends Classifier {
 
   @Override
   public Score fit(final TimeSeries[] trainSamples) {
-
     // train the shotgun models for different window lengths
     this.model = fitWeasel(trainSamples);
 
@@ -128,15 +132,62 @@ public class WEASELClassifier extends Classifier {
     model.weasel.dict.remap(bagTest);
 
     FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
-
     Double[] labels = new Double[samples.length];
 
-    for (int ind = 0; ind < features.length; ind++) {
-      double label = Linear.predict(model.linearModel, features[ind]);
-      labels[ind] = label;
-    }
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int ind = 0; ind < features.length; ind++) {
+          if (ind % BLOCKS == id) {
+            double label = Linear.predict(model.linearModel, features[ind]);
+            labels[ind] = label;
+          }
+        }
+      }
+    });
 
     return labels;
+  }
+
+  // TODO refactor
+  public Predictions predictProbabilities(TimeSeries[] samples) {
+    final Double[] labels = new Double[samples.length];
+    final double[][] probabilities = new double[samples.length][];
+
+    // iterate each sample to classify
+    final int[][][] wordsTest = model.weasel.createWords(samples);
+    final BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);
+
+    // chi square changes key mappings => remap
+    model.weasel.dict.remap(bagTest);
+
+    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
+
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int ind = 0; ind < features.length; ind++) {
+          if (ind % BLOCKS == id) {
+            probabilities[ind] = new double[model.linearModel.getNrClass()];
+            labels[ind] = Linear.predictProbability(model.linearModel, features[ind], probabilities[ind]);
+          }
+        }
+      }
+    });
+
+    return new Predictions(labels, probabilities, model.linearModel.getLabels());
+  }
+
+  public int[] getWindowLengths(final TimeSeries[] samples, boolean norm) {
+    int min = norm && MIN_WINDOW_LENGTH<=2? Math.max(3,MIN_WINDOW_LENGTH) : MIN_WINDOW_LENGTH;
+    int max = getMax(samples, MAX_WINDOW_LENGTH);
+
+    int[] wLengths = new int[max - min + 1];
+    int a = 0;
+    for (int w = min; w <= max; w+=1, a++) {
+      wLengths[a] = w;
+    }
+    return Arrays.copyOfRange(wLengths, 0, a);
   }
 
   protected WEASELModel fitWeasel(final TimeSeries[] samples) {
@@ -145,16 +196,10 @@ public class WEASELClassifier extends Classifier {
       int bestF = -1;
       boolean bestNorm = false;
 
-      int min = 4;
-      int max = getMax(samples, MAX_WINDOW_LENGTH);
-      int[] windowLengths = new int[max - min + 1];
-      for (int w = min, a = 0; w <= max; w++, a++) {
-        windowLengths[a] = w;
-      }
-
       optimize:
       for (final boolean mean : NORMALIZATION) {
-        WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, false);
+        int[] windowLengths = getWindowLengths(samples, mean);
+        WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
         int[][][] words = model.createWords(samples);
 
         for (int f = minF; f <= maxF; f += 2) {
@@ -179,7 +224,9 @@ public class WEASELClassifier extends Classifier {
       }
 
       // obtain the final matrix
-      WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, false);
+      int[] windowLengths = getWindowLengths(samples, bestNorm);
+      WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, lowerBounding);
+
       int[][][] words = model.createWords(samples);
       BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, bestF);
       model.filterChiSquared(bob, chi);
@@ -209,6 +256,8 @@ public class WEASELClassifier extends Classifier {
       final BagOfBigrams[] bob,
       final Dictionary dict,
       final double bias) {
+    Linear.resetRandom();
+
     Problem problem = new Problem();
     problem.bias = bias;
     problem.n = dict.size() + 1;
@@ -250,4 +299,11 @@ public class WEASELClassifier extends Classifier {
     return labels;
   }
 
+  public WEASELModel getModel() {
+    return model;
+  }
+
+  public void setModel(WEASELModel model) {
+    this.model = model;
+  }
 }

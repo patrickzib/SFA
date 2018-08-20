@@ -2,17 +2,18 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import sfa.classification.*;
+
+import sfa.classification.Classifier;
+import sfa.classification.MUSEClassifier;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
-import sfa.transformation.MUSE;
-
-import java.io.File;
-import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class MTSClassificationTest {
@@ -49,6 +50,9 @@ public class MTSClassificationTest {
       ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
       File dir = new File(classLoader.getResource("datasets/multivariate/").getFile());
+      //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/multivariate/");
+
+      TimeSeries.APPLY_Z_NORM = false;
 
       for (String s : datasets) {
         File d = new File(dir.getAbsolutePath() + "/" + s);
@@ -69,8 +73,6 @@ public class MTSClassificationTest {
               MultiVariateTimeSeries[] testSamples = TimeSeriesLoader.loadMultivariateDatset(test, useDerivatives);
 
               MUSEClassifier muse = new MUSEClassifier();
-              MUSEClassifier.BIGRAMS = true;
-              MUSEClassifier.MAX_WINDOW_LENGTH = 450;
               MUSEClassifier.Score museScore = muse.eval(trainSamples, testSamples);
               System.out.println(s + ";" + museScore.toString());
             }

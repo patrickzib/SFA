@@ -170,12 +170,13 @@ public class TimeSeries implements Serializable {
   /**
    * Get a subsequence starting at offset with queryLength windowSize.
    *
+   * @param offset
    * @param windowSize
    * @return
    */
   public TimeSeries getSubsequence(int offset, int windowSize) {
     double[] subsequenceData = Arrays.copyOfRange(this.data, offset, Math.min(data.length, offset + windowSize));
-    TimeSeries sequence = new TimeSeries(subsequenceData);
+    TimeSeries sequence = new TimeSeries(subsequenceData, this.label);
     sequence.norm();
     return sequence;
   }
@@ -205,9 +206,8 @@ public class TimeSeries implements Serializable {
       System.arraycopy(this.data, i, subsequenceData, 0, ws);
 
       // The newly created time series have queryLength windowSize and offset i
-      subsequences[i] = new TimeSeries(subsequenceData);
+      subsequences[i] = new TimeSeries(subsequenceData, getLabel());
       subsequences[i].norm(normMean, means[i], stddevs[i]);
-      subsequences[i].setLabel(getLabel());
     }
     return subsequences;
   }
@@ -262,9 +262,8 @@ public class TimeSeries implements Serializable {
     for (int i = 0; i < amount; i++) {
       double subsequenceData[] = new double[windowSize];
       System.arraycopy(this.data, i * windowSize, subsequenceData, 0, windowSize);
-      subsequences[i] = new TimeSeries(subsequenceData);
+      subsequences[i] = new TimeSeries(subsequenceData, getLabel());
       subsequences[i].norm(normMean);
-      subsequences[i].setLabel(getLabel());
     }
 
     return subsequences;

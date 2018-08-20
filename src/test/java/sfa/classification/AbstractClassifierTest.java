@@ -77,8 +77,13 @@ public abstract class AbstractClassifierTest {
             this.testingAccuracy = testingAccuracy;
         }
 
+        public DataSet(String name, double trainingAccuracy, double testingAccuracy, double testEarliness) {
+            this(name, trainingAccuracy, testingAccuracy);
+            this.testEarliness = testEarliness;
+        }
+
         String name;
-        double trainingAccuracy, testingAccuracy;
+        double trainingAccuracy, testingAccuracy, testEarliness;
     }
 
     protected Classifier trainClassifier(DataSet dataSet) {
@@ -101,6 +106,8 @@ public abstract class AbstractClassifierTest {
 
             classifier = initClassifier();
             Classifier.Score scoreW = classifier.eval(trainSamples, testSamples);
+            System.out.println(scoreW.toString());
+
             assertEquals("testing result of " +
                     dataSet.name+" does NOT match",
                     dataSet.testingAccuracy,
@@ -110,7 +117,13 @@ public abstract class AbstractClassifierTest {
                     dataSet.trainingAccuracy,
                     scoreW.getTrainingAccuracy(),
                     DELTA);
-            System.out.println(scoreW.toString());
+
+            if (scoreW.getTestEarliness() != null) {
+                assertEquals("test earliness result of " + dataSet.name + " does NOT match",
+                    dataSet.testEarliness,
+                    scoreW.getTestEarliness(),
+                    DELTA);
+            }
 
         }
         return classifier;

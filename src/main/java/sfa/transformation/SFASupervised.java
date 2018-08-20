@@ -4,10 +4,7 @@ package sfa.transformation;
 
 import sfa.timeseries.TimeSeries;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -129,12 +126,14 @@ public class SFASupervised extends SFA {
 
     // sort by largest f-value
     @SuppressWarnings("unchecked")
-    Indices<Double>[] best = new Indices[f.length];
+    List<Indices<Double>> best = new ArrayList<>(f.length);
     for (int i = 0; i < f.length; i++) {
-      best[i] = new Indices<>(i, f[i]);
+      if (!Double.isNaN(f[i])) {
+        best.add(new Indices<>(i, f[i]));
+      }
     }
-    Arrays.sort(best);
-    return best;
+    Collections.sort(best);
+    return best.toArray(new Indices[]{});
   }
 
   /**

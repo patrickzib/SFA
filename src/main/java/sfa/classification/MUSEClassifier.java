@@ -39,6 +39,9 @@ public class MUSEClassifier extends Classifier {
   public static boolean BIGRAMS = true;
   public static boolean lowerBounding = false;
 
+  public static int MIN_WINDOW_LENGTH = 2;
+  public static int MAX_WINDOW_LENGTH = 450;
+
   // the trained muse model
   MUSEModel model;
 
