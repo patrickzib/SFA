@@ -37,7 +37,7 @@ public class SFAWordsTest {
     sfa.fitTransform(train, wordLength, symbols, normMean);
 
     // outout discretization bins
-    sfa.printBins();
+//    sfa.printBins();
 
     // check discretization bins
     Assert.assertTrue("Wrong word queryLength of SFA transformation detected", sfa.bins.length == wordLength);
@@ -52,7 +52,7 @@ public class SFAWordsTest {
       short[] wordQuery = sfa.transform(test[q]);
       Assert.assertTrue("SFA word queryLength does not match actual queryLength.", wordQuery.length == wordLength);
 
-      System.out.println(q + "-th transformed time series SFA word " + "\t" + toSfaWord(wordQuery, symbols));
+//      System.out.println(q + "-th transformed time series SFA word " + "\t" + toSfaWord(wordQuery, symbols));
     }
   }
 

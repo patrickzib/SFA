@@ -39,22 +39,24 @@ public class SFAWordsWindowingTest {
     sfa.fitWindowing(train, windowLength, wordLength, symbols, normMean, true);
 
     // bins
-    sfa.printBins();
+    //sfa.printBins();
 
     // transform
     for (int q = 0; q < test.length; q++) {
       short[][] wordsQuery = sfa.transformWindowing(test[q]);
-      System.out.print(q + "-th time Series " + "\t");
+      //System.out.print(q + "-th time Series " + "\t");
       Assert.assertTrue("SFA word queryLength does not match actual queryLength.",
           wordsQuery.length == test[q].getLength()-windowLength+1);
 
       for (short[] word : wordsQuery) {
         Assert.assertTrue("SFA word queryLength does not match actual queryLength.", word.length == wordLength);
-        System.out.print(toSfaWord(word, symbols) + ";");
+        //System.out.print(toSfaWord(word, symbols) + ";");
       }
 
-      System.out.println("");
+      //System.out.println("");
     }
+
+    System.out.println("Test passed");
   }
 
   public static String toSfaWord(short[] word, int symbols) {
