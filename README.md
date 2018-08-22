@@ -9,18 +9,21 @@ the UCR time series classification benchmark has led to two pitfalls, namely: (a
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
 
-This repository contains a symbolic time series representation (**SFA**) and three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics.  
+This repository contains a symbolic time series representation (**SFA**), three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics. Finally, the early time series classification framework TEASER is provided.
+
 
 The implemented algorithms are in the context of:
 
 1. **Dimensionality Reduction**: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques [[1]](http://dl.acm.org/citation.cfm?doid=2247596.2247656).
 
-2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]](https://arxiv.org/abs/1701.07681).
+2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state-of-art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]](https://arxiv.org/abs/1701.07681).
 
 3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]](https://dl.acm.org/citation.cfm?doid=3132847.3132980).
 The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[5]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y). 
 
-4. **Multivariate classification**: WEASEL+MUSE is a multivariate time series classifier that offers state of art classification accuracy [[6]](https://arxiv.org/abs/1711.11343).
+4. **Multivariate classification**: WEASEL+MUSE is a multivariate time series classifier that offers state-of-art classification accuracy [[6]](https://arxiv.org/abs/1711.11343).
+
+5. **Early and accurate classification**: TEASER is a framework for early and accurate time series classification. The early classification task arises when data is collected over time, and it is desirable, or even required, to predict the class label of a time series as early as possible. As such, the earlier a decision can be made, the more rewarding it can be. TEASER is two to three times as early while keeping the same (or even a higher) level of accuracy, when compared to the state of the art.
 
 ![SFA](images/classifiers2.png)
 
@@ -335,6 +338,49 @@ Predicions predictions = muse.score(testSamples);
 arXiv 2017, [[LINK]](https://arxiv.org/abs/1711.11343)
 
 
+
+# TEASER: Tailored Early and Accurate Series classifiER (TEASER)
+
+
+In many applications measurements arrive over time and the collection of additional measurements is associated with a cost, or it is critical to act as early as possible. In this context, it is desirable to have a high-quality classification as soon as possible, while sacrificing as little accuracy as possible. The state-of-the-art methods in early time series classification compute an optimal decision time from the train time series. However, this approach assumes that a time series has a defined start (like turning on a machine), whereas in many applications measurements start at arbitrary times in an essentially infinite time series (like heartbeats in a patient). 
+
+TEASER is a method for early and accurate time series classification. TEASER’s decision for the safety (accuracy) of a prediction is treated as a two-stage classification problem: A slave classifier continuously classifies the time series, and a master classifier decides whether this result should be trusted or not.
+
+In our experimental evaluation using a benchmark of time series datasets [[LINK]](http://www.cs.ucr.edu/~eamonn/time_series_data/), TEASER is two to three times as early while keeping the same (or even a higher) level of accuracy, when compared to the state of the art. 
+
+
+**Usage:**
+
+First, load datasets, set parameters (or keep defaults), and train the TEASER model.
+
+```java
+// Load the train/test splits
+TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
+
+// The TEASER-classifier
+TEASERClassifier t = new TEASERClassifier();
+
+// Step size - equals number of classifiers to train
+TEASERClassifier.STEPS = 20.0;
+
+Score scoreT = t.fit(trainSamples);
+
+```
+
+Finally, predict test labels:
+
+```java
+TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
+
+// Predict labels and obtain offsets
+OffsetPrediction pred = predict(testSamples);
+
+```
+
+
+**References**
+
+TBA
 
 
 # Use Cases / Tests
