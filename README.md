@@ -375,7 +375,7 @@ Finally, predict test labels:
 TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
 
 // Predict labels and obtain offsets
-OffsetPrediction pred = predict(testSamples);
+OffsetPrediction pred = t.predict(testSamples);
 
 ```
 
