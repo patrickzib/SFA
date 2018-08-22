@@ -28,7 +28,7 @@ public class TEASERClassifier extends Classifier {
    * S is typically a constant set to 20, such that a prediction will be made after every 5% of the full
    * time series length.
    */
-  public static double STEPS = 20.0;
+  public static double S = 20.0;
 
   public static boolean PRINT_EARLINESS = false;
 
@@ -50,9 +50,9 @@ public class TEASERClassifier extends Classifier {
     public EarlyClassificationModel() {
       super("TEASER", 0, 1, 0, 1, false, -1);
 
-      this.offsets = new int[(int) STEPS + 1];
-      this.masterModels = new svm_model[(int) STEPS + 1];
-      this.slaveModels = new WEASELClassifier.WEASELModel[(int) STEPS + 1];
+      this.offsets = new int[(int) S + 1];
+      this.masterModels = new svm_model[(int) S + 1];
+      this.slaveModels = new WEASELClassifier.WEASELModel[(int) S + 1];
 
       Arrays.fill(this.offsets, -1);
     }
@@ -139,11 +139,11 @@ public class TEASERClassifier extends Classifier {
 
       int min = Math.max(3, MIN_WINDOW_LENGTH);
       int max = getMax(samples, MAX_WINDOW_LENGTH); // Integer.MAX_VALUE
-      double step = max / STEPS; // steps of 5%
+      double step = max / S; // steps of 5%
 
       this.model = new EarlyClassificationModel();
 
-      for (int s = 2; s <= STEPS; s++) {
+      for (int s = 2; s <= S; s++) {
         // train TEASER
         model.offsets[s] = (int) Math.round(step * s);
         TimeSeries[] data = extractUntilOffset(samples, model.offsets[s], true);
@@ -305,13 +305,13 @@ public class TEASERClassifier extends Classifier {
                 model.masterModels[s],
                 generateFeatures(probabilities, result.realLabels));
 
-            if (s >= STEPS
+            if (s >= S
                 || model.offsets[s] >= testSamples[ind].getLength()
                 || predictNow == 1
                 ) {
               int counts = getCount(predictions[ind], predictedLabel);
               if (counts >= model.threshold
-                  || s >= STEPS
+                  || s >= S
                   || model.offsets[s] >= testSamples[ind].getLength()) {
                 predictedLabels[ind] = predictedLabel;
                 double earliness = Math.min(1.0, ((double) model.offsets[s] / testSamples[ind].getLength()));

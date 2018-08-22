@@ -360,8 +360,10 @@ TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 // The TEASER-classifier
 TEASERClassifier t = new TEASERClassifier();
 
-/* The total number of time stamps S: a time stamp is a fraction of the full time series length n. S is typically a constant set to 20, such that a prediction will be made after every 5% of the full time series length. */
-TEASERClassifier.STEPS = 20.0;
+/* The total number of time stamps S: a time stamp is a fraction of the full time series 
+length n. S is typically a constant set to 20, such that a prediction will be made after 
+every 5% of the full time series length. */
+TEASERClassifier.S = 20.0;
 
 Score scoreT = t.fit(trainSamples);
 

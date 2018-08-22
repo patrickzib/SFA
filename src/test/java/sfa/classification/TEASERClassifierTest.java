@@ -1,8 +1,5 @@
 package sfa.classification;
 
-import de.bwaldvogel.liblinear.SolverType;
-import sfa.timeseries.TimeSeries;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +25,7 @@ public class TEASERClassifierTest extends AbstractClassifierTest{
     @Override
     protected Classifier initClassifier() {
         TEASERClassifier teaser = new TEASERClassifier();
-        TEASERClassifier.STEPS = 10; // faster processing
+        TEASERClassifier.S = 10; // faster processing
         return teaser;
     }
 

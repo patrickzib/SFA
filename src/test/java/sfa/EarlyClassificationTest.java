@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa;
 
-import de.bwaldvogel.liblinear.SolverType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -63,7 +62,7 @@ public class EarlyClassificationTest {
 
               // The TEASER-classifier
               TEASERClassifier t = new TEASERClassifier();
-              TEASERClassifier.STEPS = 20.0;
+              TEASERClassifier.S = 20.0;
 
               Classifier.Score scoreT = t.eval(trainSamples, testSamples);
               System.out.println(s + ";" + scoreT.toString());
