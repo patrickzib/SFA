@@ -9,7 +9,7 @@ the UCR time series classification benchmark has led to two pitfalls, namely: (a
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
 
-This repository contains a symbolic time series representation (**SFA**), three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics. Finally, the early time series classification framework TEASER is provided.
+This repository contains a symbolic time series representation (**SFA**), three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics. Finally, the early time series classification framework **TEASER** is provided.
 
 
 The implemented algorithms are in the context of:
@@ -360,7 +360,7 @@ TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 // The TEASER-classifier
 TEASERClassifier t = new TEASERClassifier();
 
-// Step size - equals number of classifiers to train
+/* The total number of time stamps S: a time stamp is a fraction of the full time series length n. S is typically a constant set to 20, such that a prediction will be made after every 5% of the full time series length. */
 TEASERClassifier.STEPS = 20.0;
 
 Score scoreT = t.fit(trainSamples);

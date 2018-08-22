@@ -16,9 +16,18 @@ import java.util.*;
  */
 public class TEASERClassifier extends Classifier {
 
+  /**
+   * The parameters for the one-class SVM
+   */
   public static int SVM_KERNEL = svm_parameter.RBF; /*, svm_parameter.LINEAR*/
   public static double[] SVM_GAMMAS = new double[]{100, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1.5, 1};
   public static double SVM_NU = 0.05;
+
+  /**
+   * The total number of time stamps S: a time stamp is a fraction of the full time series length n.
+   * S is typically a constant set to 20, such that a prediction will be made after every 5% of the full
+   * time series length.
+   */
   public static double STEPS = 20.0;
 
   public static boolean PRINT_EARLINESS = false;
@@ -26,7 +35,7 @@ public class TEASERClassifier extends Classifier {
   public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 250;
 
-  // the trained model
+  // the trained TEASER model
   EarlyClassificationModel model;
 
   WEASELClassifier slaveClassifier;  // TODO: make it a parameter to use any TS classifier?
@@ -254,12 +263,13 @@ public class TEASERClassifier extends Classifier {
     return evalLabels(testSamples, labels);
   }
 
+  
   @Override
   public Double[] predict(final TimeSeries[] testSamples) {
     return predict(testSamples, true).labels;
   }
 
-  public OffsetPrediction predict(
+  private OffsetPrediction predict(
       final TimeSeries[] testSamples,
       final boolean testing) {
 
