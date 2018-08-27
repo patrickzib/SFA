@@ -290,7 +290,7 @@ CIKM 2017, (accepted), [[LINK arXiv]](https://arxiv.org/abs/1701.07681), [[LINK 
 
 
 
-# WEASEL+MUSE: WEASEL + MUltivariate Symbols and dErivatives
+# WEASEL+MUSE: WEASEL + MUltivariate Symbolic Extension
 
 
 WEASEL+MUSE is an extension of the univariate WEASEL classifier to allow for
