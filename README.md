@@ -67,6 +67,36 @@ Step 2. Add the dependency:
 
 See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
 
+# How to get started
+
+You can import this project into your favorite IDE using gradle. For installing gradle, please refer to [![GRADLE]](https://gradle.org/install/#helpful-information) for further instructions.
+ 
+The project has two gradle build targets, one for IntelliJ IDEA and one for Eclipse. 
+
+IntelliJ IDEA:
+```
+> gradle idea
+Starting a Gradle Daemon (subsequent builds will be faster)
+:ideaModule
+:ideaProject
+:ideaWorkspace
+:idea
+
+BUILD SUCCESSFUL
+```
+
+Eclipse: 
+```
+> gradle eclipse
+:eclipseClasspath
+:eclipseJdt
+:eclipseProject
+:eclipse
+
+BUILD SUCCESSFUL
+```
+
+This will create an IntelliJ IDEA or Eclipse project.
 
 # SFA: Symbolic Fourier Approximation
 
@@ -339,7 +369,7 @@ arXiv 2017, [[LINK]](https://arxiv.org/abs/1711.11343)
 
 
 
-# TEASER: Tailored Early and Accurate Series classifiER (TEASER)
+# TEASER: Two-Tier Early and Accurate Series classifiER (TEASER)
 
 
 In many applications measurements arrive over time and the collection of additional measurements is associated with a cost, or it is critical to act as early as possible. In this context, it is desirable to have a high-quality classification as soon as possible, while sacrificing as little accuracy as possible. The state-of-the-art methods in early time series classification compute an optimal decision time from the train time series. However, this approach assumes that a time series has a defined start (like turning on a machine), whereas in many applications measurements start at arbitrary times in an essentially infinite time series (like heartbeats in a patient). 
