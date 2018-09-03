@@ -69,7 +69,7 @@ See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickz
 
 # How to get started
 
-You can import this project into your favorite IDE using gradle. For installing gradle, please refer to [![GRADLE]](https://gradle.org/install/#helpful-information) for further instructions.
+You can import this project into your favorite IDE using gradle. For installing gradle, please refer to [GRADLE](https://gradle.org/install/#helpful-information) for further instructions.
  
 The project has two gradle build targets, one for IntelliJ IDEA and one for Eclipse. 
 
