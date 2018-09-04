@@ -67,18 +67,17 @@ Step 2. Add the dependency:
 
 See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
 
-# How to get started in your IDE
+# Import this project into your favorite IDE
 
 You can import this project into your favorite IDE using gradle. This project has been tested with (minor versions might also work):
 * Gradle >=3.5. Please refer to [GRADLE](https://gradle.org/install/#helpful-information) for further instructions on how to install gradle.
-* Java JDK >=1.8
+* Java JVM >=1.8
  
 The project has two gradle build targets, one for IntelliJ IDEA and one for Eclipse. 
 
 IntelliJ IDEA:
 ```
 > gradle idea
-Starting a Gradle Daemon (subsequent builds will be faster)
 :ideaModule
 :ideaProject
 :ideaWorkspace
