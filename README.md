@@ -44,7 +44,7 @@ There are fast time series classifiers (BOSS VS, TSBF, LS, DTW CV) that require 
 There is always a trade-off between accuracy and prediction times.  However, WEASEL is consistently among the best and fastest predicting methods, and competitors are (a) either at the same level of quality (COTE) but much slower or (b) faster but much worse in accuracy (LS, DTW CV, TSBF, or BOSS VS).
 
 
-# How to include this project
+# How to include this project as a library
 
 Step 1. Add the JitPack repository to your gradle build file:
 
@@ -67,7 +67,7 @@ Step 2. Add the dependency:
 
 See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
 
-# Import this project into your favorite IDE
+# How to import this project into your favorite IDE
 
 You can import this project into your favorite IDE using gradle. This project has been tested with (minor versions might also work):
 * Gradle >=3.5. Please refer to [GRADLE](https://gradle.org/install/#helpful-information) for further instructions on how to install gradle.
