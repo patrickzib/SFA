@@ -37,14 +37,15 @@ public class WEASELClassifier extends Classifier {
 
   public static boolean lowerBounding = false;
 
-  public static int MIN_WINDOW_LENGTH = 8;
-  public static int MAX_WINDOW_LENGTH = 250;
+  public static int MIN_WINDOW_LENGTH = 2;
+  public static int MAX_WINDOW_LENGTH = 350;
 
   // the trained weasel
   WEASELModel model;
 
   public WEASELClassifier() {
     super();
+    Linear.resetRandom();
   }
 
   public static class WEASELModel extends Model {
