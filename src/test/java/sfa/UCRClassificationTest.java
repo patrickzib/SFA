@@ -23,10 +23,10 @@ public class UCRClassificationTest {
           "DiatomSizeReduction",
           "ECGFiveDays",
           "TwoLeadECG",
-          "SonyAIBORobot SurfaceII",
+          "SonyAIBORobotSurfaceII",
           "MoteStrain",
           "ItalyPowerDemand",
-          "SonyAIBORobot Surface",
+          "SonyAIBORobotSurface",
   };
 
   @Test

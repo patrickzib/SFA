@@ -40,7 +40,7 @@ public class TimeSeriesLoader {
         if (line.startsWith("@")) {
           continue;
         }
-        String[] columns = line.split(" ");
+        String[] columns = line.split(",");
         double[] data = new double[columns.length];
         int j = 0;
         Double label = null;
