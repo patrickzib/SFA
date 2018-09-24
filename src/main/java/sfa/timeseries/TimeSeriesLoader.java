@@ -40,7 +40,11 @@ public class TimeSeriesLoader {
         if (line.startsWith("@")) {
           continue;
         }
-        String[] columns = line.split(",");
+
+        // switch between old " " and new separator "," in the UCR archive
+        String separator = (line.contains(",") ? "," : " ");
+        String[] columns = line.split(separator);
+
         double[] data = new double[columns.length];
         int j = 0;
         Double label = null;
