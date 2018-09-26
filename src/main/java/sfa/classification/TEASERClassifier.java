@@ -19,7 +19,7 @@ public class TEASERClassifier extends Classifier {
   /**
    * The parameters for the one-class SVM
    */
-  public static int SVM_KERNEL = svm_parameter.RBF; /*, svm_parameter.LINEAR*/
+  public static int SVM_KERNEL = svm_parameter.RBF; /*, svm_parameter.LINEAR */
   public static double[] SVM_GAMMAS = new double[]{100, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1.5, 1};
   public static double SVM_NU = 0.05;
 
@@ -38,7 +38,7 @@ public class TEASERClassifier extends Classifier {
   // the trained TEASER model
   EarlyClassificationModel model;
 
-  WEASELClassifier slaveClassifier;  // TODO: make it a parameter to use any TS classifier?
+  WEASELClassifier slaveClassifier;
 
   public TEASERClassifier() {
     slaveClassifier = new WEASELClassifier();

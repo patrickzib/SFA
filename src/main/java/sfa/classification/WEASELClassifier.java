@@ -27,24 +27,25 @@ public class WEASELClassifier extends Classifier {
   public static int minF = 4;
   public static int maxS = 4;
 
-  public static SolverType solverType = SolverType.L2R_LR_DUAL; // ???;
+  public static SolverType solverType = SolverType.L2R_LR_DUAL;
 
   public static double chi = 2;
   public static double bias = 1;
   public static double p = 0.1;
-  public static int iterations = 1000;
+  public static int iterations = 5000;
   public static double c = 1;
 
   public static boolean lowerBounding = false;
 
   public static int MIN_WINDOW_LENGTH = 2;
-  public static int MAX_WINDOW_LENGTH = 250;
+  public static int MAX_WINDOW_LENGTH = 350;
 
   // the trained weasel
   WEASELModel model;
 
   public WEASELClassifier() {
     super();
+    Linear.resetRandom();
   }
 
   public static class WEASELModel extends Model {
