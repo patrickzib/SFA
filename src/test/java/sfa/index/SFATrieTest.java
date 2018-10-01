@@ -1,5 +1,6 @@
 package sfa.index;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
@@ -160,6 +161,83 @@ public class SFATrieTest {
     System.out.println("All ok...");
   }
 
+  public static void testSubsequenceMatchingRangeQuery() throws IOException {
+    System.out.println("Loading Time Series");
+
+    ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
+    TimeSeries[] timeSeries2 = TimeSeriesLoader.readSamplesQuerySeries(
+        classLoader.getResource("datasets/indexing/query_lightcurves.txt").getFile());
+
+    TimeSeries timeSeries = TimeSeriesLoader.generateRandomWalkData(100000, new Random(1));
+    System.out.println("Sample DS size : " + timeSeries.getLength());
+
+    int windowLength = timeSeries2[0].getLength(); // queryLength of the subsequences to be indexed
+    System.out.println("Query DS size : " + windowLength);
+
+    Runtime runtime = Runtime.getRuntime();
+    long mem = runtime.totalMemory();
+    long time = System.currentTimeMillis();
+
+    SFATrie index = new SFATrie(l, leafThreshold);
+    index.buildIndexSubsequenceMatching(timeSeries, windowLength);
+    index.checkIndex();
+
+    // GC
+    performGC();
+    System.out.println("Memory: " + ((runtime.totalMemory() - mem) / (1_048_576L)) + " MB (rough estimate)");
+
+    System.out.println("Perform NN-queries");
+    int size = (timeSeries.getData().length-windowLength)+1;
+    double[] means = new double[size];
+    double[] stds = new double[size];
+    TimeSeries.calcIncrementalMeanStddev(windowLength, timeSeries.getData(), means, stds);
+
+    for (int i = 0; i < timeSeries2.length; i++) {
+      System.out.println((i+1) + ". Query");
+      TimeSeries query = timeSeries2[i];
+
+      // do a brute force range query search to set epsilon
+      double epsilon = Double.MAX_VALUE;
+      for (int ww = 0; ww < size; ww++) {
+        double distance = getEuclideanDistance(timeSeries, query, means[ww], stds[ww], epsilon, ww);
+        if (distance < epsilon) {
+          epsilon = 1.001*distance;
+        }
+      }
+
+      // set epsilon to be 1.05x the minimal distance
+      long timeED = System.currentTimeMillis();
+      int count = 0;
+      for (int ww = 0; ww < size; ww++) {
+        double distance = getEuclideanDistance(timeSeries, query, means[ww], stds[ww], epsilon, ww);
+        if (distance <= epsilon) {
+          count++;
+        }
+      }
+      timeED = System.currentTimeMillis() - timeED;
+
+      time = System.currentTimeMillis();
+      List<Integer> result = index.searchEpsilonRange(query, epsilon);
+      time = System.currentTimeMillis() - time;
+      System.out.println("\tSFATree:" + (time/1000.0) + "s");
+
+      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
+          String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
+      System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
+      System.out.println("\tNodes seen " +  index.getBlockRead());
+
+      System.out.println("\tResult size " +  result.size());
+      index.resetIoCosts();
+
+      System.out.println("\tEuclidean:" + (timeED/1000.0) + "s");
+
+      Assert.assertEquals("Counts do not match: " + result.size() + "\t" + count,
+          result.size(), count, 0.000);
+    }
+
+    System.out.println("All ok...");
+  }
+
   public static void performGC() {
     try {
       System.gc();
@@ -203,5 +281,6 @@ public class SFATrieTest {
   public void testSFATrieTest() throws IOException {
     testWholeMatching();
     testSubsequenceMatching();
+    testSubsequenceMatchingRangeQuery();
   }
 }
