@@ -369,6 +369,32 @@ Predicions predictions = muse.score(testSamples);
 arXiv 2017, [[LINK]](https://arxiv.org/abs/1711.11343)
 
 
+# Multivariate Dataset format
+
+The multivariate dataset format is based on [Multivariate Time Series Classification Datasets](http://www.mustafabaydogan.com/files/viewdownload/14-multivariate-time-series-classification/29-multivariate-time-series-classification-datasets.html).
+
+The first column is the sample id, the second column is the time stamp of the observations, the **third column is the label** for the sample (and it may not change for the same sample id), the last columns are the observations (different dimensions of the multivariate time series).
+
+An example:
+
+|Sample Id|Time Stamp|Class |Pressure|Temperature|Energy|
+|------|-----------|------|---------|------------|-------|
+|1 |1|1|2.70|80.50|4.50|
+|1|2|1|3.20|78.40|6.70|
+|1|3|1|4.20|67.90|3.40|
+|1|4|1|8.20|89.50|7.20|
+|1|5|1|8.90|85.70|5.70|
+|2|1|3|16.34|97.54|5.02|
+|2|2|3|17.61|99.66|5.01|
+|2|3|3|18.87|101.60|4.90|
+|2|4|3|20.14|103.54|4.95|
+|2|5|3|22.67|107.43|4.95|
+|2|6|3|21.15|106.50|4.97|
+|..|..|..|..|..|..|
+|N|1|0|8.90|85.70|5.70|
+|N|2|0|10.01|88.00|5.05|
+|N|3|0|11.28|89.94|5.04|
+ 
 
 # TEASER: Two-Tier Early and Accurate Series classifiER (TEASER)
 
