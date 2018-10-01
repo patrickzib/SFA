@@ -610,7 +610,7 @@ public class SFATrie implements Serializable {
 
     while (!queue.isEmpty()) {
       // retrieve first element
-      SFANode currentNode = queue.getFirst();
+      SFANode currentNode = queue.removeFirst();
 
       // iterate over all nodes of the trie
       if (currentNode.type == NodeType.Internal) {
