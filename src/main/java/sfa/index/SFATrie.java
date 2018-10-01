@@ -590,6 +590,64 @@ public class SFATrie implements Serializable {
     return this.root.getLeafCount();
   }
 
+  public List<Integer> searchEpsilonRange(TimeSeries query, double epsilon) {
+    // approximation
+    double[] dftQuery = quantization.transformation.transform(query, wordLength);
+
+    return searchEpsilonRange(
+        dftQuery, query, epsilon);
+  }
+
+  public List<Integer> searchEpsilonRange(
+      double[] transformedQuery, TimeSeries query, double epsilon) {
+
+    // active branches
+    LinkedList<SFANode> queue = new LinkedList<>();
+    List<Integer> result = new ArrayList<>();
+
+    // add the root to the branch list
+    queue.add(this.root);
+
+    while (!queue.isEmpty()) {
+      // retrieve first element
+      SFANode currentNode = queue.getFirst();
+
+      // iterate over all nodes of the trie
+      if (currentNode.type == NodeType.Internal) {
+        addToBlockRead(1);
+        for (SFANode child : currentNode.getChildren()) {
+          double distance = getLowerBoundingDistance(
+              transformedQuery,
+              child.minValues,
+              child.maxValues);
+          if (distance <= epsilon) {
+            queue.add(child);
+          }
+        }
+      }
+      // get ED time series in the leaf node
+      else {
+        addToIOTimeSeriesRead(1);
+        addToTimeSeriesRead(currentNode.getSize());
+
+        for (IntCursor idx : currentNode.getElementIds()) {
+          double distance = getEuclideanDistance(
+              type == MatchingType.Subsequences ? timeSeries[0] : timeSeries[idx.value],
+              query,
+              means[idx.value],
+              stddev[idx.value],
+              epsilon,
+              type == MatchingType.Subsequences ? idx.value : 0);
+          if (distance <= epsilon) {
+            result.add(idx.value);
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   public SortedListMap<Double, Integer> searchNearestNeighbor(TimeSeries query, int k) {
     // approximation
     double[] dftQuery = quantization.transformation.transform(query, wordLength);
