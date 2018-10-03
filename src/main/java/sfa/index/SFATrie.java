@@ -129,7 +129,7 @@ public class SFATrie implements Serializable {
     }
 
     compress(true);
-    printStats();
+//    printStats();
   }
 
   /**
@@ -158,7 +158,7 @@ public class SFATrie implements Serializable {
     }
 
     compress(true);
-    printStats();
+//    printStats();
   }
 
   /**
@@ -180,7 +180,7 @@ public class SFATrie implements Serializable {
     }
 
     compress(false);
-    printStats();
+//    printStats();
   }
 
   /**
