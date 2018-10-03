@@ -730,13 +730,13 @@ public class SFATrie implements Serializable {
   ) {
 
     // 1 divided by stddev for faster calculations
-    stdTs = (stdTs > 0 ? 1.0 / stdTs : 1.0);
+//    stdTs = (stdTs > 0 ? 1.0 / stdTs : 1.0);
 
     double distance = 0.0;
     double[] qData = q.getData();
 
     for (int ww = 0; ww < qData.length; ww++) {
-      double value1 = (tsData[w + ww] - meanTs) * stdTs;
+      double value1 = tsData[w + ww];
       double value = qData[ww] - value1;
       distance += value * value;
 
