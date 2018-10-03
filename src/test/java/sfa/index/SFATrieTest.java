@@ -217,7 +217,7 @@ public class SFATrieTest {
       timeED = System.currentTimeMillis() - timeED;
 
       time = System.currentTimeMillis();
-      List<Integer> result = index.searchEpsilonRange(query, epsilon);
+      List<DistanceResult> result = index.searchEpsilonRange(query, epsilon);
       time = System.currentTimeMillis() - time;
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
 

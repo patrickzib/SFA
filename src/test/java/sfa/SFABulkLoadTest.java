@@ -231,7 +231,7 @@ public class SFABulkLoadTest {
 
     // add the raw data to the trie
     index.initializeSubsequenceMatching(timeSeries, n);
-    index.printStats();
+//    index.printStats();
 
     // GC
     performGC();
