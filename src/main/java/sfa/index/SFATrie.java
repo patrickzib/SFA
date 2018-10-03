@@ -590,7 +590,7 @@ public class SFATrie implements Serializable {
     return this.root.getLeafCount();
   }
 
-  public List<Integer> searchEpsilonRange(TimeSeries query, double epsilon) {
+  public List<DistanceResult> searchEpsilonRange(TimeSeries query, double epsilon) {
     // approximation
     double[] dftQuery = quantization.transformation.transform(query, wordLength);
 
@@ -598,12 +598,12 @@ public class SFATrie implements Serializable {
         dftQuery, query, epsilon);
   }
 
-  public List<Integer> searchEpsilonRange(
+  public List<DistanceResult> searchEpsilonRange(
       double[] transformedQuery, TimeSeries query, double epsilon) {
 
     // active branches
     LinkedList<SFANode> queue = new LinkedList<>();
-    List<Integer> result = new ArrayList<>();
+    List<DistanceResult> result = new ArrayList<>();
 
     // add the root to the branch list
     queue.add(this.root);
@@ -639,7 +639,7 @@ public class SFATrie implements Serializable {
               epsilon,
               type == MatchingType.Subsequences ? idx.value : 0);
           if (distance <= epsilon) {
-            result.add(idx.value);
+            result.add(new DistanceResult(idx.value,distance));
           }
         }
       }
