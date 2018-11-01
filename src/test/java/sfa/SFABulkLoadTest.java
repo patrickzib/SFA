@@ -203,7 +203,7 @@ public class SFABulkLoadTest {
     // transforms
     // each subsequence in constant time
     for (int i = 0, a = 0; i < timeSeries.getLength(); i += chunkSize, a++) {
-      System.out.println("Transforming Chunk: " + (a + 1));
+      //System.out.println("Transforming Chunk: " + (a + 1));
       TimeSeries subsequence = timeSeries.getSubsequence(i, chunkSize + n - 1);
       double[][] words = sfa.transformWindowingDouble(subsequence);
       for (int pos = 0; pos < words.length; pos++) {
@@ -231,7 +231,7 @@ public class SFABulkLoadTest {
 
     // add the raw data to the trie
     index.initializeSubsequenceMatching(timeSeries, n);
-    index.printStats();
+    //index.printStats();
 
     // GC
     performGC();
@@ -255,9 +255,9 @@ public class SFABulkLoadTest {
       System.out.println("\tSFATree:" + (time / 1000.0) + "s");
 
       List<Double> distances = result.keys();
-      System.out.println("\tTS seen: " + index.getTimeSeriesRead());
-      System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      System.out.println("\tNodes seen " + index.getBlockRead());
+      //System.out.println("\tTS seen: " + index.getTimeSeriesRead());
+      //System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
+      //System.out.println("\tNodes seen " + index.getBlockRead());
       index.resetIoCosts();
 
       // compare with nearest neighbor search!

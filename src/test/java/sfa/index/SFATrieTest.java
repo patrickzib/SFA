@@ -66,9 +66,9 @@ public class SFATrieTest {
 
       List<Double> distances = result.keys();
 
-      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)N + "%");
-      System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      System.out.println("\tNodes seen " +  index.getBlockRead());
+      //System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " + index.getTimeSeriesRead()/(double)N + "%");
+      //System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
+      //System.out.println("\tNodes seen " +  index.getBlockRead());
 
       index.resetIoCosts();
 
@@ -85,7 +85,7 @@ public class SFATrieTest {
       Assert.assertEquals("Distances do not match: " + resultDistance + "\t" + distances.get(0),
           distances.get(0), resultDistance, 0.003);
 
-      System.out.println("\tDistance is ok");
+      //System.out.println("\tDistance is ok");
     }
 
     System.out.println("All ok...");
@@ -137,10 +137,10 @@ public class SFATrieTest {
 
       List<Double> distances = result.keys();
 
-      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
-          String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
-      System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      System.out.println("\tNodes seen " +  index.getBlockRead());
+      //System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
+      //    String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
+      //System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
+      //System.out.println("\tNodes seen " +  index.getBlockRead());
 
       index.resetIoCosts();
 
@@ -220,13 +220,11 @@ public class SFATrieTest {
       List<Integer> result = index.searchEpsilonRange(query, epsilon);
       time = System.currentTimeMillis() - time;
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
-
-      System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
-          String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
-      System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      System.out.println("\tNodes seen " +  index.getBlockRead());
-
-      System.out.println("\tResult size " +  result.size());
+      //System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
+      //    String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
+      //System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
+      //System.out.println("\tNodes seen " +  index.getBlockRead());
+      //System.out.println("\tResult size " +  result.size());
       index.resetIoCosts();
 
       System.out.println("\tEuclidean:" + (timeED/1000.0) + "s");
