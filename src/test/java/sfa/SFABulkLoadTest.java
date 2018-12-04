@@ -165,7 +165,7 @@ public class SFABulkLoadTest {
     return trieDepth;
   }
 
-  @Test
+  //@Test
   public void testBulkLoadSubsequenceMatching() throws IOException {
     int N = 20 * 100_000;
     System.out.println("Loading/generating Time Series of queryLength " + N + "...");
