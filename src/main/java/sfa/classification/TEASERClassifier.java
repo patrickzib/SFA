@@ -44,6 +44,7 @@ public class TEASERClassifier extends Classifier {
     slaveClassifier = new WEASELClassifier();
     WEASELClassifier.lowerBounding = true;
     WEASELClassifier.solverType = SolverType.L2R_LR;
+    WEASELClassifier.MAX_WINDOW_LENGTH = 250;
   }
 
   public static class EarlyClassificationModel extends Model {
