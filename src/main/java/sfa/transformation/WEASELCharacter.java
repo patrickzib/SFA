@@ -138,17 +138,38 @@ public class WEASELCharacter {
    * @param words
    * @return
    */
-  public int[][][] transformSubwords(short[][][][] words) {
+  public int[][][] fitSubwords(short[][][][] words) {
 
-
-    // TODO transformation
     // Subword toolbox
+    // TODO transformation
     short[][][][] subwords = words;
 
+    // TODO Basis 'alphabetsize' beachten
 
+    // TODO mögliche Modelle
+    //  - BPE
+    //  - frequent itemsets
+    //  - A-priori + Intervalle
+    //  - character-n-grams
 
+    // TODO Modell speichern
 
+    return transformSubwords(words);
+  }
 
+  /**
+   * Toolbox
+   * @param words
+   * @return
+   */
+  public int[][][] transformSubwords(short[][][][] words) {
+
+    // Subword toolbox
+    // TODO transformation
+    short[][][][] subwords = words;
+    // TODO Basis 'alphabetsize' beachten
+
+    // TODO Modell verwenden
 
     // short => int
     byte neededBits = (byte) Words.binlog(this.alphabetSize);
@@ -176,8 +197,6 @@ public class WEASELCharacter {
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
 
-    // TODO
-    //    final long mask = (usedBits << wordLength) - 1L;
     final long mask = (1L << (usedBits * wordLength)) - 1L;
     int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
@@ -192,6 +211,7 @@ public class WEASELCharacter {
           int word = this.dict.getWord((words[w][j][offset] & mask) << highestBit | (long) w);
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
+          // TODO toolbox.usesBigrams()
 //          // add 2 grams
 //          if (offset - this.windowLengths[w] >= 0) {
 //            long prevWord = this.dict.getWord((words[w][j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w);

@@ -151,7 +151,6 @@ public class WEASELCharacterClassifier extends Classifier {
     return labels;
   }
 
-  // TODO refactor
   public Predictions predictProbabilities(TimeSeries[] samples) {
     final Double[] labels = new Double[samples.length];
     final double[][] probabilities = new double[samples.length][];
@@ -208,7 +207,7 @@ public class WEASELCharacterClassifier extends Classifier {
         for (int f = minF; f <= maxF; f += 2) {
           model.dict.reset();
 
-          final int[][][] subwords = model.transformSubwords(words);
+          final int[][][] subwords = model.fitSubwords(words);
 
           WEASELCharacter.BagOfBigrams[] bop = model.createBagOfPatterns(subwords, samples, f);
           model.filterChiSquared(bop, chi);
@@ -234,7 +233,7 @@ public class WEASELCharacterClassifier extends Classifier {
       WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, bestNorm, lowerBounding);
 
       short[][][][] words = model.createWords(samples);
-      final int[][][] subwords = model.transformSubwords(words);
+      final int[][][] subwords = model.fitSubwords(words);
       WEASELCharacter.BagOfBigrams[] bob = model.createBagOfPatterns(subwords, samples, bestF);
       model.filterChiSquared(bob, chi);
 
