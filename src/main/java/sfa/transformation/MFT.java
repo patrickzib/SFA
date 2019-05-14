@@ -29,6 +29,7 @@ public class MFT implements Serializable {
   private int windowSize = 0;
   private int startOffset = 0;
   private double norm = 0;
+  private boolean normMean = false;
 
   private transient DoubleFFT_1D fft = null;
   private boolean useMaxOrMin = false;
@@ -49,6 +50,7 @@ public class MFT implements Serializable {
     // ignore DC value?
     this.startOffset = normMean ? 2 : 0;
     this.norm = lowerBounding ? 1.0 / Math.sqrt(windowSize) : 1.0;
+    this.normMean = normMean;
   }
 
   /**
@@ -60,6 +62,10 @@ public class MFT implements Serializable {
    * @return the first l Fourier values
    */
   public double[] transform(TimeSeries timeSeries, int l) {
+    if (!timeSeries.isNormed()) {
+      timeSeries.norm(this.normMean);
+    }
+
     double[] data = new double[this.windowSize];
     System.arraycopy(timeSeries.getData(), 0, data, 0, Math.min(this.windowSize, timeSeries.getLength()));
     this.fft.realForward(data);
