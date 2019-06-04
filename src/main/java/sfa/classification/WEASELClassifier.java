@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WEASELClassifier extends Classifier {
 
   // default training parameters
-  public static int maxF = 6;
+  public static int maxF = 8;
   public static int minF = 4;
   public static int maxS = 4;
 
@@ -228,13 +228,67 @@ public class WEASELClassifier extends Classifier {
       int[] windowLengths = getWindowLengths(samples, bestNorm);
       WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, lowerBounding);
 
-      int[][][] words = model.createWords(samples);
+      int[/* Fensterlänge */][/* Sample */][/* Offset*/] words = model.createWords(samples);
       BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, bestF);
       model.filterChiSquared(bob, chi);
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+
+      Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
+      double[] weights = linearModel.getFeatureWeights();
+//      for (Feature[] timeSeriesFeatures : features) { // Histogram
+//        for (Feature f : timeSeriesFeatures) { // Wörter 'aa', 'ab', ...
+//          f.setValue(weights[f.getIndex()] * f.getValue()); // Frequenz * Feature importance
+//        }
+//      }
+
+      // wort => id
+      // id => wort
+      // Fensterlänge
+      xyz:
+
+        // Sample
+        for (int sampleId = 0; sampleId < samples.length; sampleId++) { // Samples
+          TimeSeries ts = samples[sampleId];
+          double label = ts.getLabel();
+
+          double[] plot = new double[ts.getLength()]; // nach Klassen gruppieren?
+          int[] count = new int[ts.getLength()]; // normalisieren???
+
+          for (int windowId = 0; windowId < words.length; windowId++) { // Fensterlängen
+            int[] wordsForOneSample = words[windowId][sampleId];
+
+            double[] timeSeriesValues = ts.getData();
+            BagOfBigrams sampleBob = bob[sampleId];
+
+            // Wort
+            for (int pos = 0; pos < wordsForOneSample.length; pos++) {  // Offsets
+              int word = wordsForOneSample[pos];
+              double liblinearWeight = weights[word]; // LibLinear Gewicht
+              int wordFrequency = sampleBob.bob.get(word);
+
+              // double timeSeriesValueAtOffset = timeSeriesValues[pos];               // wert an stelle pos
+
+              // 1) aufaddieren über alle Fenstergrößen (windowId)
+              // 2) multiplizieren mit Häufigkeit (wordFrequency)
+              // 3) alle pixel, die mit fenstergröße überlappen einfärben (windowLengths)
+              double featureImportance = liblinearWeight * wordFrequency;
+
+              plot[pos] += featureImportance;
+              //count[pos]++;
+
+              //System.out.print("p:" +pos + ";f" + featureImportance + ";");
+
+            }
+          }
+
+          System.out.println(Arrays.toString(plot));
+          break xyz;
+        }
+
+
 
       return new WEASELModel(
           bestNorm,
