@@ -230,6 +230,13 @@ public class WEASELClassifier extends Classifier {
       WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, lowerBounding);
 
       int[/* Fensterlänge */][/* Sample */][/* Offset*/] words = model.createWords(samples);
+
+      // For Histogram Representation
+      // TODO uncomment if not needed, requires more memory.
+      // generate the actual words from the int representation
+      short[/* Fensterlänge */][/* Sample */][/* Offset*/][/* Wortlänge */] wordsSymbols = generateWordFromInt(words);
+
+
       BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, bestF);
       model.filterChiSquared(bob, words, chi);
       model.dict.remapChi(words);
@@ -300,6 +307,20 @@ public class WEASELClassifier extends Classifier {
       e.printStackTrace();
     }
     return null;
+  }
+
+  private short[][][][] generateWordFromInt(int[][][] words) {
+    short[/* Fensterlänge */][/* Sample */][/* Offset*/][/* Wortlänge */] wordsSymbols = new short[words.length][][][];
+    for (int i = 0; i < words.length; i++) {
+      wordsSymbols[i] = new short[words[i].length][][];
+      for (int j = 0; j < words[i].length; j++) {
+        wordsSymbols[i][j] = new short[words[i][j].length][];
+        for (int k = 0; k < words[i][j].length; k++) {
+          wordsSymbols[i][j][k] = Words.toShortArray(words[i][j][k], maxF, (byte) Words.binlog(maxS));
+        }
+      }
+    }
+    return wordsSymbols;
   }
 
   protected static Problem initLibLinearProblem(

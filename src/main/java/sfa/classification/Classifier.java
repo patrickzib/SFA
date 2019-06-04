@@ -185,8 +185,29 @@ public abstract class Classifier {
           shiftOffset <<= 1;
         }
       }
-
       return bits;
+    }
+
+    public static short[] toShortArray(long longWord, int wordLength, byte usedBits) {
+      int shortsPerLong = 60 / usedBits;
+      short[] dataShorts = new short[wordLength];
+      int startBit = 0;
+      long shift = 1L;
+
+      for (int j = 0; j < shortsPerLong && j < wordLength; j++) {
+        short bytes = 0;
+        int pos = 1;
+        for (int k = startBit; k < startBit + usedBits; k++) {
+          if ((longWord & shift) != 0) {
+            bytes |= pos;
+          }
+          shift <<= 1;
+          pos <<= 1;
+        }
+        dataShorts[j] = bytes;
+        startBit += usedBits;
+      }
+      return dataShorts;
     }
   }
 
