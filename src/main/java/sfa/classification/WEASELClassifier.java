@@ -263,7 +263,7 @@ public class WEASELClassifier extends Classifier {
                 double liblinearWeight = weights[word]; // LibLinear Gewicht
                 int wordFrequency = sampleBob.bob.get(word);
 
-                // double timeSeriesValueAtOffset = timeSeriesValues[pos];               // wert an stelle pos
+                // double timeSeriesValueAtOffset = timeSeriesValues[pos];               // Wert der Zeitreihe an Stelle 'pos'
 
                 // 1) aufaddieren über alle Fenstergrößen (windowId)
                 // 2) multiplizieren mit Häufigkeit (wordFrequency)
