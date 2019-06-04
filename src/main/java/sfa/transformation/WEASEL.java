@@ -140,9 +140,6 @@ public class WEASEL {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
-
-    // TODO
-    //    final long mask = (usedBits << wordLength) - 1L;
     final long mask = (1L << (usedBits * wordLength)) - 1L;
     int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
@@ -153,16 +150,20 @@ public class WEASEL {
 
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
+
         for (int offset = 0; offset < words[w][j].length; offset++) {
           int word = this.dict.getWord((words[w][j][offset] & mask) << highestBit | (long) w);
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
-          // add 2 grams
-          if (offset - this.windowLengths[w] >= 0) {
-            long prevWord = this.dict.getWord((words[w][j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w);
-            int newWord = this.dict.getWord((prevWord << 32 | word ) << highestBit);
-            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-          }
+          // remember new word mapping
+          words[w][j][offset] = word;
+
+//          // add 2 grams
+//          if (offset - this.windowLengths[w] >= 0) {
+//            long prevWord = this.dict.getWord((words[w][j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w);
+//            int newWord = this.dict.getWord((prevWord << 32 | word ) << highestBit);
+//            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+//          }
         }
       }
     }
@@ -174,7 +175,10 @@ public class WEASEL {
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+  public void filterChiSquared(
+      final BagOfBigrams[] bob,
+      final int[][][] words,
+      double chi_limit) {
     // Chi2 Test
     IntIntHashMap featureCount = new IntIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
@@ -216,13 +220,13 @@ public class WEASEL {
       }
     }
 
-        for (int j = 0; j < bob.length; j++) {
-          for (IntIntCursor cursor : bob[j].bob) {
-            if (!chiSquare.contains(cursor.key)) {
-              bob[j].bob.values[cursor.index] = 0;
-            }
-          }
+    for (int j = 0; j < bob.length; j++) {
+      for (IntIntCursor cursor : bob[j].bob) {
+        if (!chiSquare.contains(cursor.key)) {
+          bob[j].bob.values[cursor.index] = 0;
         }
+      }
+    }
 
     // chi-squared reduces keys substantially => remap
     this.dict.remap(bob);
@@ -284,6 +288,22 @@ public class WEASEL {
         for (IntIntCursor word : oldMap) {
           if (word.value > 0) {
             bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
+          }
+        }
+      }
+    }
+
+    public void remapChi(int[][][] words) {
+      for (int i = 0; i < words.length; i++) {
+        for (int j = 0; j < words[i].length; j++) {
+          for (int k = 0; k < words[i][j].length; k++) {
+            int index = 0;
+            if ((index = this.dictChi.indexOf(words[i][j][k])) > -1) {
+              words[i][j][k] = this.dictChi.indexGet(index);
+            }
+            else {
+              words[i][j][k] = -1;
+            }
           }
         }
       }

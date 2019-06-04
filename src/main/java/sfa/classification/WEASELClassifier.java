@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WEASELClassifier extends Classifier {
 
   // default training parameters
-  public static int maxF = 8;
+  public static int maxF = 6;
   public static int minF = 4;
   public static int maxS = 4;
 
@@ -131,6 +131,7 @@ public class WEASELClassifier extends Classifier {
 
     // chi square changes key mappings => remap
     model.weasel.dict.remap(bagTest);
+    // for visualization: model.weasel.dict.remapChi(wordsTest);
 
     FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
     Double[] labels = new Double[samples.length];
@@ -206,7 +207,7 @@ public class WEASELClassifier extends Classifier {
         for (int f = minF; f <= maxF; f += 2) {
           model.dict.reset();
           BagOfBigrams[] bop = model.createBagOfPatterns(words, samples, f);
-          model.filterChiSquared(bop, chi);
+          model.filterChiSquared(bop, words, chi);
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
@@ -230,7 +231,8 @@ public class WEASELClassifier extends Classifier {
 
       int[/* Fensterlänge */][/* Sample */][/* Offset*/] words = model.createWords(samples);
       BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, bestF);
-      model.filterChiSquared(bob, chi);
+      model.filterChiSquared(bob, words, chi);
+      model.dict.remapChi(words);
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
@@ -238,24 +240,14 @@ public class WEASELClassifier extends Classifier {
 
       Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
       double[] weights = linearModel.getFeatureWeights();
-//      for (Feature[] timeSeriesFeatures : features) { // Histogram
-//        for (Feature f : timeSeriesFeatures) { // Wörter 'aa', 'ab', ...
-//          f.setValue(weights[f.getIndex()] * f.getValue()); // Frequenz * Feature importance
-//        }
-//      }
 
-      // wort => id
-      // id => wort
-      // Fensterlänge
       xyz:
-
-        // Sample
         for (int sampleId = 0; sampleId < samples.length; sampleId++) { // Samples
           TimeSeries ts = samples[sampleId];
           double label = ts.getLabel();
 
-          double[] plot = new double[ts.getLength()]; // nach Klassen gruppieren?
-          int[] count = new int[ts.getLength()]; // normalisieren???
+          double[] plot = new double[ts.getLength()]; // nach "Label" gruppieren?
+          int[] count = new int[ts.getLength()]; // für Normalisieren verwenden???
 
           for (int windowId = 0; windowId < words.length; windowId++) { // Fensterlängen
             int[] wordsForOneSample = words[windowId][sampleId];
@@ -266,17 +258,20 @@ public class WEASELClassifier extends Classifier {
             // Wort
             for (int pos = 0; pos < wordsForOneSample.length; pos++) {  // Offsets
               int word = wordsForOneSample[pos];
-              double liblinearWeight = weights[word]; // LibLinear Gewicht
-              int wordFrequency = sampleBob.bob.get(word);
 
-              // double timeSeriesValueAtOffset = timeSeriesValues[pos];               // wert an stelle pos
+              if (word > -1) { // words that were filtered are "-1"
+                double liblinearWeight = weights[word]; // LibLinear Gewicht
+                int wordFrequency = sampleBob.bob.get(word);
 
-              // 1) aufaddieren über alle Fenstergrößen (windowId)
-              // 2) multiplizieren mit Häufigkeit (wordFrequency)
-              // 3) alle pixel, die mit fenstergröße überlappen einfärben (windowLengths)
-              double featureImportance = liblinearWeight * wordFrequency;
+                // double timeSeriesValueAtOffset = timeSeriesValues[pos];               // wert an stelle pos
 
-              plot[pos] += featureImportance;
+                // 1) aufaddieren über alle Fenstergrößen (windowId)
+                // 2) multiplizieren mit Häufigkeit (wordFrequency)
+                // 3) alle pixel, die mit fenstergröße überlappen einfärben (windowLengths)
+                double featureImportance = liblinearWeight * wordFrequency;
+
+                plot[pos] += featureImportance;
+              }
               //count[pos]++;
 
               //System.out.print("p:" +pos + ";f" + featureImportance + ";");
