@@ -323,15 +323,13 @@ public class WEASELClassifier extends Classifier {
       final BagOfBigrams[] bob,
       final Dictionary dict) {
 
-    dict.remap(bob);
-
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
       BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
-          features.add(new FeatureNode((int)word.key, (word.value)));
+          features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});

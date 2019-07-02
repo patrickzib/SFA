@@ -294,17 +294,17 @@ public class WEASEL {
       return this.dictChi.size();
     }
 
-    public void remap(final BagOfBigrams[] bagOfPatterns) {
-      for (int j = 0; j < bagOfPatterns.length; j++) {
-        LongIntHashMap oldMap = bagOfPatterns[j].bob;
-        bagOfPatterns[j].bob = new LongIntHashMap();
-        for (LongIntCursor word : oldMap) {
-          if (word.value > 0) {
-            bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
-          }
-        }
-      }
-    }
+//    public void remap(final BagOfBigrams[] bagOfPatterns) {
+//      for (int j = 0; j < bagOfPatterns.length; j++) {
+//        LongIntHashMap oldMap = bagOfPatterns[j].bob;
+//        bagOfPatterns[j].bob = new LongIntHashMap();
+//        for (LongIntCursor word : oldMap) {
+//          if (word.value > 0) {
+//            bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
+//          }
+//        }
+//      }
+//    }
 
     public void filterChiSquared(final BagOfBigrams[] bagOfPatterns) {
       for (int j = 0; j < bagOfPatterns.length; j++) {
