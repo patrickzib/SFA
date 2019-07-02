@@ -311,7 +311,7 @@ public class WEASELClassifier extends Classifier {
     Problem problem = new Problem();
     problem.bias = bias;
     problem.y = getLabels(bob);
-    
+
     final FeatureNode[][] features = initLibLinear(bob, dict);
 
     problem.n = dict.size() + 1;

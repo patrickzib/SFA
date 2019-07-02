@@ -125,15 +125,14 @@ public class WEASELCharacterClassifier extends Classifier {
   }
 
   public Double[] predict(TimeSeries[] samples) {
-    final short[][][][] wordsTest = model.weasel.createWords(samples);
-    final int[][][] subwords = model.weasel.transformSubwords(wordsTest);
-
-    //WEASELCharacter.BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(subwords, samples, model.features);
-
     WEASELCharacter.BagOfBigrams[] bagTest = null;
-    for (int w = 0; w < wordsTest.length; w++) {
+
+    for (int w = 0; w < model.weasel.windowLengths.length; w++) {
+      final short[][][] wordsTest = model.weasel.createWords(samples, w);
+      final int[][] subwordsTest = model.weasel.transformSubwordsOneWindow(wordsTest);
+
       WEASELCharacter.BagOfBigrams[] bopForWindow
-          = model.weasel.createBagOfPatterns(subwords[w], samples, w, model.features);
+          = model.weasel.createBagOfPatterns(subwordsTest, samples, w, model.features);
       model.weasel.dict.filterChiSquared(bopForWindow);
       bagTest = mergeBobs(bagTest, bopForWindow);
     }
@@ -160,14 +159,13 @@ public class WEASELCharacterClassifier extends Classifier {
     final Double[] labels = new Double[samples.length];
     final double[][] probabilities = new double[samples.length][];
 
-    // iterate each sample to classify
-    final short[][][][] wordsTest = model.weasel.createWords(samples);
-    final int[][][] subwordsTest = model.weasel.transformSubwords(wordsTest);
-
     WEASELCharacter.BagOfBigrams[] bagTest = null;
-    for (int w = 0; w < wordsTest.length; w++) {
+    for (int w = 0; w < model.weasel.windowLengths.length; w++) {
+      final short[][][] wordsTest = model.weasel.createWords(samples, w);
+      final int[][] subwordsTest = model.weasel.transformSubwordsOneWindow(wordsTest);
+
       WEASELCharacter.BagOfBigrams[] bopForWindow
-          = model.weasel.createBagOfPatterns(subwordsTest[w], samples, w, model.features);
+          = model.weasel.createBagOfPatterns(subwordsTest, samples, w, model.features);
       model.weasel.dict.filterChiSquared(bopForWindow);
       bagTest = mergeBobs(bagTest, bopForWindow);
     }
@@ -211,20 +209,22 @@ public class WEASELCharacterClassifier extends Classifier {
       for (final boolean mean : NORMALIZATION) {
         int[] windowLengths = getWindowLengths(samples, mean);
         WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, mean, lowerBounding);
-        short[][][][] words = model.createWords(samples);
+        short[][][][] words = model.createWords(samples); // TODO optional: also build words for each windowSize
 
         for (int f = minF; f <= maxF; f += 2) {
           model.dict.reset();
 
-          final int[][][] subwords = model.fitSubwords(words);
+          //final int[][][] subwords = model.fitSubwords(words);
 
           WEASELCharacter.BagOfBigrams[] bop = null;
           for (int w = 0; w < words.length; w++) {
+            final int[][] subwords = model.transformSubwordsOneWindow(words[w]);
+
             WEASELCharacter.BagOfBigrams[] bobForOneWindow = fitOneWindow(
                 samples,
                 windowLengths, mean,
                 model,
-                subwords[w], f, w);
+                subwords, f, w);
             bop = mergeBobs(bop, bobForOneWindow);
           }
 

@@ -6,6 +6,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import sfa.classification.Classifier;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
@@ -109,7 +110,7 @@ public class WEASELCharacter {
    * @param samples
    * @return
    */
-  private short[][][] createWords(final TimeSeries[] samples, final int index) {
+  public short[][][] createWords(final TimeSeries[] samples, final int index) {
 
     // SFA quantization
     if (this.signature[index] == null) {
@@ -170,17 +171,28 @@ public class WEASELCharacter {
     // TODO Modell verwenden
 
     // short => int
-    byte neededBits = (byte) Words.binlog(this.alphabetSize);
-    int[][][] intWords = new int[subwords.length][subwords[0].length][];
+    int[][][] intWords = new int[subwords.length][][];
     for (int i = 0; i < subwords.length; i++) {
-      for (int j = 0; j < subwords[i].length; j++) {
-        intWords[i][j] = new int[subwords[i][j].length];
-        for (int k = 0; k < subwords[i][j].length; k++) {
-          intWords[i][j][k] = (int) Words.createWord(subwords[i][j][k], subwords[i][j][k].length, neededBits);
-        }
-      }
+      intWords[i] = transformSubwordsOneWindow(subwords[i]);
     }
 
+    return intWords;
+  }
+
+  /**
+   * Toolbox
+   * @param words
+   * @return
+   */
+  public int[][] transformSubwordsOneWindow(short[][][] words) {
+    byte neededBits = (byte) Words.binlog(this.alphabetSize);
+    int[][] intWords = new int[words.length][];
+    for (int j = 0; j < words.length; j++) {
+      intWords[j] = new int[words[j].length];
+      for (int k = 0; k < words[j].length; k++) {
+        intWords[j][k] = (int) Words.createWord(words[j][k], words[j][k].length, neededBits);
+      }
+    }
     return intWords;
   }
 
