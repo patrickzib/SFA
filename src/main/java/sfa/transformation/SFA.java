@@ -289,14 +289,7 @@ public class SFA implements Serializable {
    * @return
    */
   public short[][] transformWindowing(TimeSeries timeSeries) {
-    double[][] mft = this.transformation.transformWindowing(timeSeries, this.maxWordLength);
-
-    short[][] words = new short[mft.length][];
-    for (int i = 0; i < mft.length; i++) {
-      words[i] = quantization(mft[i]);
-    }
-
-    return words;
+    return this.transformation.transformWindowingShort(timeSeries, this.maxWordLength, this);
   }
 
   /**
@@ -387,11 +380,9 @@ public class SFA implements Serializable {
     double[][] transformedSamples = new double[samples.length][];
 
     for (int i = 0; i < samples.length; i++) {
-      // z-normalization
-      //samples[i].norm();
-
       // approximation
-      transformedSamples[i] = this.transformation.transform(samples[i], l);
+      double[] data = new double[samples[0].getLength()];
+      transformedSamples[i] = this.transformation.transform(samples[i], l, data);
 
       for (int j = 0; j < transformedSamples[i].length; j++) {
         // round to 2 decimal places to reduce noise
