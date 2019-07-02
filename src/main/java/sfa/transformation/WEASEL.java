@@ -305,12 +305,7 @@ public class WEASEL {
     }
 
     public int size() {
-      if (!this.dictChi.isEmpty()) {
-        return this.dictChi.size();
-      } else {
-        return 0;
-        //return this.dict.size();
-      }
+      return this.dictChi.size();
     }
 
     public void remap(final BagOfBigrams[] bagOfPatterns) {
@@ -325,7 +320,7 @@ public class WEASEL {
       }
     }
 
-    public void filter(final BagOfBigrams[] bagOfPatterns) {
+    public void filterChiSquared(final BagOfBigrams[] bagOfPatterns) {
       for (int j = 0; j < bagOfPatterns.length; j++) {
         LongIntHashMap oldMap = bagOfPatterns[j].bob;
         bagOfPatterns[j].bob = new LongIntHashMap();

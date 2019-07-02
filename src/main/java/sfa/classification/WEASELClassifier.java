@@ -129,23 +129,11 @@ public class WEASELClassifier extends Classifier {
   public Double[] predict(TimeSeries[] samples) {
     final int[][][] wordsTest = model.weasel.createWords(samples);
 
-    //BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);
-    // chi square changes key mappings => remap
-    //model.weasel.dict.remap(bagTest);
-
     BagOfBigrams[] bagTest = null;
     for (int w = 0; w < wordsTest.length; w++) {
       BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest[w], samples, w, model.features);
-      model.weasel.dict.filter(bopForWindow);
-
-      if (bagTest == null) {
-        bagTest = bopForWindow;
-      }
-      else {
-        for (int i = 0; i < bagTest.length; i++) {
-          bagTest[i].bob.putAll(bopForWindow[i].bob);
-        }
-      }
+      model.weasel.dict.filterChiSquared(bopForWindow);
+      bagTest = mergeBobs(bagTest, bopForWindow);
     }
 
     FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict/*, model.linearModel.getNrFeature()*/);
@@ -223,12 +211,12 @@ public class WEASELClassifier extends Classifier {
 
           BagOfBigrams[] bop = null;
           for (int w = 0; w < words.length; w++) {
-            bop = fitOneWindow(
+            BagOfBigrams[] bobForOneWindow = fitOneWindow(
                 samples,
                 windowLengths, mean,
                 model,
-                bop,
                 words[w], f, w);
+            bop = mergeBobs(bop, bobForOneWindow);
           }
 
           // train liblinear
@@ -253,12 +241,12 @@ public class WEASELClassifier extends Classifier {
 
       BagOfBigrams[] bob = null;
       for (int w = 0; w < words.length; w++) {
-        bob = fitOneWindow(
+        BagOfBigrams[] bobForOneWindow = fitOneWindow(
             samples,
             windowLengths, bestNorm,
             model,
-            bob,
             words[w], bestF, w);
+        bob = mergeBobs(bob, bobForOneWindow);
       }
 
       // train liblinear
@@ -286,24 +274,26 @@ public class WEASELClassifier extends Classifier {
       TimeSeries[] samples,
       int[] windowLengths, boolean mean,
       WEASEL model,
-      BagOfBigrams[] bop,
       int[][] word, int f,
       int w) {
     WEASEL modelForWindow = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
     modelForWindow.filterChiSquared(bopForWindow, chi);
 
+    // now, merge dicts
+    model.dict.dictChi.putAll(modelForWindow.dict.dictChi);
+
+    return bopForWindow;
+  }
+
+  private BagOfBigrams[] mergeBobs(BagOfBigrams[] bop, BagOfBigrams[] bopForWindow) {
     if (bop == null) {
       bop = bopForWindow;
-    }
-    else {
+    } else {
       for (int i = 0; i < bop.length; i++) {
         bop[i].bob.putAll(bopForWindow[i].bob);
       }
     }
-    // merge dicts
-    model.dict.dictChi.putAll(modelForWindow.dict.dictChi);
-
     return bop;
   }
 
@@ -316,7 +306,7 @@ public class WEASELClassifier extends Classifier {
     Problem problem = new Problem();
     problem.bias = bias;
     problem.y = getLabels(bob);
-    final FeatureNode[][] features = initLibLinear(bob, dict /*, problem.n*/);
+    final FeatureNode[][] features = initLibLinear(bob, dict);
 
     problem.n = dict.size() + 1;
     problem.l = features.length;
@@ -326,8 +316,7 @@ public class WEASELClassifier extends Classifier {
 
   protected static FeatureNode[][] initLibLinear(
       final BagOfBigrams[] bob,
-      final Dictionary dict
-      /*int max_feature*/) {
+      final Dictionary dict) {
 
     dict.remap(bob);
 
@@ -336,7 +325,7 @@ public class WEASELClassifier extends Classifier {
       BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
-        if (word.value > 0 /*&& word.key <= max_feature*/) {
+        if (word.value > 0) {
           features.add(new FeatureNode((int)word.key, (word.value)));
         }
       }
