@@ -55,15 +55,15 @@ public class UCRClassificationTest {
             TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
             TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 
-            // The WEASEL-classifier
-            Classifier w = new WEASELCharacterClassifier();
-            Classifier.Score scoreW = w.eval(trainSamples, testSamples);
-            System.out.println(s + ";" + scoreW.toString());
-
 //            // The WEASEL-classifier
-//            Classifier w = new WEASELClassifier();
+//            Classifier w = new WEASELCharacterClassifier();
 //            Classifier.Score scoreW = w.eval(trainSamples, testSamples);
 //            System.out.println(s + ";" + scoreW.toString());
+
+            // The WEASEL-classifier
+            Classifier w = new WEASELClassifier();
+            Classifier.Score scoreW = w.eval(trainSamples, testSamples);
+            System.out.println(s + ";" + scoreW.toString());
 //
 //            // The BOSS ensemble classifier
 //            Classifier boss = new BOSSEnsembleClassifier();
