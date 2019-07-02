@@ -141,8 +141,6 @@ public class WEASEL {
       final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
-    //final byte usedBits = (byte) Words.binlog(this.alphabetSize);
-    //final long mask = (1L << (usedBits * wordLength)) - 1L;
     int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
     // iterate all samples
@@ -157,8 +155,8 @@ public class WEASEL {
 
         // add 2 grams
         if (offset - this.windowLengths[w] >= 0) {
-          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]]) << highestBit | (long) w;
-          long newWord = (prevWord << 32 | word ) << highestBit;
+          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]]);
+          long newWord = (prevWord << 32 | word) << highestBit | (long) w;
           bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
         }
       }
