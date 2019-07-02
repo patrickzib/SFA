@@ -247,6 +247,7 @@ public class WEASELClassifier extends Classifier {
 
       Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
       double[] weights = linearModel.getFeatureWeights();
+      System.out.println(Arrays.toString(weights));
 
       xyz:
         for (int sampleId = 0; sampleId < samples.length; sampleId++) { // Samples

@@ -49,16 +49,16 @@ public abstract class Classifier {
   public static int folds = 10;
 
   // Blocks for parallel execution
-  public final static int BLOCKS = 8;
+  public final static int BLOCKS = 1;
 
-  static {
-    Runtime runtime = Runtime.getRuntime();
-    if (runtime.availableProcessors() <= 4) {
-      threads = runtime.availableProcessors() - 1;
-    } else {
-      threads = runtime.availableProcessors();
-    }
-  }
+//  static {
+//    Runtime runtime = Runtime.getRuntime();
+//    if (runtime.availableProcessors() <= 4) {
+//      threads = runtime.availableProcessors() - 1;
+//    } else {
+//      threads = runtime.availableProcessors();
+//    }
+//  }
 
   public Classifier() {
     this.exec = Executors.newFixedThreadPool(threads);
@@ -399,6 +399,8 @@ public abstract class Classifier {
     for (i = 0; i <= nr_fold; i++) {
       fold_start[i] = i * l / nr_fold;
     }
+
+    System.out.println(Arrays.toString(fold_start));
 
     final AtomicInteger correct = new AtomicInteger(0);
 
