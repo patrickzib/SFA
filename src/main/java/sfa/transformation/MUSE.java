@@ -116,7 +116,7 @@ public class MUSE {
    * @param mtsSamples
    * @return
    */
-  private int[/*window size*/][] createWords(final MultiVariateTimeSeries[] mtsSamples, final int index) {
+  public int[/*sample size*/][] createWords(final MultiVariateTimeSeries[] mtsSamples, final int index) {
 
     // SFA quantization
     if (this.signature[index] == null) {
@@ -193,7 +193,6 @@ public class MUSE {
         samples[0].getDimensions() * samples.length);
 
     final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
-//    final long mask = (usedBits << wordLength) - 1l;
     final int mask = (1 << (usedBits * wordLength)) - 1;
 
     // iterate all samples and create a muse model for each
@@ -219,6 +218,51 @@ public class MUSE {
                 int newWord = this.dict.getWord(bigram);
                 bop.bob.putOrAdd(newWord, 1, 1);
               }
+            }
+          }
+        }
+      }
+      bagOfPatterns.add(bop);
+    }
+    return bagOfPatterns.toArray(new BagOfBigrams[]{});
+  }
+
+  /**
+   * Create words and bi-grams for all window lengths
+   */
+  public BagOfBigrams[] createBagOfPatterns(
+      final int[][] wordsForWindowLength,
+      final MultiVariateTimeSeries[] samples,
+      final int w,    // index of used windowSize
+      final int dimensionality,
+      final int wordLength) {
+    List<BagOfBigrams> bagOfPatterns = new ArrayList<BagOfBigrams>(
+        samples[0].getDimensions() * samples.length);
+
+    final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
+    final int mask = (1 << (usedBits * wordLength)) - 1;
+
+    // iterate all samples and create a muse model for each
+    for (int i = 0, j = 0; i < samples.length; i++, j += dimensionality) {
+      BagOfBigrams bop = new BagOfBigrams(100, samples[i].getLabel());
+
+      // create subsequences
+      if (this.windowLengths[w] >= wordLength) {
+        for (int dim = 0; dim < dimensionality; dim++) {
+          for (int offset = 0; offset < wordsForWindowLength[j + dim].length; offset++) {
+            MuseWord word = new MuseWord(w, dim, wordsForWindowLength[j + dim][offset] & mask, 0);
+            int dict = this.dict.getWord(word);
+            bop.bob.putOrAdd(dict, 1, 1);
+
+            // add bigrams
+            if (this.windowLengths[this.windowLengths.length-1] < 200 // avoid for too large datasets
+                && MUSEClassifier.BIGRAMS
+                && (offset - this.windowLengths[w] >= 0)) {
+              MuseWord bigram = new MuseWord(w, dim,
+                  (wordsForWindowLength[j + dim][offset - this.windowLengths[w]] & mask),
+                  wordsForWindowLength[j + dim][offset] & mask);
+              int newWord = this.dict.getWord(bigram);
+              bop.bob.putOrAdd(newWord, 1, 1);
             }
           }
         }
@@ -282,9 +326,6 @@ public class MUSE {
         }
       }
     }
-
-    // chi-squared reduces keys substantially => remap
-    this.dict.remap(bob);
   }
 
   /**
@@ -293,8 +334,8 @@ public class MUSE {
    * Condenses the SFA word space.
    */
   public static class Dictionary {
-    ObjectIntHashMap<MuseWord> dict;
-    IntIntHashMap dictChi;
+    public ObjectIntHashMap<MuseWord> dict;
+    public IntIntHashMap dictChi;
 
     public Dictionary() {
       this.dict = new ObjectIntHashMap<MuseWord>();
@@ -344,6 +385,18 @@ public class MUSE {
         for (IntIntCursor word : oldMap) {
           if (word.value > 0) {
             bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
+          }
+        }
+      }
+    }
+
+    public void filterChiSquared(final BagOfBigrams[] bagOfPatterns) {
+      for (int j = 0; j < bagOfPatterns.length; j++) {
+        IntIntHashMap oldMap = bagOfPatterns[j].bob;
+        bagOfPatterns[j].bob = new IntIntHashMap();
+        for (IntIntCursor word : oldMap) {
+          if (this.dictChi.containsKey(word.key) && word.value > 0) {
+            bagOfPatterns[j].bob.put(word.key, word.value);
           }
         }
       }
