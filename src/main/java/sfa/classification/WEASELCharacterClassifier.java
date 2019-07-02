@@ -248,16 +248,16 @@ public class WEASELCharacterClassifier extends Classifier {
       int[] windowLengths = getWindowLengths(samples, bestNorm);
       WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, bestNorm, lowerBounding);
 
-      short[][][][] words = model.createWords(samples);
-      final int[][][] subwords = model.fitSubwords(words);
-
       WEASELCharacter.BagOfBigrams[] bob = null;
-      for (int w = 0; w < words.length; w++) {
+      for (int w = 0; w < model.windowLengths.length; w++) {
+        final short[][][] wordsTest = model.createWords(samples, w);
+        final int[][] subwords = model.transformSubwordsOneWindow(wordsTest);
+
         WEASELCharacter.BagOfBigrams[] bobForOneWindow = fitOneWindow(
             samples,
             windowLengths, bestNorm,
             model,
-            subwords[w], bestF, w);
+            subwords, bestF, w);
         bob = mergeBobs(bob, bobForOneWindow);
       }
 
