@@ -136,7 +136,7 @@ public class WEASELClassifier extends Classifier {
       bagTest = mergeBobs(bagTest, bopForWindow);
     }
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict/*, model.linearModel.getNrFeature()*/);
+    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
     Double[] labels = new Double[samples.length];
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
@@ -160,12 +160,15 @@ public class WEASELClassifier extends Classifier {
 
     // iterate each sample to classify
     final int[][][] wordsTest = model.weasel.createWords(samples);
-    final BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);
 
-    // chi square changes key mappings => remap
-    //model.weasel.dict.remap(bagTest);
+    BagOfBigrams[] bagTest = null;
+    for (int w = 0; w < wordsTest.length; w++) {
+      BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest[w], samples, w, model.features);
+      model.weasel.dict.filterChiSquared(bopForWindow);
+      bagTest = mergeBobs(bagTest, bopForWindow);
+    }
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict/*, model.linearModel.getNrFeature()*/);
+    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -286,7 +289,9 @@ public class WEASELClassifier extends Classifier {
     return bopForWindow;
   }
 
-  private BagOfBigrams[] mergeBobs(BagOfBigrams[] bop, BagOfBigrams[] bopForWindow) {
+  private BagOfBigrams[] mergeBobs(
+      BagOfBigrams[] bop,
+      BagOfBigrams[] bopForWindow) {
     if (bop == null) {
       bop = bopForWindow;
     } else {
@@ -306,6 +311,7 @@ public class WEASELClassifier extends Classifier {
     Problem problem = new Problem();
     problem.bias = bias;
     problem.y = getLabels(bob);
+    
     final FeatureNode[][] features = initLibLinear(bob, dict);
 
     problem.n = dict.size() + 1;

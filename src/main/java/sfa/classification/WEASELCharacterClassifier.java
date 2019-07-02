@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
+import com.carrotsearch.hppc.cursors.LongIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.WEASELCharacter;
@@ -125,15 +126,19 @@ public class WEASELCharacterClassifier extends Classifier {
 
   public Double[] predict(TimeSeries[] samples) {
     final short[][][][] wordsTest = model.weasel.createWords(samples);
-
     final int[][][] subwords = model.weasel.transformSubwords(wordsTest);
 
-    WEASELCharacter.BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(subwords, samples, model.features);
+    //WEASELCharacter.BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(subwords, samples, model.features);
 
-    // chi square changes key mappings => remap
-    model.weasel.dict.remap(bagTest);
+    WEASELCharacter.BagOfBigrams[] bagTest = null;
+    for (int w = 0; w < wordsTest.length; w++) {
+      WEASELCharacter.BagOfBigrams[] bopForWindow
+          = model.weasel.createBagOfPatterns(subwords[w], samples, w, model.features);
+      model.weasel.dict.filterChiSquared(bopForWindow);
+      bagTest = mergeBobs(bagTest, bopForWindow);
+    }
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
+    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
     Double[] labels = new Double[samples.length];
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
@@ -158,12 +163,16 @@ public class WEASELCharacterClassifier extends Classifier {
     // iterate each sample to classify
     final short[][][][] wordsTest = model.weasel.createWords(samples);
     final int[][][] subwordsTest = model.weasel.transformSubwords(wordsTest);
-    final WEASELCharacter.BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(subwordsTest, samples, model.features);
 
-    // chi square changes key mappings => remap
-    model.weasel.dict.remap(bagTest);
+    WEASELCharacter.BagOfBigrams[] bagTest = null;
+    for (int w = 0; w < wordsTest.length; w++) {
+      WEASELCharacter.BagOfBigrams[] bopForWindow
+          = model.weasel.createBagOfPatterns(subwordsTest[w], samples, w, model.features);
+      model.weasel.dict.filterChiSquared(bopForWindow);
+      bagTest = mergeBobs(bagTest, bopForWindow);
+    }
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
+    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -209,8 +218,15 @@ public class WEASELCharacterClassifier extends Classifier {
 
           final int[][][] subwords = model.fitSubwords(words);
 
-          WEASELCharacter.BagOfBigrams[] bop = model.createBagOfPatterns(subwords, samples, f);
-          model.filterChiSquared(bop, chi);
+          WEASELCharacter.BagOfBigrams[] bop = null;
+          for (int w = 0; w < words.length; w++) {
+            WEASELCharacter.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+                samples,
+                windowLengths, mean,
+                model,
+                subwords[w], f, w);
+            bop = mergeBobs(bop, bobForOneWindow);
+          }
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
@@ -234,20 +250,20 @@ public class WEASELCharacterClassifier extends Classifier {
 
       short[][][][] words = model.createWords(samples);
       final int[][][] subwords = model.fitSubwords(words);
-      WEASELCharacter.BagOfBigrams[] bob = model.createBagOfPatterns(subwords, samples, bestF);
-      model.filterChiSquared(bob, chi);
+
+      WEASELCharacter.BagOfBigrams[] bob = null;
+      for (int w = 0; w < words.length; w++) {
+        WEASELCharacter.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+            samples,
+            windowLengths, bestNorm,
+            model,
+            subwords[w], bestF, w);
+        bob = mergeBobs(bob, bobForOneWindow);
+      }
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
-
-      Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
-      double[] weights = linearModel.getFeatureWeights();
-      for (Feature[] timeSeriesFeatures : features) {
-        for (Feature f : timeSeriesFeatures) {
-          f.setValue(weights[f.getIndex()] * f.getValue()); // Anzahl
-        }
-      }
 
       return new WEASELModel(
           bestNorm,
@@ -266,6 +282,35 @@ public class WEASELCharacterClassifier extends Classifier {
     return null;
   }
 
+  private WEASELCharacter.BagOfBigrams[] fitOneWindow(
+      TimeSeries[] samples,
+      int[] windowLengths, boolean mean,
+      WEASELCharacter model,
+      int[][] word, int f,
+      int w) {
+    WEASELCharacter modelForWindow = new WEASELCharacter(maxF, maxS, windowLengths, mean, lowerBounding);
+    WEASELCharacter.BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
+    modelForWindow.filterChiSquared(bopForWindow, chi);
+
+    // now, merge dicts
+    model.dict.dictChi.putAll(modelForWindow.dict.dictChi);
+
+    return bopForWindow;
+  }
+
+  private WEASELCharacter.BagOfBigrams[] mergeBobs(
+      WEASELCharacter.BagOfBigrams[] bop,
+      WEASELCharacter.BagOfBigrams[] bopForWindow) {
+    if (bop == null) {
+      bop = bopForWindow;
+    } else {
+      for (int i = 0; i < bop.length; i++) {
+        bop[i].bob.putAll(bopForWindow[i].bob);
+      }
+    }
+    return bop;
+  }
+
   protected static Problem initLibLinearProblem(
       final WEASELCharacter.BagOfBigrams[] bob,
       final WEASELCharacter.Dictionary dict,
@@ -274,24 +319,30 @@ public class WEASELCharacterClassifier extends Classifier {
 
     Problem problem = new Problem();
     problem.bias = bias;
-    problem.n = dict.size() + 1;
     problem.y = getLabels(bob);
 
-    final FeatureNode[][] features = initLibLinear(bob, problem.n);
+    final FeatureNode[][] features = initLibLinear(bob, dict);
 
+    problem.n = dict.size() + 1;
     problem.l = features.length;
     problem.x = features;
     return problem;
   }
 
-  protected static FeatureNode[][] initLibLinear(final WEASELCharacter.BagOfBigrams[] bob, int max_feature) {
+  protected static FeatureNode[][] initLibLinear(
+        final WEASELCharacter.BagOfBigrams[] bob,
+        final WEASELCharacter.Dictionary dict
+      ) {
+
+    dict.remap(bob);
+
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
       WEASELCharacter.BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
-      for (IntIntCursor word : bop.bob) {
-        if (word.value > 0 && word.key <= max_feature) {
-          features.add(new FeatureNode(word.key, (word.value)));
+      for (LongIntCursor word : bop.bob) {
+        if (word.value > 0) {
+          features.add(new FeatureNode((int)word.key, (word.value)));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});

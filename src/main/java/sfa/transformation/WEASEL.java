@@ -258,9 +258,6 @@ public class WEASEL {
         }
       }
     }
-
-    // chi-squared reduces keys substantially => remap
-    //this.dict.remap(bob);
   }
 
   /**
