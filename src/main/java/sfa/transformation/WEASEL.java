@@ -109,7 +109,7 @@ public class WEASEL {
    * @param samples
    * @return
    */
-  private int[][] createWords(final TimeSeries[] samples, final int index) {
+  public int[][] createWords(final TimeSeries[] samples, final int index) {
 
     // SFA quantization
     if (this.signature[index] == null) {

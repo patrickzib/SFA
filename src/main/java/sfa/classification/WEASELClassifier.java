@@ -127,11 +127,10 @@ public class WEASELClassifier extends Classifier {
   }
 
   public Double[] predict(TimeSeries[] samples) {
-    final int[][][] wordsTest = model.weasel.createWords(samples);
-
     BagOfBigrams[] bagTest = null;
-    for (int w = 0; w < wordsTest.length; w++) {
-      BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest[w], samples, w, model.features);
+    for (int w = 0; w < model.weasel.windowLengths.length; w++) {
+      int[][] wordsTest = model.weasel.createWords(samples, w);
+      BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest, samples, w, model.features);
       model.weasel.dict.filterChiSquared(bopForWindow);
       bagTest = mergeBobs(bagTest, bopForWindow);
     }
@@ -159,11 +158,11 @@ public class WEASELClassifier extends Classifier {
     final double[][] probabilities = new double[samples.length][];
 
     // iterate each sample to classify
-    final int[][][] wordsTest = model.weasel.createWords(samples);
 
     BagOfBigrams[] bagTest = null;
-    for (int w = 0; w < wordsTest.length; w++) {
-      BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest[w], samples, w, model.features);
+    for (int w = 0; w < model.weasel.windowLengths.length; w++) {
+      int[][] wordsTest = model.weasel.createWords(samples, w);
+      BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest, samples, w, model.features);
       model.weasel.dict.filterChiSquared(bopForWindow);
       bagTest = mergeBobs(bagTest, bopForWindow);
     }
@@ -240,15 +239,16 @@ public class WEASELClassifier extends Classifier {
       // obtain the final matrix
       int[] windowLengths = getWindowLengths(samples, bestNorm);
       WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, lowerBounding);
-      int[][][] words = model.createWords(samples);
 
       BagOfBigrams[] bob = null;
-      for (int w = 0; w < words.length; w++) {
+      for (int w = 0; w < model.windowLengths.length; w++) {
+        int[][] words = model.createWords(samples, w);
+
         BagOfBigrams[] bobForOneWindow = fitOneWindow(
             samples,
             windowLengths, bestNorm,
             model,
-            words[w], bestF, w);
+            words, bestF, w);
         bob = mergeBobs(bob, bobForOneWindow);
       }
 
