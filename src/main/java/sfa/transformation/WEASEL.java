@@ -279,17 +279,6 @@ public class WEASEL {
       this.dictChi = new LongIntHashMap();
     }
 
-//    public int getWord(long word) {
-//      int index = 0;
-//      if ((index = this.dict.indexOf(word)) > -1) {
-//        return this.dict.indexGet(index);
-//      } else {
-//        int newWord = this.dict.size() + 1;
-//        this.dict.put(word, newWord);
-//        return newWord;
-//      }
-//    }
-
     public int getWordChi(long word) {
       int index = 0;
       if ((index = this.dictChi.indexOf(word)) > -1) {
