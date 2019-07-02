@@ -205,11 +205,13 @@ public class WEASELClassifier extends Classifier {
       optimize:
       for (final boolean mean : NORMALIZATION) {
         int[] windowLengths = getWindowLengths(samples, mean);
-        WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
-        int[][][] words = model.createWords(samples);
+        //WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
+        //int[][][] words = model.createWords(samples);
 
         for (int f = minF; f <= maxF; f += 2) {
-          model.dict.reset();
+          //model.dict.reset();
+          WEASEL model = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
+          int[][][] words = model.createWords(samples);
 
           BagOfBigrams[] bop = null;
           for (int w = 0; w < words.length; w++) {
@@ -238,7 +240,7 @@ public class WEASELClassifier extends Classifier {
 
       // obtain the final matrix
       int[] windowLengths = getWindowLengths(samples, bestNorm);
-      WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, lowerBounding);
+      WEASEL model = new WEASEL(bestF, maxS, windowLengths, bestNorm, lowerBounding);
 
       BagOfBigrams[] bob = null;
       for (int w = 0; w < model.windowLengths.length; w++) {
