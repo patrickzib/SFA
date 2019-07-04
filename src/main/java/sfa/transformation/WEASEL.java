@@ -264,16 +264,13 @@ public class WEASEL {
    * Condenses the SFA word space.
    */
   public static class Dictionary {
-    //public LongIntHashMap dict;
     public LongIntHashMap dictChi;
 
     public Dictionary() {
-      //this.dict = new LongIntHashMap();
       this.dictChi = new LongIntHashMap();
     }
 
     public void reset() {
-      //this.dict = new LongIntHashMap();
       this.dictChi = new LongIntHashMap();
     }
 
@@ -291,18 +288,6 @@ public class WEASEL {
     public int size() {
       return this.dictChi.size();
     }
-
-//    public void remap(final BagOfBigrams[] bagOfPatterns) {
-//      for (int j = 0; j < bagOfPatterns.length; j++) {
-//        LongIntHashMap oldMap = bagOfPatterns[j].bob;
-//        bagOfPatterns[j].bob = new LongIntHashMap();
-//        for (LongIntCursor word : oldMap) {
-//          if (word.value > 0) {
-//            bagOfPatterns[j].bob.put(getWordChi(word.key), word.value);
-//          }
-//        }
-//      }
-//    }
 
     public void filterChiSquared(final BagOfBigrams[] bagOfPatterns) {
       for (int j = 0; j < bagOfPatterns.length; j++) {
