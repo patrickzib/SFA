@@ -2,7 +2,7 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import com.carrotsearch.hppc.cursors.IntIntCursor;
+import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.TimeSeries;
@@ -314,10 +314,9 @@ public class WEASELClassifier extends Classifier {
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
-    modelForWindow.filterChiSquared(bopForWindow, chi);
+    LongHashSet chiSquared = modelForWindow.trainChiSquared(bopForWindow, chi);
 
-    // now, merge dicts
-    model.dict.dictChi.putAll(modelForWindow.dict.dictChi);
+    //System.out.println(chiSquared.size());
 
     return bopForWindow;
   }

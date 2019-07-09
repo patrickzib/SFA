@@ -209,7 +209,7 @@ public class WEASEL {
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+  public LongHashSet trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
@@ -249,6 +249,11 @@ public class WEASEL {
           chiSquare.add(feature.key);
         }
       }
+
+      if (chiSquare.size() > 1000) { // order by chi values??
+        //System.out.println("Break");
+        break;
+      }
     }
 
     for (int j = 0; j < bob.length; j++) {
@@ -258,6 +263,8 @@ public class WEASEL {
         }
       }
     }
+
+    return chiSquare;
   }
 
   /**
