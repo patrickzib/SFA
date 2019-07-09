@@ -220,7 +220,7 @@ public class WEASELClassifier extends Classifier {
 
       optimize:
       for (final boolean mean : NORMALIZATION) {
-        int[] windowLengths = getWindowLengths(samples, mean);
+        int[] windowLengths = getWindowLengths(samples, bestNorm);
         WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
         final int[][][] words = model.createWords(samples);
 
@@ -237,8 +237,7 @@ public class WEASELClassifier extends Classifier {
                 if (w % BLOCKS == id) {
                   BagOfBigrams[] bobForOneWindow = fitOneWindow(
                       samples,
-                      windowLengths, mean,
-                      model,
+                      model.windowLengths, mean,
                       words[w], ff, w);
                   mergeBobs(bop, bobForOneWindow);
                 }
@@ -276,8 +275,7 @@ public class WEASELClassifier extends Classifier {
               int[][] words = model.createWords(samples, w);
               BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
-                  windowLengths, mean,
-                  model,
+                  model.windowLengths, mean,
                   words, ff, w);
               mergeBobs(bop, bobForOneWindow);
             }
@@ -309,7 +307,6 @@ public class WEASELClassifier extends Classifier {
   private BagOfBigrams[] fitOneWindow(
       TimeSeries[] samples,
       int[] windowLengths, boolean mean,
-      WEASEL model,
       int[][] word, int f,
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
@@ -317,7 +314,6 @@ public class WEASELClassifier extends Classifier {
     LongHashSet chiSquared = modelForWindow.trainChiSquared(bopForWindow, chi);
 
     //System.out.println(chiSquared.size());
-
     return bopForWindow;
   }
 

@@ -3,15 +3,16 @@
 package sfa.transformation;
 
 import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
-import sfa.classification.Classifier;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -239,7 +240,7 @@ public class WEASEL {
       prob.value /= bob.length; // (float) frequencies.get(prob.key);
 
       for (LongIntCursor feature : featureCount) {
-        long key = prob.key << 32 | feature.key;
+        long key = prob.key << 32 | feature.key; // FIXME collides with bigrams???
         float expected = prob.value * feature.value;
 
         float chi = observed.get(key) - expected;
@@ -250,10 +251,10 @@ public class WEASEL {
         }
       }
 
-      if (chiSquare.size() > 1000) { // order by chi values??
-        //System.out.println("Break");
-        break;
-      }
+//      if (chiSquare.size() > 1000) { // TODO test???
+//        //System.out.println("Break");
+//        break;
+//      }
     }
 
     for (int j = 0; j < bob.length; j++) {
