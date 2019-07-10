@@ -381,8 +381,8 @@ public class SFA implements Serializable {
 
     for (int i = 0; i < samples.length; i++) {
       // approximation
-      double[] data = new double[samples[0].getLength()];
-      transformedSamples[i] = this.transformation.transform(samples[i], l, data);
+      //double[] data = new double[samples[0].getLength()];
+      transformedSamples[i] = this.transformation.transform(samples[i], l);
 
       for (int j = 0; j < transformedSamples[i].length; j++) {
         // round to 2 decimal places to reduce noise

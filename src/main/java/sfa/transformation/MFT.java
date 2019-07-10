@@ -62,25 +62,11 @@ public class MFT implements Serializable {
    * @return the first l Fourier values
    */
   public double[] transform(TimeSeries timeSeries, int l) {
+    //if (!timeSeries.isNormed()) { // FIXME needed???
+    //  timeSeries.norm(this.normMean);
+    //}
+
     double[] data = new double[this.windowSize];
-    return transform(timeSeries, l, data);
-  }
-
-  /**
-   * Transforms a time series using the *discrete* fourier transform. Results in
-   * a single Fourier transform of the time series.
-   *
-   * @param timeSeries the time series to be transformed
-   * @param l          the number of Fourier values to keep
-   * @param data       uses a buffer to avoid creating a double array each time transform is called
-   * @return the first l Fourier values
-   */
-  public double[] transform(TimeSeries timeSeries, int l, double[] data) {
-    if (!timeSeries.isNormed()) { // FIXME needed???
-      timeSeries.norm(this.normMean);
-    }
-
-    //double[] data = new double[this.windowSize];
     System.arraycopy(timeSeries.getData(), 0, data, 0, Math.min(this.windowSize, timeSeries.getLength()));
     this.fft.realForward(data);
     data[1] = 0; // DC-coefficient imaginary part
