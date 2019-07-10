@@ -2,23 +2,24 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.cursors.IntIntCursor;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.carrotsearch.hppc.LongFloatHashMap;
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
-import sfa.classification.Classifier;
+
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * The WEASEL-Model as published in
  * <p>
- * Schäfer, P., Leser, U.: Fast and Accurate Time Series
- * Classification with WEASEL. CIKM 2017
+ * Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with
+ * WEASEL. CIKM 2017
  */
 public class WEASELCharacter {
 
@@ -41,24 +42,25 @@ public class WEASELCharacter {
       BLOCKS = runtime.availableProcessors();
     }
 
-    //    BLOCKS = 1; // for testing purposes
+    // BLOCKS = 1; // for testing purposes
   }
-  public WEASELCharacter(){}
+
+  public WEASELCharacter() {
+  }
 
   /**
    * Create a WEASEL model.
    *
    * @param maxF          Length of the SFA words
    * @param maxS          alphabet size
-   * @param windowLengths the set of window lengths to use for extracting SFA words from
-   *                      time series.
+   * @param windowLengths the set of window lengths to use for extracting SFA
+   *                      words from time series.
    * @param normMean      set to true, if mean should be set to 0 for a window
-   * @param lowerBounding set to true, if the Fourier transform should be normed (typically
-   *                      used to lower bound / mimic Euclidean distance).
+   * @param lowerBounding set to true, if the Fourier transform should be normed
+   *                      (typically used to lower bound / mimic Euclidean
+   *                      distance).
    */
-  public WEASELCharacter(
-      int maxF, int maxS,
-      int[] windowLengths, boolean normMean, boolean lowerBounding) {
+  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding) {
     this.maxF = maxF;
     this.alphabetSize = maxS;
     this.windowLengths = windowLengths;
@@ -87,8 +89,7 @@ public class WEASELCharacter {
    * @param samples
    * @return
    */
-  public short[/* windowLength */][/* sample */][/* offset */][/* character */]
-      createWords(final TimeSeries[] samples) {
+  public short[/* windowLength */][/* sample */][/* offset */][/* character */] createWords(final TimeSeries[] samples) {
     // create bag of words for each window queryLength
     final short[][][][] words = new short[this.windowLengths.length][samples.length][][];
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
@@ -115,8 +116,7 @@ public class WEASELCharacter {
     // SFA quantization
     if (this.signature[index] == null) {
       this.signature[index] = new SFASupervised();
-      this.signature[index].fitWindowing(
-          samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
+      this.signature[index].fitWindowing(samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
 
     // create words
@@ -125,7 +125,7 @@ public class WEASELCharacter {
       if (samples[i].getLength() >= this.windowLengths[index]) {
         words[i] = this.signature[index].transformWindowing(samples[i]);
       } else {
-        words[i] = new short[][]{};
+        words[i] = new short[][] {};
       }
     }
 
@@ -134,6 +134,7 @@ public class WEASELCharacter {
 
   /**
    * Toolbox
+   * 
    * @param words
    * @return
    */
@@ -146,10 +147,10 @@ public class WEASELCharacter {
     // TODO Basis 'alphabetsize' beachten
 
     // TODO mögliche Modelle
-    //  - BPE
-    //  - frequent itemsets
-    //  - A-priori + Intervalle
-    //  - character-n-grams
+    // - BPE
+    // - frequent itemsets
+    // - A-priori + Intervalle
+    // - character-n-grams
 
     // TODO Modell speichern
 
@@ -158,6 +159,7 @@ public class WEASELCharacter {
 
   /**
    * Toolbox
+   * 
    * @param words
    * @return
    */
@@ -181,6 +183,7 @@ public class WEASELCharacter {
 
   /**
    * Toolbox
+   * 
    * @param words
    * @return
    */
@@ -199,16 +202,13 @@ public class WEASELCharacter {
   /**
    * Create words and bi-grams for all window lengths
    */
-  public BagOfBigrams[] createBagOfPatterns(
-      final int[][] wordsForWindowLength,
-      final TimeSeries[] samples,
-      final int w,    // index of used windowSize
+  public BagOfBigrams[] createBagOfPatterns(final int[][] wordsForWindowLength, final TimeSeries[] samples, final int w, // index of used windowSize
       final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH)) + 1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -217,7 +217,7 @@ public class WEASELCharacter {
 
       // create subsequences
       for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
-        long word = (wordsForWindowLength[j][offset] & mask) << highestBit | (long) w;
+        long word = (wordsForWindowLength[j][offset] & mask) << highestBit | w;
         bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
         // TODO toolbox.usesBigrams()
@@ -236,15 +236,12 @@ public class WEASELCharacter {
   /**
    * Create words and bi-grams for all window lengths
    */
-  public BagOfBigrams[] createBagOfPatterns(
-      final int[][][] words,
-      final TimeSeries[] samples,
-      final int wordLength) {
+  public BagOfBigrams[] createBagOfPatterns(final int[][][] words, final TimeSeries[] samples, final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH)) + 1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -254,7 +251,7 @@ public class WEASELCharacter {
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
         for (int offset = 0; offset < words[w][j].length; offset++) {
-          long word = (words[w][j][offset] & mask) << highestBit | (long) w;
+          long word = (words[w][j][offset] & mask) << highestBit | w;
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
           // TODO toolbox.usesBigrams()
@@ -310,8 +307,7 @@ public class WEASELCharacter {
 
         float chi = observed.get(key) - expected;
         float newChi = chi * chi / expected;
-        if (newChi >= chi_limit
-            && !chiSquare.contains(feature.key)) {
+        if (newChi >= chi_limit && !chiSquare.contains(feature.key)) {
           chiSquare.add(feature.key);
         }
       }
