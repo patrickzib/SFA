@@ -164,6 +164,14 @@ public abstract class Classifier {
       return log + (bits >>> 1);
     }
 
+    public static int binlogRoundedUp(int bits) {
+      if (bits <= 1) {
+        return 0;
+      } else {
+        return binlog(bits - 1) + 1;
+      }
+    }
+
     public static long createWord(short[] words, int features, byte usedBits) {
       return fromByteArrayOne(words, features, usedBits);
     }
