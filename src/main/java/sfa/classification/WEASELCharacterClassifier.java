@@ -45,19 +45,19 @@ public class WEASELCharacterClassifier extends Classifier {
   public static int MAX_WINDOW_LENGTH = 350;
 
   // the trained weasel
-  WEASELModel model;
+  WEASELCharacterModel model;
 
   public WEASELCharacterClassifier() {
     super();
     Linear.resetRandom();
   }
 
-  public static class WEASELModel extends Model {
+  public static class WEASELCharacterModel extends Model {
 
-    public WEASELModel() {
+    public WEASELCharacterModel() {
     }
 
-    public WEASELModel(boolean normed, int features, WEASELCharacter model, de.bwaldvogel.liblinear.Model linearModel, int testing, int testSize, int training, int trainSize) {
+    public WEASELCharacterModel(boolean normed, int features, WEASELCharacter model, de.bwaldvogel.liblinear.Model linearModel, int testing, int testSize, int training, int trainSize) {
       super("WEASEL", testing, testSize, training, trainSize, normed, -1);
       this.features = features;
       this.weasel = model;
@@ -187,7 +187,7 @@ public class WEASELCharacterClassifier extends Classifier {
     return Arrays.copyOfRange(wLengths, 0, a);
   }
 
-  protected WEASELModel fitWeasel(final TimeSeries[] samples) {
+  protected WEASELCharacterModel fitWeasel(final TimeSeries[] samples) {
     try {
       int maxCorrect = -1;
       int bestF = -1;
@@ -244,7 +244,7 @@ public class WEASELCharacterClassifier extends Classifier {
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
-      return new WEASELModel(bestNorm, bestF, model, linearModel, 0, // testing
+      return new WEASELCharacterModel(bestNorm, bestF, model, linearModel, 0, // testing
           1, maxCorrect, // training
           samples.length);
 
@@ -324,11 +324,11 @@ public class WEASELCharacterClassifier extends Classifier {
     return labels;
   }
 
-  public WEASELModel getModel() {
+  public WEASELCharacterModel getModel() {
     return model;
   }
 
-  public void setModel(WEASELModel model) {
+  public void setModel(WEASELCharacterModel model) {
     this.model = model;
   }
 }
