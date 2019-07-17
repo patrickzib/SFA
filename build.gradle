@@ -64,6 +64,10 @@ dependencies {
     // libSVM in java
     compile "tw.edu.ntu.csie:libsvm:3.17"
 
+    // commons.math
+    compile "org.apache.commons:commons-math3:3.5"
+
+
     compile 'junit:junit:4.12'
     testCompile 'junit:junit:4.12'
 }

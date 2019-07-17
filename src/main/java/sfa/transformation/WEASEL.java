@@ -5,14 +5,14 @@ package sfa.transformation;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.io.Serializable;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -214,7 +214,8 @@ public class WEASEL {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
-    LongIntHashMap observed = new LongIntHashMap(bob[0].bob.size());
+    LongObjectHashMap<LongIntHashMap> observed = new LongObjectHashMap<>();
+    LongHashSet degreesOfFreedom = new LongHashSet(); // number of classes
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
@@ -222,8 +223,19 @@ public class WEASEL {
       for (LongIntCursor word : bagOfPattern.bob) {
         if (word.value > 0) {
           featureCount.putOrAdd(word.key, 1, 1);
-          long key = label << 32 | word.key;
-          observed.putOrAdd(key, 1, 1);
+
+          int index = 0;
+          LongIntHashMap obs = null;
+          if ((index = observed.indexOf(label)) > -1) {
+            obs = observed.indexGet(index);
+          } else {
+            obs = new LongIntHashMap();
+            observed.put(label, obs);
+          }
+
+          // count observations per class for this feature
+          obs.putOrAdd(word.key, 1, 1);
+          degreesOfFreedom.add(label);
         }
       }
     }
@@ -234,38 +246,75 @@ public class WEASEL {
       classProb.putOrAdd(label, 1, 1);
     }
 
+    // pass a null rng to avoid unneeded overhead as we will not sample from this distribution
+    final ChiSquaredDistribution distribution =
+        new ChiSquaredDistribution(null, degreesOfFreedom.size());
+
     // chi-squared: observed minus expected occurrence
     LongHashSet chiSquare = new LongHashSet(featureCount.size());
+    ArrayList<PValueKey> pvalues = new ArrayList<PValueKey>(featureCount.size());
+
     for (LongFloatCursor prob : classProb) {
       prob.value /= bob.length; // (float) frequencies.get(prob.key);
 
+      LongIntHashMap obs = observed.get(prob.key);
       for (LongIntCursor feature : featureCount) {
-        long key = prob.key << 32 | feature.key; // FIXME collides with bigrams???
         float expected = prob.value * feature.value;
 
-        float chi = observed.get(key) - expected;
+        float chi = obs.get(feature.key) - expected;
         float newChi = chi * chi / expected;
-        if (newChi >= chi_limit
-            && !chiSquare.contains(feature.key)) {
-          chiSquare.add(feature.key);
+
+        if (newChi > 0 && !chiSquare.contains(feature.key)) {
+          double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
+
+          if (pvalue <= 0.9) {
+            chiSquare.add(feature.key);
+            pvalues.add(new PValueKey(pvalue, feature.key));
+          }
         }
       }
+    }
 
-//      if (chiSquare.size() > 1000) { // TODO test???
-//        //System.out.println("Break");
-//        break;
-//      }
+    // sort by pvalue
+    Collections.sort(pvalues, new Comparator<PValueKey>() {
+      @Override
+      public int compare(PValueKey o1, PValueKey o2) {
+        return Double.compare(o1.pvalue, o2.pvalue);
+      }
+    });
+
+
+    // only keep the best featrures (with lowest pvalue)
+    LongHashSet chiSquaredBest = new LongHashSet();
+    for (PValueKey key : pvalues.subList(0, Math.min(pvalues.size(), 100))) {
+      //System.out.println(key.pvalue + " " + key.key);
+      chiSquaredBest.add(key.key);
     }
 
     for (int j = 0; j < bob.length; j++) {
       for (LongIntCursor cursor : bob[j].bob) {
-        if (!chiSquare.contains(cursor.key)) {
+        if (!chiSquaredBest.contains(cursor.key)) {
           bob[j].bob.values[cursor.index] = 0;
         }
       }
     }
 
     return chiSquare;
+  }
+
+  static class PValueKey {
+    public double pvalue;
+    public long key;
+
+    public PValueKey(double pvalue, long key) {
+      this.pvalue = pvalue;
+      this.key = key;
+    }
+
+    @Override
+    public String toString() {
+      return "" + this.pvalue + ":" + this.key;
+    }
   }
 
   /**
