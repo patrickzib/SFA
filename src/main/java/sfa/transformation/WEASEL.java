@@ -159,7 +159,7 @@ public class WEASEL {
         // add 2 grams
         if (offset - this.windowLengths[w] >= 0) {
           long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
-          long newWord = (prevWord << 32 | word) << highestBit | (long) w;
+          long newWord = (word << 32 | prevWord ); // << highestBit | (long) w;
           bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
         }
       }
@@ -196,7 +196,7 @@ public class WEASEL {
           // add 2 grams
           if (offset - this.windowLengths[w] >= 0) {
             long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask);
-            long newWord = (prevWord << 32 | word ) << highestBit | (long) w;
+            long newWord = (word << 32 | prevWord ); // << highestBit | (long) w;
             bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
           }
         }
@@ -224,7 +224,7 @@ public class WEASEL {
         if (word.value > 0) {
           featureCount.putOrAdd(word.key, 1, 1);
 
-          int index = 0;
+          int index = -1;
           LongIntHashMap obs = null;
           if ((index = observed.indexOf(label)) > -1) {
             obs = observed.indexGet(index);
@@ -264,10 +264,14 @@ public class WEASEL {
         float chi = obs.get(feature.key) - expected;
         float newChi = chi * chi / expected;
 
-        if (newChi > 0 && !chiSquare.contains(feature.key)) {
+        if (newChi > 0
+            && !chiSquare.contains(feature.key)) {
           double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
 
-          if (pvalue <= 0.9) {
+          if (
+              //newChi >= chi_limit
+              pvalue <= 0.9
+             ) {
             chiSquare.add(feature.key);
             pvalues.add(new PValueKey(pvalue, feature.key));
           }
@@ -290,10 +294,11 @@ public class WEASEL {
       //System.out.println(key.pvalue + " " + key.key);
       chiSquaredBest.add(key.key);
     }
+    chiSquare = chiSquaredBest;
 
     for (int j = 0; j < bob.length; j++) {
       for (LongIntCursor cursor : bob[j].bob) {
-        if (!chiSquaredBest.contains(cursor.key)) {
+        if (!chiSquare.contains(cursor.key)) {
           bob[j].bob.values[cursor.index] = 0;
         }
       }
