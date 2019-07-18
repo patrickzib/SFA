@@ -247,9 +247,8 @@ public class WEASELClassifier extends Classifier {
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
-          int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
-
           System.out.println("Train Dict Size: " + model.dict.size());
+          int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
           if (correct > maxCorrect) {
             maxCorrect = correct;

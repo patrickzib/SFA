@@ -159,8 +159,10 @@ public class WEASEL {
         // add 2 grams
         if (offset - this.windowLengths[w] >= 0) {
           long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
-          long newWord = (word << 32 | prevWord ); // << highestBit | (long) w;
-          bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+          if (prevWord != 0) {
+            long newWord = (prevWord << 32 | word);
+            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+          }
         }
       }
     }
@@ -196,8 +198,10 @@ public class WEASEL {
           // add 2 grams
           if (offset - this.windowLengths[w] >= 0) {
             long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask);
-            long newWord = (word << 32 | prevWord ); // << highestBit | (long) w;
-            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+            if (prevWord != 0) {
+              long newWord = (prevWord << 32 | word);
+              bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+            }
           }
         }
       }
@@ -215,7 +219,6 @@ public class WEASEL {
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
     LongObjectHashMap<LongIntHashMap> observed = new LongObjectHashMap<>();
-    LongHashSet degreesOfFreedom = new LongHashSet(); // number of classes
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
@@ -235,7 +238,6 @@ public class WEASEL {
 
           // count observations per class for this feature
           obs.putOrAdd(word.key, 1, 1);
-          degreesOfFreedom.add(label);
         }
       }
     }
@@ -247,8 +249,8 @@ public class WEASEL {
     }
 
     // pass a null rng to avoid unneeded overhead as we will not sample from this distribution
-    final ChiSquaredDistribution distribution =
-        new ChiSquaredDistribution(null, degreesOfFreedom.size());
+    //final ChiSquaredDistribution distribution =
+    //    new ChiSquaredDistribution(null, classProb.keys().size());
 
     // chi-squared: observed minus expected occurrence
     LongHashSet chiSquare = new LongHashSet(featureCount.size());
@@ -259,42 +261,40 @@ public class WEASEL {
 
       LongIntHashMap obs = observed.get(prob.key);
       for (LongIntCursor feature : featureCount) {
-        float expected = prob.value * feature.value;
+        double expected = prob.value * feature.value;
 
-        float chi = obs.get(feature.key) - expected;
-        float newChi = chi * chi / expected;
+        double chi = obs.get(feature.key) - expected;
+        double newChi = chi * chi / expected;
 
-        if (newChi > 0
+        if (newChi > 0 && newChi >= chi_limit
             && !chiSquare.contains(feature.key)) {
-          double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
+          //double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
 
-          if (
-              //newChi >= chi_limit
-              pvalue <= 0.9
-             ) {
+//          if (pvalue <= 0.5) {
             chiSquare.add(feature.key);
-            pvalues.add(new PValueKey(pvalue, feature.key));
-          }
+            pvalues.add(new PValueKey(newChi, feature.key));
+//          }
         }
       }
     }
 
-    // sort by pvalue
-    Collections.sort(pvalues, new Comparator<PValueKey>() {
-      @Override
-      public int compare(PValueKey o1, PValueKey o2) {
-        return Double.compare(o1.pvalue, o2.pvalue);
+    // limit to 100 (?) features per window size
+    int limit = 100;
+    if (pvalues.size() > limit) {
+      // sort by chi-squared value
+      Collections.sort(pvalues, new Comparator<PValueKey>() {
+        @Override
+        public int compare(PValueKey o1, PValueKey o2) {
+          return -Double.compare(o1.pvalue, o2.pvalue);
+        }
+      });
+      // only keep the best featrures (with highest chi-squared pvalue)
+      LongHashSet chiSquaredBest = new LongHashSet();
+      for (PValueKey key : pvalues.subList(0, Math.min(pvalues.size(), limit))) {
+        chiSquaredBest.add(key.key);
       }
-    });
-
-
-    // only keep the best featrures (with lowest pvalue)
-    LongHashSet chiSquaredBest = new LongHashSet();
-    for (PValueKey key : pvalues.subList(0, Math.min(pvalues.size(), 100))) {
-      //System.out.println(key.pvalue + " " + key.key);
-      chiSquaredBest.add(key.key);
+      chiSquare = chiSquaredBest;
     }
-    chiSquare = chiSquaredBest;
 
     for (int j = 0; j < bob.length; j++) {
       for (LongIntCursor cursor : bob[j].bob) {
