@@ -38,7 +38,7 @@ public class WEASELClassifier extends Classifier {
 
   public static boolean lowerBounding = false;
 
-  public static int MIN_WINDOW_LENGTH = 2;
+  public static int MIN_WINDOW_LENGTH = 6;
   public static int MAX_WINDOW_LENGTH = 350;
 
   // the trained weasel
@@ -247,7 +247,6 @@ public class WEASELClassifier extends Classifier {
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
-          System.out.println("Train Dict Size: " + model.dict.size());
           int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
           if (correct > maxCorrect) {
@@ -288,7 +287,7 @@ public class WEASELClassifier extends Classifier {
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
-      System.out.println("Dict Size: " + model.dict.size());
+      System.out.println("Train Dict Size: " + model.dict.size());
 
       return new WEASELModel(
           bestNorm,
@@ -314,9 +313,7 @@ public class WEASELClassifier extends Classifier {
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
-    LongHashSet chiSquared = modelForWindow.trainChiSquared(bopForWindow, chi);
-
-    //System.out.println(chiSquared.size());
+    modelForWindow.trainChiSquared(bopForWindow, chi);
     return bopForWindow;
   }
 

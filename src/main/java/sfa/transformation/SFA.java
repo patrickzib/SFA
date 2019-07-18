@@ -47,7 +47,7 @@ public class SFA implements Serializable {
   // for the MFT classifier
   private boolean mftUseMaxOrMin = false;
 
-  static class ValueLabel implements Serializable {
+  public static class ValueLabel implements Serializable {
     private static final long serialVersionUID = 4392333771929261697L;
 
     public double value;
@@ -63,6 +63,18 @@ public class SFA implements Serializable {
     @Override
     public String toString() {
       return "" + this.value + ":" + this.label;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      ValueLabel that = (ValueLabel) o;
+      return Double.compare(that.value, value) == 0 && Double.compare(that.label, label) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(value, label);
     }
   }
 
@@ -453,7 +465,6 @@ public class SFA implements Serializable {
         // apply the split
         for (int j = 0; j < splitPoints.size(); j++) {
           double value = element.get(splitPoints.get(j) + 1).value;
-          //          double value = (element.get(splitPoints.get(j)).value + element.get(splitPoints.get(j)+1).value)/2.0;
           this.bins[i][j] = value;
         }
       }
@@ -483,7 +494,7 @@ public class SFA implements Serializable {
         - total_c_out / total * entropy(cOut, total_c_out);
   }
 
-  protected void findBestSplit(
+  public void findBestSplit(
       List<ValueLabel> element,
       int start,
       int end,
@@ -514,10 +525,14 @@ public class SFA implements Serializable {
       // only inspect changes of the label
       if (!label.equals(lastLabel)) {
         double gain = calculateInformationGain(cIn, cOut, class_entropy, i, total);
+        gain = Math.round(gain * 1000.0) / 1000.0; // round for 4 decimal places
 
-        if (gain >= bestGain) {
+        if (gain > bestGain) {
           bestPos = split;
           bestGain = gain;
+        }
+        else if (gain == bestGain) {
+          bestPos = Math.min(bestPos, split);
         }
       }
       lastLabel = label;
@@ -529,19 +544,20 @@ public class SFA implements Serializable {
       // recursive split
       remainingSymbols = remainingSymbols / 2;
       if (remainingSymbols > 1) {
-        if (bestPos - start > 2 && end - bestPos > 2) { // enough data points?
+        if (bestPos - start > 2 && end - bestPos > 2) { // enough data points left and right?
           findBestSplit(element, start, bestPos, remainingSymbols, splitPoints);
           findBestSplit(element, bestPos, end, remainingSymbols, splitPoints);
-        } else if (end - bestPos > 4) { // enough data points?
+        } else if (end - bestPos > 4) { // enough data points right?
           findBestSplit(element, bestPos, (end - bestPos) / 2, remainingSymbols, splitPoints);
           findBestSplit(element, (end - bestPos) / 2, end, remainingSymbols, splitPoints);
-        } else if (bestPos - start > 4) { // enough data points?
+        } else if (bestPos - start > 4) { // enough data points left?
           findBestSplit(element, start, (bestPos - start) / 2, remainingSymbols, splitPoints);
           findBestSplit(element, (bestPos - start) / 2, end, remainingSymbols, splitPoints);
         }
       }
     }
   }
+
 
   protected int moveElement(
       List<ValueLabel> element,

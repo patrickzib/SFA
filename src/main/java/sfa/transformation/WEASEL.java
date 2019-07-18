@@ -214,7 +214,7 @@ public class WEASEL {
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public LongHashSet trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+  public void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
@@ -303,8 +303,6 @@ public class WEASEL {
         }
       }
     }
-
-    return chiSquare;
   }
 
   static class PValueKey {
