@@ -29,7 +29,7 @@ public class NoTransformer extends SubwordTransformer<NoParameter> {
 
   @Override
   public short[][] transform(short[] word) {
-    return new short[][] { word };
+    return new short[][] {};
   }
 
 }
