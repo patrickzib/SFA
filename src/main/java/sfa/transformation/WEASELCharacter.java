@@ -2,6 +2,8 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.carrotsearch.hppc.LongFloatHashMap;
@@ -12,8 +14,10 @@ import com.carrotsearch.hppc.cursors.LongIntCursor;
 
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
-import sfa.classification.WEASELClassifier;
+import sfa.classification.WEASELCharacterClassifier;
 import sfa.timeseries.TimeSeries;
+import subwordTransformer.Parameter;
+import subwordTransformer.SubwordTransformer;
 
 /**
  * The WEASEL-Model as published in
@@ -32,6 +36,9 @@ public class WEASELCharacter {
   public SFA[] signature;
   public Dictionary dict;
 
+  public SubwordTransformer[] transformers;
+  public int outputAlphabetSize;
+
   public final static int BLOCKS;
 
   static {
@@ -48,6 +55,16 @@ public class WEASELCharacter {
   public WEASELCharacter() {
   }
 
+  private WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding) {
+    this.maxF = maxF;
+    this.alphabetSize = maxS;
+    this.windowLengths = windowLengths;
+    this.normMean = normMean;
+    this.lowerBounding = lowerBounding;
+    this.dict = new Dictionary();
+    this.signature = new SFA[windowLengths.length];
+  }
+
   /**
    * Create a WEASEL model.
    *
@@ -60,14 +77,18 @@ public class WEASELCharacter {
    *                      (typically used to lower bound / mimic Euclidean
    *                      distance).
    */
-  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding) {
-    this.maxF = maxF;
-    this.alphabetSize = maxS;
-    this.windowLengths = windowLengths;
-    this.normMean = normMean;
-    this.lowerBounding = lowerBounding;
-    this.dict = new Dictionary();
-    this.signature = new SFA[windowLengths.length];
+  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding, SubwordTransformer<? extends Parameter> transformer) {
+    this(maxF, maxS, windowLengths, normMean, lowerBounding);
+    this.transformers = new SubwordTransformer[windowLengths.length];
+    for (int i = 0; i < windowLengths.length; i++) {
+      this.transformers[i] = transformer.clone();
+    }
+    this.outputAlphabetSize = this.transformers[0].getOutputAlphabetSize();
+  }
+
+  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding, int outputAlphabetSize) {
+    this(maxF, maxS, windowLengths, normMean, lowerBounding);
+    this.outputAlphabetSize = outputAlphabetSize;
   }
 
   /**
@@ -132,83 +153,59 @@ public class WEASELCharacter {
     return words;
   }
 
-  /**
-   * Toolbox
-   * 
-   * @param words
-   * @return
-   */
-  public int[][][] fitSubwords(short[][][][] words) {
-
-    // Subword toolbox
-    // TODO transformation
-    short[][][][] subwords = words;
-
-    // TODO Basis 'alphabetsize' beachten
-
-    // TODO mögliche Modelle
-    // - BPE
-    // - frequent itemsets
-    // - A-priori + Intervalle
-    // - character-n-grams
-
-    // TODO Modell speichern
-
-    return transformSubwords(words);
-  }
-
-  /**
-   * Toolbox
-   * 
-   * @param words
-   * @return
-   */
-  public int[][][] transformSubwords(short[][][][] words) {
-
-    // Subword toolbox
-    // TODO transformation
-    short[][][][] subwords = words;
-    // TODO Basis 'alphabetsize' beachten
-
-    // TODO Modell verwenden
-
-    // short => int
-    int[][][] intWords = new int[subwords.length][][];
-    for (int i = 0; i < subwords.length; i++) {
-      intWords[i] = transformSubwordsOneWindow(subwords[i]);
+  public void setTransformerTrainingWords(short[][][][] words) {
+    for (int i = 0; i < words.length; i++) {
+      List<short[]> wordsList = new ArrayList<>();
+      for (int j = 0; j < words[i].length; j++) {
+        for (int k = 0; k < words[i][j].length; k++) {
+          wordsList.add(words[i][j][k]);
+        }
+      }
+      short[][] wordsArray = new short[wordsList.size()][];
+      wordsArray = wordsList.toArray(wordsArray);
+      this.transformers[i].setWords(wordsArray);
     }
-
-    return intWords;
   }
 
-  /**
-   * Toolbox
-   * 
-   * @param words
-   * @return
-   */
-  public int[][] transformSubwordsOneWindow(short[][][] words) {
-    byte neededBits = (byte) Words.binlog(this.alphabetSize);
-    int[][] intWords = new int[words.length][];
-    for (int j = 0; j < words.length; j++) {
-      intWords[j] = new int[words[j].length];
-      for (int k = 0; k < words[j].length; k++) {
-        intWords[j][k] = (int) Words.createWord(words[j][k], words[j][k].length, neededBits);
+  public void fitSubwords(Parameter param) {
+    for (int i = 0; i < this.transformers.length; i++) {
+      this.transformers[i].fitParameter(param);
+    }
+  }
+
+  public int[][][] transformSubwordsOneWindow(short[][][] words, int w) {
+    byte neededBits = (byte) Words.binlogRoundedUp(this.outputAlphabetSize);
+    int[][][] intWords = new int[words.length][][];
+
+    for (int sample = 0; sample < words.length; sample++) {
+      intWords[sample] = new int[words[sample].length][];
+      for (int offset = 0; offset < words[sample].length; offset++) {
+        short[] word = words[sample][offset];
+        short[][] subwords = this.transformers[w].transformWord(word);
+        if (subwords.length == 0) { // TODO: always add word itself?
+          intWords[sample][offset] = new int[] { (int) Words.createWord(word, word.length, neededBits) };
+        } else {
+          intWords[sample][offset] = new int[subwords.length];
+          for (int subwordIndex = 0; subwordIndex < subwords.length; subwordIndex++) {
+            intWords[sample][offset][subwordIndex] = (int) Words.createWord(subwords[subwordIndex], subwords[subwordIndex].length, neededBits);
+          }
+        }
       }
     }
+
     return intWords;
   }
 
   /**
    * Create words and bi-grams for all window lengths
    */
-  public BagOfBigrams[] createBagOfPatterns(final int[][] wordsForWindowLength, final TimeSeries[] samples, final int w, // index of used windowSize
+  public BagOfBigrams[] createBagOfPatterns(final int[][][] wordsForWindowLength, final TimeSeries[] samples, final int w, // index of used windowSize
       final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
-    final byte usedBits = (byte) Words.binlog(this.alphabetSize);
+    final byte usedBits = (byte) Words.binlogRoundedUp(this.outputAlphabetSize);
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH)) + 1;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELCharacterClassifier.MAX_WINDOW_LENGTH)) + 1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -217,50 +214,20 @@ public class WEASELCharacter {
 
       // create subsequences
       for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
-        long word = (wordsForWindowLength[j][offset] & mask) << highestBit | w;
-        bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
-
-        // TODO toolbox.usesBigrams()
-//        // add 2 grams
-//        if (offset - this.windowLengths[w] >= 0) {
-//          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w;
-//          long newWord = (prevWord << 32 | word ) << highestBit;
-//          bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-//        }
-      }
-    }
-
-    return bagOfPatterns;
-  }
-
-  /**
-   * Create words and bi-grams for all window lengths
-   */
-  public BagOfBigrams[] createBagOfPatterns(final int[][][] words, final TimeSeries[] samples, final int wordLength) {
-    BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
-
-    final byte usedBits = (byte) Words.binlog(this.alphabetSize);
-    final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH)) + 1;
-
-    // iterate all samples
-    // and create a bag of pattern
-    for (int j = 0; j < samples.length; j++) {
-      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length * 6, samples[j].getLabel());
-
-      // create subsequences
-      for (int w = 0; w < this.windowLengths.length; w++) {
-        for (int offset = 0; offset < words[w][j].length; offset++) {
-          long word = (words[w][j][offset] & mask) << highestBit | w;
+        for (int subword = 0; subword < wordsForWindowLength[j][offset].length; subword++) {
+          long word = (wordsForWindowLength[j][offset][subword] & mask) << highestBit | w;
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
-          // TODO toolbox.usesBigrams()
-//          // add 2 grams
-//          if (offset - this.windowLengths[w] >= 0) {
-//            long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w;
-//            long newWord = (prevWord << 32 | word ) << highestBit;
-//            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-//          }
+          // add 2 grams
+          int prevOffset = offset - this.windowLengths[w];
+          if (prevOffset >= 0) {
+            for (int prevSubword = 0; prevSubword < wordsForWindowLength[j][prevOffset].length; prevSubword++) {
+              long prevWord = (wordsForWindowLength[j][prevOffset][prevSubword] & mask) << highestBit | w;
+              long newWord = (prevWord << 32 | word) << highestBit;
+              bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+            }
+          }
+
         }
       }
     }

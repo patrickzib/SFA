@@ -2,32 +2,25 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import sfa.classification.*;
+
+import sfa.classification.Classifier;
+import sfa.classification.WEASELCharacterClassifier;
+import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
-
-import java.io.File;
-import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class UCRClassificationTest {
 
   // The datasets to use
-  public static String[] datasets = new String[]{
-          "Coffee", "Beef", "CBF",
-          "ECG200", "FaceFour", "OliveOil",
-          "Gun_Point",
-          "DiatomSizeReduction",
-          "ECGFiveDays",
-          "TwoLeadECG",
-          "SonyAIBORobotSurfaceII",
-          "MoteStrain",
-          "ItalyPowerDemand",
-          "SonyAIBORobotSurface",
-  };
+  public static String[] datasets = new String[] { "Coffee", "Beef", "CBF", "ECG200", "FaceFour", "OliveOil", "Gun_Point", "DiatomSizeReduction", "ECGFiveDays", "TwoLeadECG", "SonyAIBORobotSurfaceII",
+      "MoteStrain", "ItalyPowerDemand", "SonyAIBORobotSurface", };
 
   @Test
   public void testUCRClassification() throws IOException {
@@ -35,7 +28,8 @@ public class UCRClassificationTest {
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
     File dir = new File(classLoader.getResource("datasets/univariate/").getFile());
-    //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
+    // File dir = new
+    // File("/Users/bzcschae/workspace/similarity/datasets/classification");
 
     for (String s : datasets) {
       File d = new File(dir.getAbsolutePath() + "/" + s);
@@ -55,7 +49,7 @@ public class UCRClassificationTest {
             TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
             TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
 
-            // The WEASEL-classifier
+            // The WEASELCharacter-classifier
             Classifier w = new WEASELCharacterClassifier();
             Classifier.Score scoreW = w.eval(trainSamples, testSamples);
             System.out.println(s + ";" + scoreW.toString());
@@ -64,7 +58,7 @@ public class UCRClassificationTest {
             Classifier w1 = new WEASELClassifier();
             Classifier.Score scoreW1 = w1.eval(trainSamples, testSamples);
             System.out.println(s + ";" + scoreW1.toString());
-//
+
 //            // The BOSS ensemble classifier
 //            Classifier boss = new BOSSEnsembleClassifier();
 //            Classifier.Score scoreBOSS = boss.eval(trainSamples, testSamples);
@@ -88,8 +82,7 @@ public class UCRClassificationTest {
         }
       } else {
         // not really an error. just a hint:
-        System.out.println("Dataset could not be found: " + d.getAbsolutePath() + ". " +
-                "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
+        System.out.println("Dataset could not be found: " + d.getAbsolutePath() + ". " + "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
       }
     }
 
