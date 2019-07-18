@@ -38,7 +38,7 @@ public class WEASELClassifier extends Classifier {
 
   public static boolean lowerBounding = false;
 
-  public static int MIN_WINDOW_LENGTH = 6;
+  public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 350;
 
   // the trained weasel

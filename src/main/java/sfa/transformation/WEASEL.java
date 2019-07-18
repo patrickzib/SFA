@@ -248,10 +248,6 @@ public class WEASEL {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // pass a null rng to avoid unneeded overhead as we will not sample from this distribution
-    //final ChiSquaredDistribution distribution =
-    //    new ChiSquaredDistribution(null, classProb.keys().size());
-
     // chi-squared: observed minus expected occurrence
     LongHashSet chiSquare = new LongHashSet(featureCount.size());
     ArrayList<PValueKey> pvalues = new ArrayList<PValueKey>(featureCount.size());
@@ -268,12 +264,8 @@ public class WEASEL {
 
         if (newChi > 0 && newChi >= chi_limit
             && !chiSquare.contains(feature.key)) {
-          //double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
-
-//          if (pvalue <= 0.5) {
-            chiSquare.add(feature.key);
-            pvalues.add(new PValueKey(newChi, feature.key));
-//          }
+          chiSquare.add(feature.key);
+          pvalues.add(new PValueKey(newChi, feature.key));
         }
       }
     }

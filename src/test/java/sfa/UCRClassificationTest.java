@@ -18,7 +18,8 @@ public class UCRClassificationTest {
   // The datasets to use
   public static String[] datasets = new String[]{
           "Coffee", "Beef", "CBF",
-          "ECG200", "FaceFour", "OliveOil",
+          "ECG200",
+          "FaceFour", "OliveOil",
           "Gun_Point",
           "DiatomSizeReduction",
           "ECGFiveDays",
@@ -34,8 +35,8 @@ public class UCRClassificationTest {
     // the relative path to the datasets
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-    //File dir = new File(classLoader.getResource("datasets/univariate/").getFile());
-    File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
+    File dir = new File(classLoader.getResource("datasets/univariate/").getFile());
+    //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
 
     for (String s : datasets) {
       File d = new File(dir.getAbsolutePath() + "/" + s);

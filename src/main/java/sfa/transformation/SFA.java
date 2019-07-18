@@ -513,6 +513,7 @@ public class SFA implements Serializable {
       cOut.putOrAdd(element.get(pos).label, 1, 1);
     }
     double class_entropy = entropy(cOut, total);
+    class_entropy = Math.round(class_entropy * 1000.0) / 1000.0;  // round for 4 decimal places
 
     int i = start;
     Double lastLabel = element.get(i).label;
@@ -527,12 +528,9 @@ public class SFA implements Serializable {
         double gain = calculateInformationGain(cIn, cOut, class_entropy, i, total);
         gain = Math.round(gain * 1000.0) / 1000.0; // round for 4 decimal places
 
-        if (gain > bestGain) {
+        if (gain >= bestGain) {
           bestPos = split;
           bestGain = gain;
-        }
-        else if (gain == bestGain) {
-          bestPos = Math.min(bestPos, split);
         }
       }
       lastLabel = label;
