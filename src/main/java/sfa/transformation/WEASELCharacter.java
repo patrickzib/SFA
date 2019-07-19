@@ -154,23 +154,37 @@ public class WEASELCharacter {
   }
 
   public void setTransformerTrainingWords(short[][][][] words) {
-    for (int i = 0; i < words.length; i++) {
-      List<short[]> wordsList = new ArrayList<>();
-      for (int j = 0; j < words[i].length; j++) {
-        for (int k = 0; k < words[i][j].length; k++) {
-          wordsList.add(words[i][j][k]);
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int i = 0; i < words.length; i++) {
+          if (i % BLOCKS == id) {
+            List<short[]> wordsList = new ArrayList<>();
+            for (int j = 0; j < words[i].length; j++) {
+              for (int k = 0; k < words[i][j].length; k++) {
+                wordsList.add(words[i][j][k]);
+              }
+            }
+            short[][] wordsArray = new short[wordsList.size()][];
+            wordsArray = wordsList.toArray(wordsArray);
+            WEASELCharacter.this.transformers[i].setWords(wordsArray);
+          }
         }
       }
-      short[][] wordsArray = new short[wordsList.size()][];
-      wordsArray = wordsList.toArray(wordsArray);
-      this.transformers[i].setWords(wordsArray);
-    }
+    });
   }
 
   public void fitSubwords(Parameter param) {
-    for (int i = 0; i < this.transformers.length; i++) {
-      this.transformers[i].fitParameter(param);
-    }
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int i = 0; i < WEASELCharacter.this.transformers.length; i++) {
+          if (i % BLOCKS == id) {
+            WEASELCharacter.this.transformers[i].fitParameter(param);
+          }
+        }
+      }
+    });
   }
 
   public int[][][] transformSubwordsOneWindow(short[][][] words, int w) {
