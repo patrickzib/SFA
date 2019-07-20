@@ -220,12 +220,11 @@ public class SFATrieTest {
       List<Integer> result = index.searchEpsilonRange(query, epsilon);
       time = System.currentTimeMillis() - time;
       System.out.println("\tSFATree:" + (time/1000.0) + "s");
-      //System.out.println("\tTS seen: " + index.getTimeSeriesRead() + " " +
-      //    String.format("%.3f", index.getTimeSeriesRead()/(double)size) + "%");
-      //System.out.println("\tLeaves seen " + index.getIoTimeSeriesRead());
-      //System.out.println("\tNodes seen " +  index.getBlockRead());
-      //System.out.println("\tResult size " +  result.size());
       index.resetIoCosts();
+
+      for (Integer a : result) {
+        System.out.println(a);
+      }
 
       System.out.println("\tEuclidean:" + (timeED/1000.0) + "s");
 
@@ -267,7 +266,7 @@ public class SFATrieTest {
       distance += value*value;
 
       // early abandoning
-      if (distance >= minValue) {
+      if (distance > minValue) {
         return Double.MAX_VALUE;
       }
     }

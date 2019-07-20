@@ -4,6 +4,7 @@ package sfa.classification;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
+import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -175,8 +176,8 @@ public class MUSEClassifier extends Classifier {
 
           for (int f = minF; f <= maxF; f += 2) {
             final MUSE model = new MUSE(f, maxS, histType, windowLengths, mean, lowerBounding);
-
             MUSE.BagOfBigrams[] bag = null;
+
             for (int w = 0; w < model.windowLengths.length; w++) {
               int[][] words = model.createWords(samples, w);
               MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
@@ -256,13 +257,11 @@ public class MUSEClassifier extends Classifier {
       MUSE model,
       int[][] word, int f, int dimensionality, int w) {
     MUSE modelForWindow = new MUSE(f, maxS, histType, windowLengths, mean, lowerBounding);
-    modelForWindow.dict.dict.putAll(model.dict.dict);
 
     MUSE.BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, dimensionality, f);
     modelForWindow.filterChiSquared(bopForWindow, chi);
 
     // now, merge dicts
-    model.dict.dict.putAll(modelForWindow.dict.dict);
     model.dict.dictChi.putAll(modelForWindow.dict.dictChi);
 
     return bopForWindow;
@@ -342,15 +341,13 @@ public class MUSEClassifier extends Classifier {
       final MUSE.BagOfBigrams[] bob,
       final MUSE.Dictionary dict) {
 
-    dict.remap(bob);
-
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
       MUSE.BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<FeatureNode>(bop.bob.size());
-      for (IntIntCursor word : bop.bob) {
+      for (ObjectIntCursor<MUSE.MuseWord> word : bop.bob) {
         if (word.value > 0 ) {
-          features.add(new FeatureNode(word.key, word.value));
+          features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
         }
       }
 

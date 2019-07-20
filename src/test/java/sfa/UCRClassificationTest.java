@@ -35,7 +35,7 @@ public class UCRClassificationTest {
       File d = new File(dir.getAbsolutePath() + "/" + s);
       if (d.exists() && d.isDirectory()) {
         for (File train : d.listFiles()) {
-          if (train.getName().toUpperCase().endsWith("TRAIN")) {
+          if (train.getName().toUpperCase().endsWith("_TRAIN.TXT")) {
             File test = new File(train.getAbsolutePath().replaceFirst("TRAIN", "TEST"));
 
             if (!test.exists()) {
