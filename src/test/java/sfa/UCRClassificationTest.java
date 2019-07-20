@@ -19,8 +19,8 @@ import sfa.timeseries.TimeSeriesLoader;
 public class UCRClassificationTest {
 
   // The datasets to use
-  public static String[] datasets = new String[] { "Coffee", "Beef", "CBF", "ECG200", "FaceFour", "OliveOil", "Gun_Point", "DiatomSizeReduction", "ECGFiveDays", "TwoLeadECG", "SonyAIBORobotSurfaceII",
-      "MoteStrain", "ItalyPowerDemand", "SonyAIBORobotSurface", };
+  public static String[] datasets = new String[] { "Coffee", "Beef", "CBF", "ECG200", "FaceFour", "OliveOil", "GunPoint", "DiatomSizeReduction", "ECGFiveDays", "TwoLeadECG", "SonyAIBORobotSurface2",
+      "MoteStrain", "ItalyPowerDemand", "SonyAIBORobotSurface1", };
 
   @Test
   public void testUCRClassification() throws IOException {
