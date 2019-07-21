@@ -89,6 +89,9 @@ public abstract class SubwordTransformer<P extends Parameter> implements Cloneab
    * @param words the training words
    */
   public void setWords(short[][] words) {
+    if (words.length == 0) {
+      throw new IllegalArgumentException("Training words must not be empty.");
+    }
     if (!Arrays.deepEquals(this.currentWords, words)) {
       wordsChanged = true;
       // copy words array

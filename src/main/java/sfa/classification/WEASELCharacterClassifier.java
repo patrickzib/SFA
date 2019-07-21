@@ -20,8 +20,8 @@ import sfa.transformation.WEASELCharacter;
 import sfa.transformation.WEASELCharacter.BagOfBigrams;
 import sfa.transformation.WEASELCharacter.Dictionary;
 import subwordTransformer.SubwordTransformer;
-import subwordTransformer.apriori.AprioriParameter;
-import subwordTransformer.apriori.AprioriTransformer;
+import subwordTransformer.bpe.BPEParameter;
+import subwordTransformer.bpe.BPETransformer;
 
 /**
  * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as
@@ -50,8 +50,8 @@ public class WEASELCharacterClassifier extends Classifier {
   public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 350;
 
-  public static SubwordTransformer<?> transformer = new AprioriTransformer(maxS);
-  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(AprioriParameter.getParameterList(0.5, 0.91, 0.2));
+  public static SubwordTransformer<?> transformer = new BPETransformer(maxS, true);
+  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(BPEParameter.getParameterList(0.4, 0.91, 0.15));
 
   // the trained weasel
   WEASELCharacterModel model;
@@ -252,7 +252,7 @@ public class WEASELCharacterClassifier extends Classifier {
             final Problem problem = initLibLinearProblem(bop, model.dict, bias);
             int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
-            if (correct >= maxCorrect) {
+            if (correct > maxCorrect) { // TODO > or >= ?
               maxCorrect = correct;
               bestF = f;
               bestNorm = mean;

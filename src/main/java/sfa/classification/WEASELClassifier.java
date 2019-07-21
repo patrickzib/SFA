@@ -2,24 +2,29 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.cursors.LongIntCursor;
-import de.bwaldvogel.liblinear.*;
-import sfa.timeseries.TimeSeries;
-import sfa.transformation.WEASEL;
-import sfa.transformation.WEASEL.BagOfBigrams;
-import sfa.transformation.WEASEL.Dictionary;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.carrotsearch.hppc.cursors.LongIntCursor;
+
+import de.bwaldvogel.liblinear.FeatureNode;
+import de.bwaldvogel.liblinear.Linear;
+import de.bwaldvogel.liblinear.Parameter;
+import de.bwaldvogel.liblinear.Problem;
+import de.bwaldvogel.liblinear.SolverType;
+import sfa.timeseries.TimeSeries;
+import sfa.transformation.WEASEL;
+import sfa.transformation.WEASEL.BagOfBigrams;
+import sfa.transformation.WEASEL.Dictionary;
+
 /**
- * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as published in
+ * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as
+ * published in
  * <p>
- * Schäfer, P., Leser, U.: Fast and Accurate Time Series
- * Classification with WEASEL." CIKM 2017
+ * Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with
+ * WEASEL." CIKM 2017
  */
 public class WEASELClassifier extends Classifier {
 
@@ -52,18 +57,10 @@ public class WEASELClassifier extends Classifier {
 
   public static class WEASELModel extends Model {
 
-    public WEASELModel(){}
+    public WEASELModel() {
+    }
 
-    public WEASELModel(
-        boolean normed,
-        int features,
-        WEASEL model,
-        de.bwaldvogel.liblinear.Model linearModel,
-        int testing,
-        int testSize,
-        int training,
-        int trainSize
-    ) {
+    public WEASELModel(boolean normed, int features, WEASEL model, de.bwaldvogel.liblinear.Model linearModel, int testing, int testSize, int training, int trainSize) {
       super("WEASEL", testing, testSize, training, trainSize, normed, -1);
       this.features = features;
       this.weasel = model;
@@ -81,8 +78,7 @@ public class WEASELClassifier extends Classifier {
   }
 
   @Override
-  public Score eval(
-      final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
+  public Score eval(final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     Score score = fit(trainSamples);
@@ -102,14 +98,8 @@ public class WEASELClassifier extends Classifier {
       System.out.println("");
     }
 
-    return new Score(
-        "WEASEL",
-        correctTesting, testSamples.length,
-        score.training, trainSamples.length,
-        score.windowLength
-    );
+    return new Score("WEASEL", correctTesting, testSamples.length, score.training, trainSamples.length, score.windowLength);
   }
-
 
   @Override
   public Score fit(final TimeSeries[] trainSamples) {
@@ -120,13 +110,13 @@ public class WEASELClassifier extends Classifier {
     return model.score;
   }
 
-
   @Override
   public Predictions score(final TimeSeries[] testSamples) {
     Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
 
+  @Override
   public Double[] predict(TimeSeries[] samples) {
 
     // iterate each sample to classify
@@ -201,12 +191,12 @@ public class WEASELClassifier extends Classifier {
   }
 
   public int[] getWindowLengths(final TimeSeries[] samples, boolean norm) {
-    int min = norm && MIN_WINDOW_LENGTH<=2? Math.max(3,MIN_WINDOW_LENGTH) : MIN_WINDOW_LENGTH;
+    int min = norm && MIN_WINDOW_LENGTH <= 2 ? Math.max(3, MIN_WINDOW_LENGTH) : MIN_WINDOW_LENGTH;
     int max = getMax(samples, MAX_WINDOW_LENGTH);
 
     int[] wLengths = new int[max - min + 1];
     int a = 0;
-    for (int w = min; w <= max; w+=1, a++) {
+    for (int w = min; w <= max; w += 1, a++) {
       wLengths[a] = w;
     }
     return Arrays.copyOfRange(wLengths, 0, a);
@@ -218,8 +208,7 @@ public class WEASELClassifier extends Classifier {
       int bestF = -1;
       boolean bestNorm = false;
 
-      optimize:
-      for (final boolean mean : NORMALIZATION) {
+      optimize: for (final boolean mean : NORMALIZATION) {
         int[] windowLengths = getWindowLengths(samples, bestNorm);
         WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
         final int[][][] words = model.createWords(samples);
@@ -235,10 +224,7 @@ public class WEASELClassifier extends Classifier {
             public void run(int id, AtomicInteger processed) {
               for (int w = 0; w < model.windowLengths.length; w++) {
                 if (w % BLOCKS == id) {
-                  BagOfBigrams[] bobForOneWindow = fitOneWindow(
-                      samples,
-                      model.windowLengths, mean,
-                      words[w], ff, w);
+                  BagOfBigrams[] bobForOneWindow = fitOneWindow(samples, model.windowLengths, mean, words[w], ff, w);
                   mergeBobs(bop, bobForOneWindow);
                 }
               }
@@ -273,10 +259,7 @@ public class WEASELClassifier extends Classifier {
           for (int w = 0; w < model.windowLengths.length; w++) {
             if (w % BLOCKS == id) {
               int[][] words = model.createWords(samples, w);
-              BagOfBigrams[] bobForOneWindow = fitOneWindow(
-                  samples,
-                  model.windowLengths, mean,
-                  words, ff, w);
+              BagOfBigrams[] bobForOneWindow = fitOneWindow(samples, model.windowLengths, mean, words, ff, w);
               mergeBobs(bop, bobForOneWindow);
             }
           }
@@ -287,18 +270,11 @@ public class WEASELClassifier extends Classifier {
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
-      System.out.println("Train Dict Size: " + model.dict.size());
+      // System.out.println("Train Dict Size: " + model.dict.size());
 
-      return new WEASELModel(
-          bestNorm,
-          bestF,
-          model,
-          linearModel,
-          0, // testing
-          1,
-          maxCorrect, // training
-          samples.length
-      );
+      return new WEASELModel(bestNorm, bestF, model, linearModel, 0, // testing
+          1, maxCorrect, // training
+          samples.length);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -306,34 +282,24 @@ public class WEASELClassifier extends Classifier {
     return null;
   }
 
-  private BagOfBigrams[] fitOneWindow(
-      TimeSeries[] samples,
-      int[] windowLengths, boolean mean,
-      int[][] word, int f,
-      int w) {
+  private BagOfBigrams[] fitOneWindow(TimeSeries[] samples, int[] windowLengths, boolean mean, int[][] word, int f, int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
     modelForWindow.trainChiSquared(bopForWindow, chi);
     return bopForWindow;
   }
 
-  private synchronized void mergeBobs(
-      BagOfBigrams[] bop,
-      BagOfBigrams[] bopForWindow) {
+  private synchronized void mergeBobs(BagOfBigrams[] bop, BagOfBigrams[] bopForWindow) {
     for (int i = 0; i < bop.length; i++) {
-      if (bop[i]==null) {
+      if (bop[i] == null) {
         bop[i] = bopForWindow[i];
-      }
-      else {
+      } else {
         bop[i].bob.putAll(bopForWindow[i].bob);
       }
     }
   }
 
-  protected static Problem initLibLinearProblem(
-      final BagOfBigrams[] bob,
-      final Dictionary dict,
-      final double bias) {
+  protected static Problem initLibLinearProblem(final BagOfBigrams[] bob, final Dictionary dict, final double bias) {
     Linear.resetRandom();
     Linear.disableDebugOutput();
 
@@ -349,9 +315,7 @@ public class WEASELClassifier extends Classifier {
     return problem;
   }
 
-  protected static FeatureNode[][] initLibLinear(
-      final BagOfBigrams[] bob,
-      final Dictionary dict) {
+  protected static FeatureNode[][] initLibLinear(final BagOfBigrams[] bob, final Dictionary dict) {
 
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
@@ -362,8 +326,9 @@ public class WEASELClassifier extends Classifier {
           features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
         }
       }
-      FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});
+      FeatureNode[] featuresArray = features.toArray(new FeatureNode[] {});
       Arrays.parallelSort(featuresArray, new Comparator<FeatureNode>() {
+        @Override
         public int compare(FeatureNode o1, FeatureNode o2) {
           return Integer.compare(o1.index, o2.index);
         }
