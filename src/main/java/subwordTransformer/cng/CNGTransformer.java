@@ -12,8 +12,8 @@ import subwordTransformer.SubwordTransformer;
  */
 public class CNGTransformer extends SubwordTransformer<CNGParameter> {
 
-  private final Map<Integer, Map<List<Short>, Integer>> nGramCounts = new HashMap<>();
-  private final List<short[]> dictionary = new ArrayList<>();
+  private Map<Integer, Map<List<Short>, Integer>> nGramCounts;
+  private List<short[]> dictionary;
 
   /**
    * @param alphabetSize        the alphabet size of the input words
@@ -69,7 +69,7 @@ public class CNGTransformer extends SubwordTransformer<CNGParameter> {
 
   @Override
   protected void buildDictionary() {
-    nGramCounts.clear();
+    nGramCounts = new HashMap<>();
     for (int n = this.getParameter().getMinN(); n <= this.getParameter().getMaxN(); n++) {
       this.countNGrams(n);
     }
@@ -87,7 +87,7 @@ public class CNGTransformer extends SubwordTransformer<CNGParameter> {
   }
 
   private void fillDictionary() {
-    dictionary.clear();
+    dictionary = new ArrayList<>();
     int minCount = (int) Math.ceil(this.getWords().length * this.getParameter().getMinSupport());
     for (int n = this.getParameter().getMinN(); n <= this.getParameter().getMaxN(); n++) {
       for (Map.Entry<List<Short>, Integer> subword : nGramCounts.get(n).entrySet()) {

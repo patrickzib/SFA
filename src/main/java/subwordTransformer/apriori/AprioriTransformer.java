@@ -20,7 +20,7 @@ public class AprioriTransformer extends SubwordTransformer<AprioriParameter> {
 
   private FrequentItemSets<CharacterItem> frequentItemSets;
   private double currentMinSupport = 1;
-  private final List<short[]> dictionary = new ArrayList<>();
+  private List<short[]> dictionary;
 
   /**
    * @param alphabetSize the alphabet size of the input words
@@ -68,7 +68,7 @@ public class AprioriTransformer extends SubwordTransformer<AprioriParameter> {
   }
 
   private void fillDictionary(FrequentItemSets<CharacterItem> frequentItemSets) {
-    dictionary.clear();
+    dictionary = new ArrayList<>();
     int alphabetSize = this.getInputAlphabetSize();
     for (ItemSet<CharacterItem> itemSet : frequentItemSets) {
       int patternLength = itemSet.last().getChar() / alphabetSize + 1;
