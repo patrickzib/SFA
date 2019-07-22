@@ -5,13 +5,12 @@ package sfa.transformation;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
-import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
-import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -210,10 +209,74 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
-  /**
-   * Implementation based on:
-   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
-   */
+//  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
+//    // compute highest index
+//    int length = 0;
+//    IntLongHashMap reverseMap = new IntLongHashMap();
+//    for (int j = 0; j < bob.length; j++) {
+//      for (LongIntCursor word : bob[j].bob) {
+//        int index = dict.getWordIndex(word.key);
+//        reverseMap.put(index, word.key);
+//        length = Math.max(index, length);
+//      }
+//    }
+//
+//    // dense double array
+//    length = length+1;
+//    double[][] data = new double[bob.length][length];
+//    for (int i = 0; i < bob.length; i++) {
+//      BagOfBigrams bop = bob[i];
+//      for (LongIntCursor word : bop.bob) {
+//        int index = dict.getWordIndex(word.key);
+//        data[i][index] = (double)word.value;
+//      }
+//    }
+//
+//    HashMap<Double, ArrayList<double[]>> classes = new HashMap<>();
+//    for (int i = 0; i < bob.length; i++) {
+//      ArrayList<double[]> allTs = classes.get(bob[i].label);
+//      if (allTs == null) {
+//        allTs = new ArrayList<>();
+//        classes.put(bob[i].label, allTs);
+//      }
+//      allTs.add(data[i]);
+//    }
+//
+//    double nSamples = bob.length;
+//    double nClasses = classes.keySet().size();
+//
+//    double[] f = SFASupervised.getFoneway(length, classes, nSamples, nClasses);
+//
+//    // sort by largest f-value
+//    @SuppressWarnings("unchecked")
+//    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
+//    for (int i = 0; i < f.length; i++) {
+//      if (!Double.isNaN(f[i]) && f[i]>0) {
+//        best.add(new SFASupervised.Indices<>(i, f[i]));
+//      }
+//    }
+//    Collections.sort(best);
+//    best = best.subList(0, (int) Math.min(100, best.size()));
+//
+//    LongHashSet bestWords = new LongHashSet();
+//    for (SFASupervised.Indices<Double> index : best) {
+//      bestWords.add(reverseMap.get(index.value.intValue()));
+//    }
+//
+//    for (int j = 0; j < bob.length; j++) {
+//      for (LongIntCursor cursor : bob[j].bob) {
+//        if (!bestWords.contains(cursor.key)) {
+//          bob[j].bob.values[cursor.index] = 0;
+//        }
+//      }
+//    }
+//  }
+
+
+    /**
+     * Implementation based on:
+     * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
+     */
   public void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
@@ -318,29 +381,29 @@ public class WEASEL {
    * Condenses the SFA word space.
    */
   public static class Dictionary {
-    public LongIntHashMap dictChi;
+    public LongIntHashMap dict;
 
     public Dictionary() {
-      this.dictChi = new LongIntHashMap();
+      this.dict = new LongIntHashMap();
     }
 
     public void reset() {
-      this.dictChi = new LongIntHashMap();
+      this.dict = new LongIntHashMap();
     }
 
-    public int getWordChi(long word) {
+    public int getWordIndex(long word) {
       int index = 0;
-      if ((index = this.dictChi.indexOf(word)) > -1) {
-        return this.dictChi.indexGet(index);
+      if ((index = this.dict.indexOf(word)) > -1) {
+        return this.dict.indexGet(index);
       } else {
-        int newWord = this.dictChi.size() + 1;
-        this.dictChi.put(word, newWord);
+        int newWord = this.dict.size() + 1;
+        this.dict.put(word, newWord);
         return newWord;
       }
     }
 
     public int size() {
-      return this.dictChi.size();
+      return this.dict.size();
     }
 
     public void filterChiSquared(final BagOfBigrams[] bagOfPatterns) {
@@ -348,7 +411,7 @@ public class WEASEL {
         LongIntHashMap oldMap = bagOfPatterns[j].bob;
         bagOfPatterns[j].bob = new LongIntHashMap();
         for (LongIntCursor word : oldMap) {
-          if (this.dictChi.containsKey(word.key) && word.value > 0) {
+          if (this.dict.containsKey(word.key) && word.value > 0) {
             bagOfPatterns[j].bob.put(word.key, word.value);
           }
         }

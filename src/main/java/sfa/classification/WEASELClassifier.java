@@ -2,7 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.TimeSeries;
@@ -314,6 +313,7 @@ public class WEASELClassifier extends Classifier {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
     modelForWindow.trainChiSquared(bopForWindow, chi);
+    //modelForWindow.trainAnova(bopForWindow, chi);
     return bopForWindow;
   }
 
@@ -359,7 +359,7 @@ public class WEASELClassifier extends Classifier {
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
-          features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
+          features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});
