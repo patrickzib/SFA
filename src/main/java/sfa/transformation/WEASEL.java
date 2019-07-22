@@ -228,7 +228,7 @@ public class WEASEL {
 //      BagOfBigrams bop = bob[i];
 //      for (LongIntCursor word : bop.bob) {
 //        int index = dict.getWordIndex(word.key);
-//        data[i][index] = (double)word.value;
+//        data[i][index] += (double)word.value;
 //      }
 //    }
 //
