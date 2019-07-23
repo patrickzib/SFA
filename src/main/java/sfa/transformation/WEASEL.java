@@ -30,6 +30,7 @@ public class WEASEL {
   public boolean lowerBounding;
   public SFA[] signature;
   public Dictionary dict;
+  public static int WORD_LIMIT = 100;
 
   public final static int BLOCKS;
 
@@ -113,7 +114,7 @@ public class WEASEL {
 
     // SFA quantization
     if (this.signature[index] == null) {
-      this.signature[index] = new SFASupervised();
+      this.signature[index] = new SFA(SFA.HistogramType.EQUI_FREQUENCY);
       this.signature[index].fitWindowing(
           samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
@@ -148,21 +149,22 @@ public class WEASEL {
     // iterate all samples
     // and create a bag of pattern
     for (int j = 0; j < samples.length; j++) {
-      bagOfPatterns[j] = new BagOfBigrams(wordsForWindowLength[j].length * 2, samples[j].getLabel());
+      bagOfPatterns[j] = new BagOfBigrams(wordsForWindowLength[j].length, samples[j].getLabel());
 
       // create subsequences
       for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
-        long word = (wordsForWindowLength[j][offset] & mask) << highestBit | (long) w;
+        long word = (long) w << (31-highestBit) | (wordsForWindowLength[j][offset] & mask) ;
         bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
+        wordsForWindowLength[j][offset] = (int)word;
 
-        // add 2 grams
-        if (offset - this.windowLengths[w] >= 0) {
-          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
-          if (prevWord != 0) {
-            long newWord = (prevWord << 32 | word);
-            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-          }
-        }
+//        // add 2 grams
+//        if (offset - this.windowLengths[w] >= 0) {
+//          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
+//          if (prevWord != 0) {
+//            long newWord = (prevWord << 32 | word);
+//            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+//          }
+//        }
       }
     }
 
@@ -193,15 +195,16 @@ public class WEASEL {
         for (int offset = 0; offset < words[w][j].length; offset++) {
           long word = (words[w][j][offset] & mask) << highestBit | (long) w;
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
+          words[w][j][offset] = (int)word;
 
-          // add 2 grams
-          if (offset - this.windowLengths[w] >= 0) {
-            long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask);
-            if (prevWord != 0) {
-              long newWord = (prevWord << 32 | word);
-              bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-            }
-          }
+//          // add 2 grams
+//          if (offset - this.windowLengths[w] >= 0) {
+//            long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask);
+//            if (prevWord != 0) {
+//              long newWord = (prevWord << 32 | word);
+//              bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+//            }
+//          }
         }
       }
     }
@@ -256,7 +259,7 @@ public class WEASEL {
 //      }
 //    }
 //    Collections.sort(best);
-//    best = best.subList(0, (int) Math.min(100, best.size()));
+//    best = best.subList(0, (int) Math.min(WORD_LIMIT, best.size()));
 //
 //    LongHashSet bestWords = new LongHashSet();
 //    for (SFASupervised.Indices<Double> index : best) {
@@ -277,7 +280,7 @@ public class WEASEL {
      * Implementation based on:
      * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
      */
-  public void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+  public static void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     LongFloatHashMap classProb = new LongFloatHashMap(10);
@@ -322,11 +325,12 @@ public class WEASEL {
       for (LongIntCursor feature : featureCount) {
         double expected = prob.value * feature.value;
 
-        double chi = obs.get(feature.key) - expected;
+        double chi = obs == null? 0 : obs.get(feature.key) - expected;
         double newChi = chi * chi / expected;
 
         if (newChi > 0 && newChi >= chi_limit
-            && !chiSquare.contains(feature.key)) {
+            && !chiSquare.contains(feature.key)
+            && feature.value > 1) {
           chiSquare.add(feature.key);
           pvalues.add(new PValueKey(newChi, feature.key));
         }
@@ -334,13 +338,17 @@ public class WEASEL {
     }
 
     // limit to 100 (?) features per window size
-    int limit = 100;
+    int limit = WORD_LIMIT;
     if (pvalues.size() > limit) {
       // sort by chi-squared value
       Collections.sort(pvalues, new Comparator<PValueKey>() {
         @Override
         public int compare(PValueKey o1, PValueKey o2) {
-          return -Double.compare(o1.pvalue, o2.pvalue);
+          int comp = Double.compare(o1.pvalue, o2.pvalue);
+          if (comp == 0) {
+            return -Long.compare(o1.key,o2.key);
+          }
+          return -comp;
         }
       });
       // only keep the best featrures (with highest chi-squared pvalue)

@@ -305,7 +305,7 @@ public class WEASELClassifier extends Classifier {
     return null;
   }
 
-  private BagOfBigrams[] fitOneWindow(
+  protected BagOfBigrams[] fitOneWindow(
       TimeSeries[] samples,
       int[] windowLengths, boolean mean,
       int[][] word, int f,
@@ -317,7 +317,7 @@ public class WEASELClassifier extends Classifier {
     return bopForWindow;
   }
 
-  private synchronized void mergeBobs(
+  protected synchronized void mergeBobs(
       BagOfBigrams[] bop,
       BagOfBigrams[] bopForWindow) {
     for (int i = 0; i < bop.length; i++) {
@@ -359,7 +359,8 @@ public class WEASELClassifier extends Classifier {
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
-          features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
+          FeatureNode node = new FeatureNode(dict.getWordIndex(word.key), word.value);
+          features.add(node);
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});
