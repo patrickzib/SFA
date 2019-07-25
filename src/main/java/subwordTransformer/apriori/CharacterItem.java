@@ -2,7 +2,7 @@ package subwordTransformer.apriori;
 
 import de.mrapp.apriori.Item;
 
-class CharacterItem implements Item, Comparable<Item> {
+class CharacterItem implements Item {
 
   private static final long serialVersionUID = -7757150128073205053L;
   private final short character;
