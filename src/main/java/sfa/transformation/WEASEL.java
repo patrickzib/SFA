@@ -175,6 +175,30 @@ public class WEASEL {
   /**
    * Create words and bi-grams for all window lengths
    */
+  public void remapWords(
+      final int[][] wordsForWindowLength,
+      final TimeSeries[] samples,
+      final int w,    // index of used windowSize
+      final int wordLength) {
+
+    final byte usedBits = (byte) Words.binlog(this.alphabetSize);
+    final long mask = (1L << (usedBits * wordLength)) - 1L;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
+
+    // iterate all samples
+    // and create a bag of pattern
+    for (int j = 0; j < samples.length; j++) {
+      // create subsequences
+      for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
+        long word = (long) w << (31-highestBit) | (wordsForWindowLength[j][offset] & mask) ;
+        wordsForWindowLength[j][offset] = (int)word;
+      }
+    }
+  }
+
+  /**
+   * Create words and bi-grams for all window lengths
+   */
   public BagOfBigrams[] createBagOfPatterns(
       final int[][][] words,
       final TimeSeries[] samples,

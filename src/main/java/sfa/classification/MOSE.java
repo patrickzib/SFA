@@ -129,6 +129,10 @@ public class MOSE extends WEASELClassifier {
 
       System.out.println("Train Dict Size: " + model.dict.size());
 
+      // TODO
+      //  - identify relevant windowSizes???
+      //  - use actual weights???
+
       // obtain feature weights
       //double[] weights = linearModel.getFeatureWeights();
 
@@ -140,7 +144,7 @@ public class MOSE extends WEASELClassifier {
 
         // left split
         int[][] words = model.createWords(slidingTs, w);
-        WEASEL.BagOfBigrams[] bob = model.createBagOfPatterns(words, slidingTs, w, maxF);
+        model.remapWords(words, slidingTs, w, maxF);
 
         for (int i = 0; i < words.length; i++) {
           for (int j = 0; j < words[i].length; j++) {
