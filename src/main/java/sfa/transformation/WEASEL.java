@@ -277,7 +277,11 @@ public class WEASEL {
       Collections.sort(pvalues, new Comparator<PValueKey>() {
         @Override
         public int compare(PValueKey o1, PValueKey o2) {
-          return -Double.compare(o1.pvalue, o2.pvalue);
+          int comp = Double.compare(o1.pvalue, o2.pvalue);
+          if (comp == 0) {
+            return -Long.compare(o1.key,o2.key);
+          }
+          return -comp;
         }
       });
       // only keep the best featrures (with highest chi-squared pvalue)
