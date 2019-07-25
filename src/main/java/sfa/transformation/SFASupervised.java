@@ -4,6 +4,7 @@ package sfa.transformation;
 
 import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.LongIntHashMap;
+import com.carrotsearch.hppc.LongLongHashMap;
 import sfa.timeseries.TimeSeries;
 import sun.jvm.hotspot.debugger.LongHashMap;
 
@@ -232,18 +233,18 @@ public class SFASupervised extends SFA {
    */
   public static double[] getFonewaySparse(
       int length,
-      Map<Double, List<LongIntHashMap>> classes,
+      Map<Double, List<LongLongHashMap>> classes,
       double nSamples,
       double nClasses) {
     double[] ss_alldata = new double[length];
     HashMap<Double, double[]> sums_args = new HashMap<>();
 
-    for (Entry<Double, List<LongIntHashMap>> allTs : classes.entrySet()) {
+    for (Entry<Double, List<LongLongHashMap>> allTs : classes.entrySet()) {
 
       double[] sums = new double[ss_alldata.length];
       sums_args.put(allTs.getKey(), sums);
 
-      for (LongIntHashMap ts : allTs.getValue()) {
+      for (LongLongHashMap ts : allTs.getValue()) {
         for (int i = 0; i < ts.size(); i++) {
           ss_alldata[i] += ts.get(i) * ts.get(i);
           sums[i] += ts.get(i);

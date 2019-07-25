@@ -5,6 +5,7 @@ package sfa.transformation;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.apache.commons.math3.distribution.FDistribution;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.inference.OneWayAnova;
@@ -212,67 +213,67 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
-//  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
-//
-//    int highestIndex = 0;
-//    IntLongHashMap reverseMap = new IntLongHashMap();
-//    Map<Double, List<LongIntHashMap>> classes = new HashMap<>();
-//    for (int j = 0; j < bob.length; j++) {
-//      List<LongIntHashMap> allTs = classes.get(bob[j].label);
-//      if (allTs == null) {
-//        allTs = new ArrayList<>();
-//        classes.put(bob[j].label, allTs);
-//      }
-//      LongIntHashMap keys = new LongIntHashMap(bob[j].bob.size()); // ugly to copy everything ...
-//      for (LongIntCursor word : bob[j].bob) {
-//        int index = dict.getWordIndex(word.key);
-//        reverseMap.put(index, word.key);
-//        keys.put(index, word.value);
-//        highestIndex = Math.max(index, highestIndex);
-//      }
-//      allTs.add(keys);
-//    }
-//
-//    // dense double array
-//    highestIndex = highestIndex+1;
-//
-//    double nSamples = bob.length;
-//    double nClasses = classes.keySet().size();
-//
-//    double[] f = SFASupervised.getFonewaySparse(highestIndex, classes, nSamples, nClasses);
-//
-//    final FDistribution fdist = new FDistribution(null, nClasses - 1, nSamples - nClasses);
-//    for (int i = 0; i < f.length; i++) {
-//      f[i] = 1.0 - fdist.cumulativeProbability(f[i]);
-//    }
-//
-//    // sort by largest f-value
-//    @SuppressWarnings("unchecked")
-//    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
-//    for (int i = 0; i < f.length; i++) {
-//      if (!Double.isNaN(f[i]) && f[i]>0.5) {
-//        best.add(new SFASupervised.Indices<>(i, f[i]));
-//      }
-//    }
-//
-//    //Collections.sort(best);
-//    //best = best.subList(0, (int) Math.min(100, best.size()));
-//
-//
-//    LongHashSet bestWords = new LongHashSet();
-//    for (SFASupervised.Indices<Double> index : best) {
-//      bestWords.add(reverseMap.get(index.value.intValue()));
-//    }
-//
-//    for (int j = 0; j < bob.length; j++) {
-//      for (LongIntCursor cursor : bob[j].bob) {
-//        if (!bestWords.contains(cursor.key)) {
-//          bob[j].bob.values[cursor.index] = 0;
-//        }
-//      }
-//    }
-//
-//  }
+  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
+
+    int highestIndex = 0;
+    IntLongHashMap reverseMap = new IntLongHashMap();
+    Map<Double, List<LongLongHashMap>> classes = new HashMap<>();
+    for (int j = 0; j < bob.length; j++) {
+      List<LongLongHashMap> allTs = classes.get(bob[j].label);
+      if (allTs == null) {
+        allTs = new ArrayList<>();
+        classes.put(bob[j].label, allTs);
+      }
+      LongLongHashMap keys = new LongLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
+      for (LongIntCursor word : bob[j].bob) {
+        int index = dict.getWordIndex(word.key);
+        reverseMap.put(index, word.key);
+        keys.put(index, word.value);
+        highestIndex = Math.max(index, highestIndex);
+      }
+      allTs.add(keys);
+    }
+
+    // dense double array
+    highestIndex = highestIndex+1;
+
+    double nSamples = bob.length;
+    double nClasses = classes.keySet().size();
+
+    double[] f = SFASupervised.getFonewaySparse(highestIndex, classes, nSamples, nClasses);
+
+    final FDistribution fdist = new FDistribution(null, nClasses - 1, nSamples - nClasses);
+    for (int i = 0; i < f.length; i++) {
+      f[i] = 1.0 - fdist.cumulativeProbability(f[i]);
+    }
+
+    // sort by largest f-value
+    @SuppressWarnings("unchecked")
+    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
+    for (int i = 0; i < f.length; i++) {
+      if (!Double.isNaN(f[i]) && f[i]>0.5) {
+        best.add(new SFASupervised.Indices<>(i, f[i]));
+      }
+    }
+
+    //Collections.sort(best);
+    //best = best.subList(0, (int) Math.min(100, best.size()));
+
+
+    LongHashSet bestWords = new LongHashSet();
+    for (SFASupervised.Indices<Double> index : best) {
+      bestWords.add(reverseMap.get(index.value.intValue()));
+    }
+
+    for (int j = 0; j < bob.length; j++) {
+      for (LongIntCursor cursor : bob[j].bob) {
+        if (!bestWords.contains(cursor.key)) {
+          bob[j].bob.values[cursor.index] = 0;
+        }
+      }
+    }
+
+  }
 
 
     /**
