@@ -13,7 +13,7 @@ class CharacterTransaction implements Transaction<CharacterItem> {
   public CharacterTransaction(short[] word, int alphabetSize) {
     this.items = new ArrayList<CharacterItem>(word.length);
     for (int i = 0; i < word.length; i++) {
-      this.items.add(new CharacterItem((short) (word[i] + i * alphabetSize)));
+      this.items.add(new CharacterItem(word[i], i, alphabetSize));
     }
   }
 

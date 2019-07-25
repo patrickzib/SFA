@@ -71,14 +71,11 @@ public class AprioriTransformer extends SubwordTransformer<AprioriParameter> {
     dictionary = new ArrayList<>();
     int alphabetSize = this.getInputAlphabetSize();
     for (ItemSet<CharacterItem> itemSet : frequentItemSets) {
-      int patternLength = itemSet.last().getChar() / alphabetSize + 1;
+      int patternLength = itemSet.last().getPosition() + 1;
       short[] pattern = new short[patternLength];
       Arrays.fill(pattern, this.getFillCharacter());
       for (CharacterItem item : itemSet) {
-        short positionalChar = item.getChar();
-        int position = positionalChar / alphabetSize;
-        short character = (short) (positionalChar % alphabetSize);
-        pattern[position] = character;
+        pattern[item.getPosition()] = item.getCharacter();
       }
       dictionary.add(pattern);
     }
