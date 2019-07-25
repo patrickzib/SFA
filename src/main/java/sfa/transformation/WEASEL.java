@@ -5,6 +5,9 @@ package sfa.transformation;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import org.apache.commons.math3.distribution.FDistribution;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.inference.OneWayAnova;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
@@ -210,53 +213,51 @@ public class WEASEL {
   }
 
 //  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
-//    // compute highest index
-//    int length = 0;
+//
+//    int highestIndex = 0;
 //    IntLongHashMap reverseMap = new IntLongHashMap();
+//    Map<Double, List<LongIntHashMap>> classes = new HashMap<>();
 //    for (int j = 0; j < bob.length; j++) {
+//      List<LongIntHashMap> allTs = classes.get(bob[j].label);
+//      if (allTs == null) {
+//        allTs = new ArrayList<>();
+//        classes.put(bob[j].label, allTs);
+//      }
+//      LongIntHashMap keys = new LongIntHashMap(bob[j].bob.size()); // ugly to copy everything ...
 //      for (LongIntCursor word : bob[j].bob) {
 //        int index = dict.getWordIndex(word.key);
 //        reverseMap.put(index, word.key);
-//        length = Math.max(index, length);
+//        keys.put(index, word.value);
+//        highestIndex = Math.max(index, highestIndex);
 //      }
+//      allTs.add(keys);
 //    }
 //
 //    // dense double array
-//    length = length+1;
-//    double[][] data = new double[bob.length][length];
-//    for (int i = 0; i < bob.length; i++) {
-//      BagOfBigrams bop = bob[i];
-//      for (LongIntCursor word : bop.bob) {
-//        int index = dict.getWordIndex(word.key);
-//        data[i][index] += (double)word.value;
-//      }
-//    }
-//
-//    HashMap<Double, ArrayList<double[]>> classes = new HashMap<>();
-//    for (int i = 0; i < bob.length; i++) {
-//      ArrayList<double[]> allTs = classes.get(bob[i].label);
-//      if (allTs == null) {
-//        allTs = new ArrayList<>();
-//        classes.put(bob[i].label, allTs);
-//      }
-//      allTs.add(data[i]);
-//    }
+//    highestIndex = highestIndex+1;
 //
 //    double nSamples = bob.length;
 //    double nClasses = classes.keySet().size();
 //
-//    double[] f = SFASupervised.getFoneway(length, classes, nSamples, nClasses);
+//    double[] f = SFASupervised.getFonewaySparse(highestIndex, classes, nSamples, nClasses);
+//
+//    final FDistribution fdist = new FDistribution(null, nClasses - 1, nSamples - nClasses);
+//    for (int i = 0; i < f.length; i++) {
+//      f[i] = 1.0 - fdist.cumulativeProbability(f[i]);
+//    }
 //
 //    // sort by largest f-value
 //    @SuppressWarnings("unchecked")
 //    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
 //    for (int i = 0; i < f.length; i++) {
-//      if (!Double.isNaN(f[i]) && f[i]>0) {
+//      if (!Double.isNaN(f[i]) && f[i]>0.5) {
 //        best.add(new SFASupervised.Indices<>(i, f[i]));
 //      }
 //    }
-//    Collections.sort(best);
-//    best = best.subList(0, (int) Math.min(100, best.size()));
+//
+//    //Collections.sort(best);
+//    //best = best.subList(0, (int) Math.min(100, best.size()));
+//
 //
 //    LongHashSet bestWords = new LongHashSet();
 //    for (SFASupervised.Indices<Double> index : best) {
@@ -270,6 +271,7 @@ public class WEASEL {
 //        }
 //      }
 //    }
+//
 //  }
 
 
