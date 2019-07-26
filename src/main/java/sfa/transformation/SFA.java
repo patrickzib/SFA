@@ -513,7 +513,7 @@ public class SFA implements Serializable {
       cOut.putOrAdd(element.get(pos).label, 1, 1);
     }
     double class_entropy = entropy(cOut, total);
-    class_entropy = Math.round(class_entropy * 1000.0) / 1000.0;  // round for 4 decimal places
+    //class_entropy = Math.round(class_entropy * 1000.0) / 1000.0;  // round for 4 decimal places
 
     int i = start;
     Double lastLabel = element.get(i).label;

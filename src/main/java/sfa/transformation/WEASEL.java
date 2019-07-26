@@ -344,10 +344,10 @@ public class WEASEL {
         @Override
         public int compare(PValueKey o1, PValueKey o2) {
           int comp = -Double.compare(o1.pvalue, o2.pvalue);
-          if (comp==0) { // tie breaker
-            return Long.compare(o1.key, o2.key);
+          if (comp!=0) { // tie breaker
+            return comp;
           }
-          return comp;
+          return Long.compare(o1.key, o2.key);
         }
       });
       // only keep the best featrures (with highest chi-squared pvalue)
