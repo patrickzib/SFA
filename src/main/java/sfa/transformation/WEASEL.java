@@ -347,112 +347,11 @@ public class WEASEL {
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public static void trainChiSquared2(final BagOfBigrams[] bob) {
-    // Chi2 Test
-    ObjectIntHashMap<WeaselWord> featureCount = new ObjectIntHashMap<>(bob[0].bob.size());
-    LongFloatHashMap classProb = new LongFloatHashMap(10);
-    LongObjectHashMap<ObjectIntHashMap<WeaselWord>> observed = new LongObjectHashMap<>();
-
-    // count number of samples with this word
-    for (BagOfBigrams bagOfPattern : bob) {
-      long label = bagOfPattern.label.longValue();
-      for (ObjectIntCursor<WeaselWord> word : bagOfPattern.bob) {
-        if (word.value > 0) {
-          featureCount.putOrAdd(word.key, 1, 1);
-
-          int index = -1;
-          ObjectIntHashMap<WeaselWord> obs = null;
-          if ((index = observed.indexOf(label)) > -1) {
-            obs = observed.indexGet(index);
-          } else {
-            obs = new ObjectIntHashMap<>();
-            observed.put(label, obs);
-          }
-
-          // count observations per class for this feature
-          obs.putOrAdd(word.key, 1, 1);
-        }
-      }
-    }
-
-
-    // samples per class
-    for (BagOfBigrams bagOfPattern : bob) {
-      long label = bagOfPattern.label.longValue();
-      classProb.putOrAdd(label, 1, 1);
-    }
-
-    // chi-squared: observed minus expected occurrence
-    ObjectHashSet<WeaselWord> chiSquare = new ObjectHashSet<>(featureCount.size());
-    ArrayList<PValueKey> pvalues = new ArrayList<>(featureCount.size());
-
-    for (LongFloatCursor prob : classProb) {
-      prob.value /= bob.length;
-
-      ObjectIntHashMap<WeaselWord> obs = observed.get(prob.key);
-      for (ObjectIntCursor<WeaselWord> feature : featureCount) {
-        double expected = prob.value * feature.value;
-        double observe = obs.get(feature.key);
-
-        double chi = obs == null? 0 : observe - expected;
-        double newChi = chi * chi / expected;
-
-        if (!chiSquare.contains(feature.key)
-            && observe > 0
-            && feature.value > 1
-        ) {
-          chiSquare.add(feature.key);
-          pvalues.add(new PValueKey(newChi, feature.key));
-        }
-      }
-    }
-
-    // limit to 100 (?) features per window size
-    int limit = WORD_LIMIT;
-    if (pvalues.size() > limit) {
-      // sort by chi-squared value
-      Collections.sort(pvalues, new Comparator<PValueKey>() {
-        @Override
-        public int compare(PValueKey o1, PValueKey o2) {
-          return Double.compare(o1.pvalue, o2.pvalue);
-        }
-      });
-      // only keep the best featrures (with highest chi-squared pvalue)
-      ObjectHashSet<WeaselWord> chiSquaredBest = new ObjectHashSet();
-      int count = 0;
-      double lastValue = 0.0;
-      for (PValueKey key : pvalues) {
-        chiSquaredBest.add(key.key);
-        if (++count >= Math.min(pvalues.size(), limit)
-            // keep all keys with the same values to solve ties
-           && key.pvalue != lastValue) {
-            break;
-        }
-        lastValue = key.pvalue;
-      }
-      chiSquare = chiSquaredBest;
-    }
-
-    for (int j = 0; j < bob.length; j++) {
-      for (ObjectIntCursor<WeaselWord> cursor : bob[j].bob) {
-        if (!chiSquare.contains(cursor.key)) {
-          bob[j].bob.values[cursor.index] = 0;
-        }
-      }
-    }
-  }
-
-
-  /**
-   * Implementation based on:
-   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
-   */
   public static ObjectHashSet<WeaselWord> trainHighestCount(final BagOfBigrams[] bob) {
     ObjectIntHashMap<WeaselWord> featureCount = new ObjectIntHashMap<>(bob[0].bob.size());
 
     // count number of samples with this word
     for (BagOfBigrams bagOfPattern : bob) {
-      long label = bagOfPattern.label.longValue();
       for (ObjectIntCursor<WeaselWord> word : bagOfPattern.bob) {
         if (word.value > 0) {
           featureCount.putOrAdd(word.key, 1, 1);

@@ -30,7 +30,7 @@ public class WEASELTest {
 
     int[] windowLengths = new int[]{1024,128,64,32,4};
     WEASEL model = new WEASEL(12, 8, windowLengths, false, true);
-    int[][][] words = model.createWords(samples.toArray(new TimeSeries[]{}));
+    long[][][] words = model.createWords(samples.toArray(new TimeSeries[]{}));
     for (int i = 0; i < words.length; i++) {
       Assert.assertNotNull("Index is null: " +i, words[i]);
       //System.out.println("i:" + words.length);
@@ -49,7 +49,7 @@ public class WEASELTest {
 
     // create bag of words from a time series without data
     TimeSeries ts = new TimeSeries(new double[]{});
-    int[][][] words2 = model.createWords(new TimeSeries[]{ts});
+    long[][][] words2 = model.createWords(new TimeSeries[]{ts});
     Assert.assertNotNull("Word is null:", words2[0]);
     WEASEL.BagOfBigrams[] bag2 = model.createBagOfPatterns(words2, new TimeSeries[]{ts}, 8);
     Assert.assertNotNull("BagOfBigrams is null:", bag2);
@@ -66,7 +66,7 @@ public class WEASELTest {
     int[] windowLengths = new int[]{1024,128,64,32,4};
     WEASEL model = new WEASEL(12, 8, windowLengths, false, true);
     TimeSeries ts = new TimeSeries(new double[]{});
-    int[][][] words2 = model.createWords(new TimeSeries[]{ts});
+    long[][][] words2 = model.createWords(new TimeSeries[]{ts});
     Assert.assertNotNull("Word is null:", words2[0]);
     WEASEL.BagOfBigrams[] bag2 = model.createBagOfPatterns(words2, new TimeSeries[]{ts}, 8);
     Assert.assertNotNull("BagOfBigrams is null:", bag2);

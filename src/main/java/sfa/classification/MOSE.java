@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MOSE extends WEASELClassifier {
 
   ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-  File sequence = new File(classLoader.getResource("datasets/sequences/TEK16.txt_TRAIN").getFile());
+  File sequence = new File(classLoader.getResource("datasets/sequences/TEK14.txt_TRAIN").getFile());
 
   public MOSE() {
     super();
@@ -170,7 +170,10 @@ public class MOSE extends WEASELClassifier {
               WEASEL.BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
                   model.windowLengths, mean,
-                  words, (int)Math.max(4, Math.sqrt(model.windowLengths[w])), w);
+                  words,
+                  (int)Math.max(4, Math.sqrt(model.windowLengths[w])), // ff
+                  w
+                  );
               // TODO
 
               mergeBobs(bop, bobForOneWindow);
@@ -221,7 +224,9 @@ public class MOSE extends WEASELClassifier {
 
         // left split
         long[][] words = model.createWords(slidingTs, w);
-        model.remapWords(words, slidingTs, w, maxF);
+        model.remapWords(words, slidingTs, w,
+            (int)Math.max(4, Math.sqrt(model.windowLengths[w])) // ff
+        );
 
         for (int i = 0; i < words.length; i++) {
           for (int j = 0; j < words[i].length; j++) {
@@ -232,7 +237,7 @@ public class MOSE extends WEASELClassifier {
               //int count = bob[i].bob.get(words[i][j]);
 
               for (int w2 = 0; w2 < windowLength; w2++) {
-                plot[i + j + w2] = Math.max(index, plot[i + j + w2]);
+                plot[i + j + w2] = index;//;Math.max(index, plot[i + j + w2]);
               }
 
 //              // use the same color to the left

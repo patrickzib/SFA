@@ -79,7 +79,7 @@ public class TimeSeries implements Serializable {
     this.stddev = stddev;
 
     if (APPLY_Z_NORM && !isNormed()) {
-      double inverseStddev = (this.stddev != 0) ? 1.0 / this.stddev : 1.0;
+      double inverseStddev = (Math.abs(this.stddev) > 1) ? 1.0 / this.stddev : 1.0;
 
       if (normMean) {
         for (int i = 0; i < this.data.length; i++) {
