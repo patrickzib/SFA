@@ -199,14 +199,16 @@ public class WEASELCharacter {
       for (int offset = 0; offset < words[sample].length; offset++) {
         short[] word = words[sample][offset];
         short[][] subwords = this.transformers[w].transformWord(word);
-        if (subwords.length == 0) { // TODO: always add word itself?
-          intWords[sample][offset] = new int[] { (int) Words.createWord(word, word.length, neededBits) };
-        } else {
-          intWords[sample][offset] = new int[subwords.length];
-          for (int subwordIndex = 0; subwordIndex < subwords.length; subwordIndex++) {
-            intWords[sample][offset][subwordIndex] = (int) Words.createWord(subwords[subwordIndex], subwords[subwordIndex].length, neededBits);
-          }
+        // if (subwords.length == 0) { // TODO: always add word itself?
+        // intWords[sample][offset] = new int[] { (int) Words.createWord(word,
+        // word.length, neededBits) };
+        // } else {
+        intWords[sample][offset] = new int[subwords.length + 1];
+        for (int subwordIndex = 0; subwordIndex < subwords.length; subwordIndex++) {
+          intWords[sample][offset][subwordIndex] = (int) Words.createWord(subwords[subwordIndex], subwords[subwordIndex].length, neededBits);
         }
+        intWords[sample][offset][subwords.length] = (int) Words.createWord(word, word.length, neededBits);
+        // }
       }
     }
 
