@@ -114,7 +114,7 @@ public class WEASEL {
 
     // SFA quantization
     if (this.signature[index] == null) {
-      this.signature[index] = new SFA(SFA.HistogramType.EQUI_FREQUENCY);
+      this.signature[index] = new SFA(SFA.HistogramType.EQUI_DEPTH);
       this.signature[index].fitWindowing(
           samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
@@ -156,15 +156,6 @@ public class WEASEL {
         long word = (long) w << (31-highestBit) | (wordsForWindowLength[j][offset] & mask) ;
         bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
         wordsForWindowLength[j][offset] = (int)word;
-
-//        // add 2 grams
-//        if (offset - this.windowLengths[w] >= 0) {
-//          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
-//          if (prevWord != 0) {
-//            long newWord = (prevWord << 32 | word);
-//            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-//          }
-//        }
       }
     }
 
@@ -212,7 +203,7 @@ public class WEASEL {
     // iterate all samples
     // and create a bag of pattern
     for (int j = 0; j < samples.length; j++) {
-      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length * 6, samples[j].getLabel());
+      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length, samples[j].getLabel());
 
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
@@ -220,15 +211,6 @@ public class WEASEL {
           long word = (words[w][j][offset] & mask) << highestBit | (long) w;
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
           words[w][j][offset] = (int)word;
-
-//          // add 2 grams
-//          if (offset - this.windowLengths[w] >= 0) {
-//            long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask);
-//            if (prevWord != 0) {
-//              long newWord = (prevWord << 32 | word);
-//              bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-//            }
-//          }
         }
       }
     }
@@ -236,68 +218,6 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
-//  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
-//    // compute highest index
-//    int length = 0;
-//    IntLongHashMap reverseMap = new IntLongHashMap();
-//    for (int j = 0; j < bob.length; j++) {
-//      for (LongIntCursor word : bob[j].bob) {
-//        int index = dict.getWordIndex(word.key);
-//        reverseMap.put(index, word.key);
-//        length = Math.max(index, length);
-//      }
-//    }
-//
-//    // dense double array
-//    length = length+1;
-//    double[][] data = new double[bob.length][length];
-//    for (int i = 0; i < bob.length; i++) {
-//      BagOfBigrams bop = bob[i];
-//      for (LongIntCursor word : bop.bob) {
-//        int index = dict.getWordIndex(word.key);
-//        data[i][index] += (double)word.value;
-//      }
-//    }
-//
-//    HashMap<Double, ArrayList<double[]>> classes = new HashMap<>();
-//    for (int i = 0; i < bob.length; i++) {
-//      ArrayList<double[]> allTs = classes.get(bob[i].label);
-//      if (allTs == null) {
-//        allTs = new ArrayList<>();
-//        classes.put(bob[i].label, allTs);
-//      }
-//      allTs.add(data[i]);
-//    }
-//
-//    double nSamples = bob.length;
-//    double nClasses = classes.keySet().size();
-//
-//    double[] f = SFASupervised.getFoneway(length, classes, nSamples, nClasses);
-//
-//    // sort by largest f-value
-//    @SuppressWarnings("unchecked")
-//    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
-//    for (int i = 0; i < f.length; i++) {
-//      if (!Double.isNaN(f[i]) && f[i]>0) {
-//        best.add(new SFASupervised.Indices<>(i, f[i]));
-//      }
-//    }
-//    Collections.sort(best);
-//    best = best.subList(0, (int) Math.min(WORD_LIMIT, best.size()));
-//
-//    LongHashSet bestWords = new LongHashSet();
-//    for (SFASupervised.Indices<Double> index : best) {
-//      bestWords.add(reverseMap.get(index.value.intValue()));
-//    }
-//
-//    for (int j = 0; j < bob.length; j++) {
-//      for (LongIntCursor cursor : bob[j].bob) {
-//        if (!bestWords.contains(cursor.key)) {
-//          bob[j].bob.values[cursor.index] = 0;
-//        }
-//      }
-//    }
-//  }
 
 
     /**
@@ -340,7 +260,7 @@ public class WEASEL {
 
     // chi-squared: observed minus expected occurrence
     LongHashSet chiSquare = new LongHashSet(featureCount.size());
-    ArrayList<PValueKey> pvalues = new ArrayList<PValueKey>(featureCount.size());
+    ArrayList<PValueKey> pvalues = new ArrayList<>(featureCount.size());
 
     for (LongFloatCursor prob : classProb) {
       prob.value /= bob.length; // (float) frequencies.get(prob.key);
@@ -354,7 +274,8 @@ public class WEASEL {
 
         if (newChi > 0 && newChi >= chi_limit
             && !chiSquare.contains(feature.key)
-            && feature.value > 1) {
+            //&& feature.value > 1 // TODO
+            ) {
           chiSquare.add(feature.key);
           pvalues.add(new PValueKey(newChi, feature.key));
         }
@@ -379,6 +300,170 @@ public class WEASEL {
       LongHashSet chiSquaredBest = new LongHashSet();
       for (PValueKey key : pvalues.subList(0, Math.min(pvalues.size(), limit))) {
         chiSquaredBest.add(key.key);
+      }
+      chiSquare = chiSquaredBest;
+    }
+
+    for (int j = 0; j < bob.length; j++) {
+      for (LongIntCursor cursor : bob[j].bob) {
+        if (!chiSquare.contains(cursor.key)) {
+          bob[j].bob.values[cursor.index] = 0;
+        }
+      }
+    }
+  }
+
+
+  /**
+   * Implementation based on:
+   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
+   */
+  public static void trainChiSquared2(final BagOfBigrams[] bob) {
+    // Chi2 Test
+    LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
+    LongFloatHashMap classProb = new LongFloatHashMap(10);
+    LongObjectHashMap<LongIntHashMap> observed = new LongObjectHashMap<>();
+
+    // count number of samples with this word
+    for (BagOfBigrams bagOfPattern : bob) {
+      long label = bagOfPattern.label.longValue();
+      for (LongIntCursor word : bagOfPattern.bob) {
+        if (word.value > 0) {
+          featureCount.putOrAdd(word.key, 1, 1);
+
+          int index = -1;
+          LongIntHashMap obs = null;
+          if ((index = observed.indexOf(label)) > -1) {
+            obs = observed.indexGet(index);
+          } else {
+            obs = new LongIntHashMap();
+            observed.put(label, obs);
+          }
+
+          // count observations per class for this feature
+          obs.putOrAdd(word.key, 1, 1);
+        }
+      }
+    }
+
+    // samples per class
+    for (BagOfBigrams bagOfPattern : bob) {
+      long label = bagOfPattern.label.longValue();
+      classProb.putOrAdd(label, 1, 1);
+    }
+
+    // chi-squared: observed minus expected occurrence
+    LongHashSet chiSquare = new LongHashSet(featureCount.size());
+    ArrayList<PValueKey> pvalues = new ArrayList<>(featureCount.size());
+
+    for (LongFloatCursor prob : classProb) {
+      prob.value /= bob.length;
+
+      LongIntHashMap obs = observed.get(prob.key);
+      for (LongIntCursor feature : featureCount) {
+        double expected = prob.value * feature.value;
+        double observe = obs.get(feature.key);
+
+        double chi = obs == null? 0 : observe - expected;
+        double newChi = chi * chi / expected;
+
+        if (!chiSquare.contains(feature.key)
+            && observe > 0
+            && feature.value > 1
+        ) {
+          chiSquare.add(feature.key);
+          pvalues.add(new PValueKey(newChi, feature.key));
+        }
+      }
+    }
+
+    // limit to 100 (?) features per window size
+    int limit = WORD_LIMIT;
+    if (pvalues.size() > limit) {
+      // sort by chi-squared value
+      Collections.sort(pvalues, new Comparator<PValueKey>() {
+        @Override
+        public int compare(PValueKey o1, PValueKey o2) {
+          return Double.compare(o1.pvalue, o2.pvalue);
+        }
+      });
+      // only keep the best featrures (with highest chi-squared pvalue)
+      LongHashSet chiSquaredBest = new LongHashSet();
+      int count = 0;
+      double lastValue = 0.0;
+      for (PValueKey key : pvalues) {
+        chiSquaredBest.add(key.key);
+        if (++count >= Math.min(pvalues.size(), limit)
+            // keep all keys with the same values to solve ties
+           && key.pvalue != lastValue) {
+            break;
+        }
+        lastValue = key.pvalue;
+      }
+      chiSquare = chiSquaredBest;
+    }
+
+    for (int j = 0; j < bob.length; j++) {
+      for (LongIntCursor cursor : bob[j].bob) {
+        if (!chiSquare.contains(cursor.key)) {
+          bob[j].bob.values[cursor.index] = 0;
+        }
+      }
+    }
+  }
+
+
+  /**
+   * Implementation based on:
+   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
+   */
+  public static void trainHighestCount(final BagOfBigrams[] bob) {
+    // Chi2 Test
+    LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
+
+    // count number of samples with this word
+    for (BagOfBigrams bagOfPattern : bob) {
+      long label = bagOfPattern.label.longValue();
+      for (LongIntCursor word : bagOfPattern.bob) {
+        if (word.value > 0) {
+          featureCount.putOrAdd(word.key, 1, 1);
+        }
+      }
+    }
+
+    // chi-squared: observed minus expected occurrence
+    ArrayList<PValueKey> pvalues = new ArrayList<>(featureCount.size());
+    LongHashSet chiSquare = new LongHashSet(featureCount.size());
+
+    for (LongIntCursor feature : featureCount) {
+      if (feature.value > 1) { // at least 2 occurrences
+        pvalues.add(new PValueKey(feature.value, feature.key));
+      }
+    }
+
+
+    // limit to 100 (?) features per window size
+    int limit = WORD_LIMIT;
+    if (pvalues.size() > limit) {
+      // sort by chi-squared value
+      Collections.sort(pvalues, new Comparator<PValueKey>() {
+        @Override
+        public int compare(PValueKey o1, PValueKey o2) {
+          return -Double.compare(o1.pvalue, o2.pvalue); // decending sort
+        }
+      });
+      // only keep the best featrures (with highest chi-squared pvalue)
+      LongHashSet chiSquaredBest = new LongHashSet();
+      int count = 0;
+      double lastValue = 0.0;
+      for (PValueKey key : pvalues) {
+        chiSquaredBest.add(key.key);
+        if (++count >= Math.min(pvalues.size(), limit)
+            // keep all keys with the same values to solve ties
+            && key.pvalue != lastValue) {
+          break;
+        }
+        lastValue = key.pvalue;
       }
       chiSquare = chiSquaredBest;
     }

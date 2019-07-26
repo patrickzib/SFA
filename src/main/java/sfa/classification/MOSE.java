@@ -54,35 +54,37 @@ public class MOSE extends WEASELClassifier {
     public WEASEL.BagOfBigrams[] bop;
   }
 
+  int minS = 8;
+
   public void eval() {
 
     //maxF = 6;
     MIN_WINDOW_LENGTH = 100;
     MAX_WINDOW_LENGTH = 200;
-    WEASEL.WORD_LIMIT = 10;
+    WEASEL.WORD_LIMIT = 20;
     solverType = SolverType.L2R_L2LOSS_SVC;
     c = 1;
     chi = 1;
+    minS = 8;
     maxS = 8;
-    final boolean norm = true;
     maxF = 8;
 
-
     TimeSeries sample = TimeSeriesLoader.loadDataset(sequence)[0];
-    fitMose(sample, norm);
+    fitMose(sample);
   }
 
   public void fitMose(
-      final TimeSeries sample, final boolean norm) {
+      final TimeSeries sample) {
     try {
 
       double[] data = sample.getData();
       int width = Math.min(500, data.length/10);
+      System.out.println("Width: " + width);
 
-      TimeSeries[] disjointTS = sample.getDisjointSequences(width, norm);
+      TimeSeries[] disjointTS = sample.getDisjointSequences(width, true);
 
       MIN_WINDOW_LENGTH = width / 8;
-      MAX_WINDOW_LENGTH = width / 4;
+      MAX_WINDOW_LENGTH = width / 2;
 
       System.out.println("MIN_WINDOW_LENGTH:" + MIN_WINDOW_LENGTH);
       System.out.println("MAX_WINDOW_LENGTH:" + MAX_WINDOW_LENGTH);
@@ -94,12 +96,68 @@ public class MOSE extends WEASELClassifier {
 
       TimeSeries[] samples = disjointTS;
 
+      System.out.println("Samples: " + samples.length);
+
+//      int maxCorrect = Integer.MAX_VALUE;
+//      int bestF = -1;
+//      int bestS = -1;
+//      boolean bestNorm = false;
+//
+//      optimize:
+//      for (final boolean mean : NORMALIZATION) {
+//        int[] windowLengths = getWindowLengths(samples, bestNorm);
+//        //for (int s = minS; s <= maxS; s *= 2) {
+//          WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
+//          final int[][][] words = model.createWords(samples);
+//
+//          for (int f = minF; f <= maxF; f += 2) {
+//            model.dict.reset();
+//
+//            final WEASEL.BagOfBigrams[] bop = new WEASEL.BagOfBigrams[samples.length];
+//            final int ff = f;
+//
+//            ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+//              @Override
+//              public void run(int id, AtomicInteger processed) {
+//                for (int w = 0; w < model.windowLengths.length; w++) {
+//                  if (w % BLOCKS == id) {
+//                    WEASEL.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+//                        samples,
+//                        model.windowLengths, mean,
+//                        words[w], ff, w);
+//                    mergeBobs(bop, bobForOneWindow);
+//                  }
+//                }
+//              }
+//            });
+//
+//            // train liblinear
+//            final Problem problem = initLibLinearProblem(bop, model.dict, bias);
+//            int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
+//
+//            if (correct < maxCorrect) {
+//              maxCorrect = correct;
+//              bestF = f;
+//              bestS = maxS;
+//              bestNorm = mean;
+//
+//              System.out.println("Correct: " + correct);
+//              System.out.println("bestNorm: " + mean);
+//              System.out.println("BestF: " + bestF);
+//              System.out.println("BestS: " + bestS);
+//            }
+//          }
+//       // }
+//      }
+
       // obtain the final matrix
-      int[] windowLengths = getWindowLengths(samples, norm);
-      WEASEL model = new WEASEL(maxF, maxS, windowLengths, norm, lowerBounding);
+      final boolean mean = true;
+      int[] windowLengths = getWindowLengths(samples, mean);
+      WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
 
       //int[][][] words = new int[model.windowLengths.length][][];
       final WEASEL.BagOfBigrams[] bop = new WEASEL.BagOfBigrams[samples.length];
+      final int ff = maxF;
       ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
         @Override
         public void run(int id, AtomicInteger processed) {
@@ -108,8 +166,8 @@ public class MOSE extends WEASELClassifier {
               int[][] words = model.createWords(samples, w);
               WEASEL.BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
-                  model.windowLengths, norm,
-                  words, maxF, w);
+                  model.windowLengths, mean,
+                  words, ff, w);
 
               mergeBobs(bop, bobForOneWindow);
             }
@@ -117,15 +175,15 @@ public class MOSE extends WEASELClassifier {
         }
       });
 
-      model.trainChiSquared(bop, chi);
+      model.trainHighestCount(bop);
 
       // train liblinear
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
-      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
-      int correct = 0;
-      for (int j = 0; j < problem.x.length; j++) {
-        correct += Linear.predict(linearModel, problem.x[j])==problem.y[j] ? 1 : 0;
-      }
+      //de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+      //int correct = 0;
+      //for (int j = 0; j < problem.x.length; j++) {
+      //  correct += Linear.predict(linearModel, problem.x[j])==problem.y[j] ? 1 : 0;
+      //}
 
       System.out.println("Train Dict Size: " + model.dict.size());
 
@@ -136,8 +194,11 @@ public class MOSE extends WEASELClassifier {
       // obtain feature weights
       //double[] weights = linearModel.getFeatureWeights();
 
-      TimeSeries[] slidingTs = sample.getSubsequences(width, norm);
 
+
+      // Generate the plot from the dictionary words
+
+      TimeSeries[] slidingTs = sample.getSubsequences(width, true);
       double[] plot = new double[sample.getLength()];
       for (int w = 0; w < model.windowLengths.length; w++) {
         int windowLength = model.windowLengths[w];
@@ -152,9 +213,23 @@ public class MOSE extends WEASELClassifier {
               int index = model.dict.getWordIndex(words[i][j]);
               //double weight = weights[index];
               //int count = bob[i].bob.get(words[i][j]);
+
               for (int w2 = 0; w2 < windowLength; w2++) {
-                plot[i + j + w2] = Math.max(index, plot[i + j + w2]);
+                plot[i + j + w2] = index; //, plot[i + j + w2];
               }
+
+              // use the same color to the left
+//              for (int w2 = i + j; w2 > 0; w2--) {
+//                if (plot[w2] > 0)
+//                  plot[w2] = index; //, plot[w2]);
+//              }
+
+              // use the same color to the right
+              for (int w2 = i + j + windowLength; w2 < plot.length; w2++) {
+                if (plot[w2] > 0)
+                  plot[w2] = index; //, plot[w2]);
+              }
+
             }
           }
         }
