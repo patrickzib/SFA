@@ -350,10 +350,18 @@ public class WEASEL {
           return Long.compare(o1.key, o2.key);
         }
       });
-      // only keep the best featrures (with highest chi-squared pvalue)
+      // only keep the best features (with highest chi-squared pvalue)
       LongHashSet chiSquaredBest = new LongHashSet();
-      for (PValueKey key : pvalues.subList(0, Math.min(pvalues.size(), limit))) {
+      int count = 0;
+      double lastValue = 0.0;
+      for (PValueKey key : pvalues) {
         chiSquaredBest.add(key.key);
+        if (++count >= Math.min(pvalues.size(), limit)
+          // keep all keys with the same values to solve ties
+          && key.pvalue != lastValue) {
+          break;
+        }
+        lastValue = key.pvalue;
       }
       chiSquare = chiSquaredBest;
     }
