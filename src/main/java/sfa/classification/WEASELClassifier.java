@@ -136,7 +136,7 @@ public class WEASELClassifier extends Classifier {
       public void run(int id, AtomicInteger processed) {
         for (int w = 0; w < model.weasel.windowLengths.length; w++) {
           if (w % BLOCKS == id) {
-            int[][] wordsTest = model.weasel.createWords(samples, w);
+            long[][] wordsTest = model.weasel.createWords(samples, w);
             BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest, samples, w, model.features);
             model.weasel.dict.filterChiSquared(bopForWindow);
             mergeBobs(bagTest, bopForWindow);
@@ -174,7 +174,7 @@ public class WEASELClassifier extends Classifier {
       public void run(int id, AtomicInteger processed) {
         for (int w = 0; w < model.weasel.windowLengths.length; w++) {
           if (w % BLOCKS == id) {
-            int[][] wordsTest = model.weasel.createWords(samples, w);
+            long[][] wordsTest = model.weasel.createWords(samples, w);
             BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest, samples, w, model.features);
             model.weasel.dict.filterChiSquared(bopForWindow);
             mergeBobs(bagTest, bopForWindow);
@@ -222,7 +222,7 @@ public class WEASELClassifier extends Classifier {
       for (final boolean mean : NORMALIZATION) {
         int[] windowLengths = getWindowLengths(samples, bestNorm);
         WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
-        final int[][][] words = model.createWords(samples);
+        final long[][][] words = model.createWords(samples);
 
         for (int f = minF; f <= maxF; f += 2) {
           model.dict.reset();
@@ -272,7 +272,7 @@ public class WEASELClassifier extends Classifier {
         public void run(int id, AtomicInteger processed) {
           for (int w = 0; w < model.windowLengths.length; w++) {
             if (w % BLOCKS == id) {
-              int[][] words = model.createWords(samples, w);
+              long[][] words = model.createWords(samples, w);
               BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
                   model.windowLengths, mean,
@@ -309,7 +309,7 @@ public class WEASELClassifier extends Classifier {
   protected BagOfBigrams[] fitOneWindow(
       TimeSeries[] samples,
       int[] windowLengths, boolean mean,
-      int[][] word, int f,
+      long[][] word, int f,
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);

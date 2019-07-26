@@ -85,8 +85,8 @@ public class WEASEL {
 
   static public class WeaselWord implements Comparable<WeaselWord>{
     public int w = 0;
-    public int word = 0;
-    public WeaselWord(int w, int word) {
+    public long word = 0;
+    public WeaselWord(int w, long word) {
       this.w = w;
       this.word = word;
     }
@@ -102,7 +102,7 @@ public class WEASEL {
     @Override
     public int hashCode() {
       int result = 1;
-      result = 31 * result + Integer.hashCode(word);
+      result = 31 * result + Long.hashCode(word);
       result = 31 * result + Integer.hashCode(w);
       return result;
     }
@@ -111,7 +111,7 @@ public class WEASEL {
     public int compareTo(WeaselWord o) {
       int comp = Integer.compare(w, o.w);
       if (comp == 0) {
-        return Integer.compare(word, o.word);
+        return Long.compare(word, o.word);
       }
       return comp;
     }
@@ -123,9 +123,9 @@ public class WEASEL {
    * @param samples
    * @return
    */
-  public int[][][] createWords(final TimeSeries[] samples) {
+  public long[][][] createWords(final TimeSeries[] samples) {
     // create bag of words for each window queryLength
-    final int[][][] words = new int[this.windowLengths.length][samples.length][];
+    final long[][][] words = new long[this.windowLengths.length][samples.length][];
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
@@ -145,7 +145,7 @@ public class WEASEL {
    * @param samples
    * @return
    */
-  public int[][] createWords(final TimeSeries[] samples, final int index) {
+  public long[][] createWords(final TimeSeries[] samples, final int index) {
 
     // SFA quantization
     if (this.signature[index] == null) {
@@ -155,12 +155,12 @@ public class WEASEL {
     }
 
     // create words
-    final int[][] words = new int[samples.length][];
+    final long[][] words = new long[samples.length][];
     for (int i = 0; i < samples.length; i++) {
       if (samples[i].getLength() >= this.windowLengths[index]) {
-        words[i] = this.signature[index].transformWindowingInt(samples[i], this.maxF);
+        words[i] = this.signature[index].transformWindowingLong(samples[i], this.maxF);
       } else {
-        words[i] = new int[]{};
+        words[i] = new long[]{};
       }
     }
 
@@ -171,7 +171,7 @@ public class WEASEL {
    * Create words and bi-grams for all window lengths
    */
   public BagOfBigrams[] createBagOfPatterns(
-      final int[][] wordsForWindowLength,
+      final long[][] wordsForWindowLength,
       final TimeSeries[] samples,
       final int w,    // index of used windowSize
       final int wordLength) {
@@ -188,9 +188,7 @@ public class WEASEL {
       // create subsequences
       for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
         bagOfPatterns[j].bob.putOrAdd(
-            new WeaselWord(w, (int)(wordsForWindowLength[j][offset] & mask)), 1, 1);
-
-        wordsForWindowLength[j][offset] = (int)(wordsForWindowLength[j][offset] & mask);
+            new WeaselWord(w, wordsForWindowLength[j][offset] & mask), 1, 1);
       }
     }
 
@@ -202,7 +200,7 @@ public class WEASEL {
    * Create words and bi-grams for all window lengths
    */
   public void remapWords(
-      final int[][] wordsForWindowLength,
+      final long[][] wordsForWindowLength,
       final TimeSeries[] samples,
       final int w,    // index of used windowSize
       final int wordLength) {
@@ -215,7 +213,7 @@ public class WEASEL {
     for (int j = 0; j < samples.length; j++) {
       // create subsequences
       for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
-        wordsForWindowLength[j][offset] = (int)(wordsForWindowLength[j][offset] & mask);
+        wordsForWindowLength[j][offset] = wordsForWindowLength[j][offset] & mask;
       }
     }
   }
@@ -224,7 +222,7 @@ public class WEASEL {
    * Create words and bi-grams for all window lengths
    */
   public BagOfBigrams[] createBagOfPatterns(
-      final int[][][] words,
+      final long[][][] words,
       final TimeSeries[] samples,
       final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
@@ -241,9 +239,7 @@ public class WEASEL {
       for (int w = 0; w < this.windowLengths.length; w++) {
         for (int offset = 0; offset < words[w][j].length; offset++) {
           bagOfPatterns[j].bob.putOrAdd(
-              new WeaselWord(w, (int)(words[w][j][offset] & mask)), 1, 1);
-
-          //words[w][j][offset] = (int)word;
+              new WeaselWord(w, words[w][j][offset] & mask), 1, 1);
         }
       }
     }

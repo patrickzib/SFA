@@ -61,9 +61,11 @@ public class MOSE extends WEASELClassifier {
     MIN_WINDOW_LENGTH = 100;
     MAX_WINDOW_LENGTH = 200;
     WEASEL.WORD_LIMIT = 10;
-    solverType = SolverType.L2R_L2LOSS_SVC;
-    c = 1;
-    chi = 1;
+
+//    solverType = SolverType.L2R_L2LOSS_SVC;
+//    c = 1;
+//    chi = 1;
+
     maxS = 8;
     maxF = 12;
 
@@ -76,12 +78,12 @@ public class MOSE extends WEASELClassifier {
     try {
 
       double[] data = sample.getData();
-      int width = Math.min(500, data.length/10);
+      int width = Math.min(1000, data.length/10);
       System.out.println("Width: " + width);
 
       TimeSeries[] disjointTS = sample.getDisjointSequences(width, true);
 
-      MIN_WINDOW_LENGTH = width / 4;
+      MIN_WINDOW_LENGTH = width / 3;
       MAX_WINDOW_LENGTH = (int)(width / 1.5);
       maxF = (int)Math.sqrt(MAX_WINDOW_LENGTH);
 
@@ -164,7 +166,7 @@ public class MOSE extends WEASELClassifier {
         public void run(int id, AtomicInteger processed) {
           for (int w = 0; w < model.windowLengths.length; w++) {
             if (w % BLOCKS == id) {
-              int[][] words = model.createWords(samples, w);
+              long[][] words = model.createWords(samples, w);
               WEASEL.BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
                   model.windowLengths, mean,
@@ -191,12 +193,19 @@ public class MOSE extends WEASELClassifier {
       System.out.println("");
 
       // train liblinear
-      Problem problem = initLibLinearProblem(bop, model.dict, bias);
+      for (ObjectCursor<WEASEL.WeaselWord> ww : usedWords) {
+        model.dict.getWordIndex(ww.value);
+      }
+
+      //Problem problem = initLibLinearProblem(bop, model.dict, bias);
       //de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
       //int correct = 0;
       //for (int j = 0; j < problem.x.length; j++) {
       //  correct += Linear.predict(linearModel, problem.x[j])==problem.y[j] ? 1 : 0;
       //}
+      // obtain feature weights
+      //double[] weights = linearModel.getFeatureWeights();
+
 
       System.out.println("Train Dict Size: " + model.dict.size());
 
@@ -204,20 +213,14 @@ public class MOSE extends WEASELClassifier {
       //  - identify relevant windowSizes???
       //  - use actual weights???
 
-      // obtain feature weights
-      //double[] weights = linearModel.getFeatureWeights();
-
-
-
       // Generate the plot from the dictionary words
-
       TimeSeries[] slidingTs = sample.getSubsequences(width, true);
       double[] plot = new double[sample.getLength()];
       for (int w : usedWindowLengths) {
         int windowLength = model.windowLengths[w];
 
         // left split
-        int[][] words = model.createWords(slidingTs, w);
+        long[][] words = model.createWords(slidingTs, w);
         model.remapWords(words, slidingTs, w, maxF);
 
         for (int i = 0; i < words.length; i++) {
@@ -229,19 +232,19 @@ public class MOSE extends WEASELClassifier {
               //int count = bob[i].bob.get(words[i][j]);
 
               for (int w2 = 0; w2 < windowLength; w2++) {
-                plot[i + j + w2] = index; //, plot[i + j + w2];
+                plot[i + j + w2] = Math.max(index, plot[i + j + w2]);
               }
 
-              // use the same color to the left
+//              // use the same color to the left
 //              for (int w2 = i + j; w2 > 0; w2--) {
 //                if (plot[w2] > 0)
-//                  plot[w2] = index; //, plot[w2]);
+//                  plot[w2] = Math.max(index, plot[w2]);
 //              }
-
-              // use the same color to the right
+//
+//              // use the same color to the right
 //              for (int w2 = i + j + windowLength; w2 < plot.length; w2++) {
 //                if (plot[w2] > 0)
-//                  plot[w2] = index; //, plot[w2]);
+//                  plot[w2] = Math.max(index, plot[w2]);
 //              }
 
             }

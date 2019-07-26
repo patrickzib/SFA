@@ -338,6 +338,26 @@ public class SFA implements Serializable {
   }
 
   /**
+   * Extracts sliding windows from a time series and transforms it to its SFA
+   * word.
+   * <p>
+   * Returns the SFA words as a single long (compacts the characters into one
+   * long).
+   *
+   * @param ts
+   * @param wordLength
+   * @return
+   */
+  public long[] transformWindowingLong(TimeSeries ts, int wordLength) {
+    short[][] words = transformWindowing(ts);
+    long[] longWords = new long[words.length];
+    for (int i = 0; i < words.length; i++) {
+      longWords[i] = Words.createWord(words[i], wordLength, this.neededBits);
+    }
+    return longWords;
+  }
+
+  /**
    * Trains the SFA boss based on a set of samples. At the end of this call,
    * the quantization bins are set.
    *
