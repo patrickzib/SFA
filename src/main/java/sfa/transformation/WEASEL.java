@@ -149,7 +149,7 @@ public class WEASEL {
 
     // SFA quantization
     if (this.signature[index] == null) {
-      this.signature[index] = new SFA(SFA.HistogramType.EQUI_FREQUENCY);
+      this.signature[index] = new SFASupervised(SFA.HistogramType.EQUI_FREQUENCY);
       this.signature[index].fitWindowing(
           samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
@@ -480,7 +480,11 @@ public class WEASEL {
       Collections.sort(pvalues, new Comparator<PValueKey>() {
         @Override
         public int compare(PValueKey o1, PValueKey o2) {
-          return -Double.compare(o1.pvalue, o2.pvalue); // decending sort
+          int comp = -Double.compare(o1.pvalue, o2.pvalue);
+          if (comp == 0) {
+            return -o1.key.compareTo(o2.key);
+          }
+          return comp; //-Double.compare(o1.pvalue, o2.pvalue); // decending sort
         }
       });
       // only keep the best featrures (with highest chi-squared pvalue)
@@ -491,7 +495,7 @@ public class WEASEL {
         chiSquaredBest.add(key.key);
         if (++count >= Math.min(pvalues.size(), limit)
             // keep all keys with the same values to solve ties
-            && key.pvalue != lastValue) {
+            /*&& key.pvalue != lastValue*/) {
           break;
         }
         lastValue = key.pvalue;

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MOSE extends WEASELClassifier {
 
   ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-  File sequence = new File(classLoader.getResource("datasets/sequences/ann_gun_CentroidA1.csv.txt_TRAIN").getFile());
+  File sequence = new File(classLoader.getResource("datasets/sequences/TEK16.txt_TRAIN").getFile());
 
   public MOSE() {
     super();
@@ -55,8 +55,6 @@ public class MOSE extends WEASELClassifier {
     public WEASEL.BagOfBigrams[] bop;
   }
 
-  int minS = 8;
-
   public void eval() {
 
     //maxF = 6;
@@ -66,9 +64,8 @@ public class MOSE extends WEASELClassifier {
     solverType = SolverType.L2R_L2LOSS_SVC;
     c = 1;
     chi = 1;
-    minS = 8;
     maxS = 8;
-    maxF = 8;
+    maxF = 12;
 
     TimeSeries sample = TimeSeriesLoader.loadDataset(sequence)[0];
     fitMose(sample);
@@ -84,8 +81,11 @@ public class MOSE extends WEASELClassifier {
 
       TimeSeries[] disjointTS = sample.getDisjointSequences(width, true);
 
-      MIN_WINDOW_LENGTH = width / 8;
-      MAX_WINDOW_LENGTH = width / 2;
+      MIN_WINDOW_LENGTH = width / 4;
+      MAX_WINDOW_LENGTH = (int)(width / 1.5);
+      maxF = (int)Math.sqrt(MAX_WINDOW_LENGTH);
+
+      System.out.println("Features: " + maxF);
 
       System.out.println("MIN_WINDOW_LENGTH:" + MIN_WINDOW_LENGTH);
       System.out.println("MAX_WINDOW_LENGTH:" + MAX_WINDOW_LENGTH);
@@ -168,7 +168,8 @@ public class MOSE extends WEASELClassifier {
               WEASEL.BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
                   model.windowLengths, mean,
-                  words, ff, w);
+                  words, (int)Math.max(4, Math.sqrt(model.windowLengths[w])), w);
+              // TODO
 
               mergeBobs(bop, bobForOneWindow);
             }
