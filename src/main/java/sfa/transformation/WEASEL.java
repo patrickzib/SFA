@@ -336,35 +336,35 @@ public class WEASEL {
       }
     }
 
-    // limit to 100 (?) features per window size
-    int limit = 100;
-    if (pvalues.size() > limit) {
-      // sort by chi-squared value
-      Collections.sort(pvalues, new Comparator<PValueKey>() {
-        @Override
-        public int compare(PValueKey o1, PValueKey o2) {
-          int comp = -Double.compare(o1.pvalue, o2.pvalue);
-          if (comp!=0) { // tie breaker
-            return comp;
-          }
-          return Long.compare(o1.key, o2.key);
-        }
-      });
-      // only keep the best features (with highest chi-squared pvalue)
-      LongHashSet chiSquaredBest = new LongHashSet();
-      int count = 0;
-      double lastValue = 0.0;
-      for (PValueKey key : pvalues) {
-        chiSquaredBest.add(key.key);
-        if (++count >= Math.min(pvalues.size(), limit)
-          // keep all keys with the same values to solve ties
-          && key.pvalue != lastValue) {
-          break;
-        }
-        lastValue = key.pvalue;
-      }
-      chiSquare = chiSquaredBest;
-    }
+//    // limit to 100 (?) features per window size
+//    int limit = 100;
+//    if (pvalues.size() > limit) {
+//      // sort by chi-squared value
+//      Collections.sort(pvalues, new Comparator<PValueKey>() {
+//        @Override
+//        public int compare(PValueKey o1, PValueKey o2) {
+//          int comp = -Double.compare(o1.pvalue, o2.pvalue);
+//          if (comp!=0) { // tie breaker
+//            return comp;
+//          }
+//          return Long.compare(o1.key, o2.key);
+//        }
+//      });
+//      // only keep the best features (with highest chi-squared pvalue)
+//      LongHashSet chiSquaredBest = new LongHashSet();
+//      int count = 0;
+//      double lastValue = 0.0;
+//      for (PValueKey key : pvalues) {
+//        chiSquaredBest.add(key.key);
+//        if (++count >= Math.min(pvalues.size(), limit)
+//          // keep all keys with the same values to solve ties
+//          && key.pvalue != lastValue) {
+//          break;
+//        }
+//        lastValue = key.pvalue;
+//      }
+//      chiSquare = chiSquaredBest;
+//    }
 
     for (int j = 0; j < bob.length; j++) {
       for (LongIntCursor cursor : bob[j].bob) {
