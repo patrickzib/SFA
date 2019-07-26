@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.WEASEL;
@@ -356,7 +357,7 @@ public class WEASELClassifier extends Classifier {
     for (int j = 0; j < bob.length; j++) {
       BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
-      for (LongIntCursor word : bop.bob) {
+      for (ObjectIntCursor<WEASEL.WeaselWord> word : bop.bob) {
         if (word.value > 0) {
           FeatureNode node = new FeatureNode(dict.getWordIndex(word.key), word.value);
           features.add(node);

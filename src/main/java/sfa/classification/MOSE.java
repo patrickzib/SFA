@@ -3,6 +3,7 @@ package sfa.classification;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.DoubleDoubleCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
 import de.bwaldvogel.liblinear.Linear;
 import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MOSE extends WEASELClassifier {
 
   ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
-  File sequence = new File(classLoader.getResource("datasets/sequences/brady45.txt_TRAIN").getFile());
+  File sequence = new File(classLoader.getResource("datasets/sequences/ann_gun_CentroidA1.csv.txt_TRAIN").getFile());
 
   public MOSE() {
     super();
@@ -61,7 +62,7 @@ public class MOSE extends WEASELClassifier {
     //maxF = 6;
     MIN_WINDOW_LENGTH = 100;
     MAX_WINDOW_LENGTH = 200;
-    WEASEL.WORD_LIMIT = 20;
+    WEASEL.WORD_LIMIT = 10;
     solverType = SolverType.L2R_L2LOSS_SVC;
     c = 1;
     chi = 1;
@@ -175,7 +176,18 @@ public class MOSE extends WEASELClassifier {
         }
       });
 
-      model.trainHighestCount(bop);
+      ObjectHashSet<WEASEL.WeaselWord> usedWords = model.trainHighestCount(bop);
+
+      // find used words
+      HashSet<Integer> usedWindowLengths = new HashSet<>();
+      for (ObjectCursor<WEASEL.WeaselWord> w : usedWords) {
+        usedWindowLengths.add(w.value.w);
+      }
+      System.out.println("Used windows:"+usedWindowLengths);
+      for (int w :  usedWindowLengths) {
+        System.out.print(model.windowLengths[w] + " ");
+      }
+      System.out.println("");
 
       // train liblinear
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
@@ -200,7 +212,7 @@ public class MOSE extends WEASELClassifier {
 
       TimeSeries[] slidingTs = sample.getSubsequences(width, true);
       double[] plot = new double[sample.getLength()];
-      for (int w = 0; w < model.windowLengths.length; w++) {
+      for (int w : usedWindowLengths) {
         int windowLength = model.windowLengths[w];
 
         // left split
@@ -209,8 +221,9 @@ public class MOSE extends WEASELClassifier {
 
         for (int i = 0; i < words.length; i++) {
           for (int j = 0; j < words[i].length; j++) {
-            if (model.dict.dict.containsKey(words[i][j])) {
-              int index = model.dict.getWordIndex(words[i][j]);
+            WEASEL.WeaselWord word = new WEASEL.WeaselWord(w, words[i][j]);
+            if (model.dict.dict.containsKey(word)) {
+              int index = model.dict.getWordIndex(word);
               //double weight = weights[index];
               //int count = bob[i].bob.get(words[i][j]);
 
@@ -225,10 +238,10 @@ public class MOSE extends WEASELClassifier {
 //              }
 
               // use the same color to the right
-              for (int w2 = i + j + windowLength; w2 < plot.length; w2++) {
-                if (plot[w2] > 0)
-                  plot[w2] = index; //, plot[w2]);
-              }
+//              for (int w2 = i + j + windowLength; w2 < plot.length; w2++) {
+//                if (plot[w2] > 0)
+//                  plot[w2] = index; //, plot[w2]);
+//              }
 
             }
           }
