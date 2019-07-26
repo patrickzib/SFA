@@ -220,7 +220,7 @@ public class WEASELClassifier extends Classifier {
 
       optimize:
       for (final boolean mean : NORMALIZATION) {
-        int[] windowLengths = getWindowLengths(samples, bestNorm);
+        int[] windowLengths = getWindowLengths(samples, mean);
         WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
         final long[][][] words = model.createWords(samples);
 

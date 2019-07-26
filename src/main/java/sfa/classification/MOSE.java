@@ -108,7 +108,7 @@ public class MOSE extends WEASELClassifier {
 //
 //      optimize:
 //      for (final boolean mean : NORMALIZATION) {
-//        int[] windowLengths = getWindowLengths(samples, bestNorm);
+//        int[] windowLengths = getWindowLengths(samples, mean);
 //        //for (int s = minS; s <= maxS; s *= 2) {
 //          WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
 //          final int[][][] words = model.createWords(samples);
