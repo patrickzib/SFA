@@ -25,7 +25,7 @@ public class AprioriClassifierTest extends AbstractClassifierTest {
   @Override
   protected Classifier initClassifier() {
     WEASELCharacterClassifier.transformer = new AprioriTransformer(WEASELCharacterClassifier.maxS);
-    WEASELCharacterClassifier.transformerParameterList = new ArrayList<>(AprioriParameter.getParameterList(0.5, 0.5, 1));
+    WEASELCharacterClassifier.transformerParameterList = new ArrayList<>(AprioriParameter.getParameterList(2, 2, 0.5, 0.5, 1));
     return new WEASELCharacterClassifier();
   }
 

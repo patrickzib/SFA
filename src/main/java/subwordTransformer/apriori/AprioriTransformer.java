@@ -68,9 +68,11 @@ public class AprioriTransformer extends SubwordTransformer<AprioriParameter> {
   }
 
   private void fillDictionary(FrequentItemSets<CharacterItem> frequentItemSets) {
+    @SuppressWarnings("rawtypes")
+    Filter<ItemSet> filter = Filter.forItemSets().bySize(this.getParameter().getMinSize());
+    FrequentItemSets<CharacterItem> filteredFrequentItemSets = frequentItemSets.filter(filter);
     dictionary = new ArrayList<>();
-    int alphabetSize = this.getInputAlphabetSize();
-    for (ItemSet<CharacterItem> itemSet : frequentItemSets) {
+    for (ItemSet<CharacterItem> itemSet : filteredFrequentItemSets) {
       int patternLength = itemSet.last().getPosition() + 1;
       short[] pattern = new short[patternLength];
       Arrays.fill(pattern, this.getFillCharacter());
