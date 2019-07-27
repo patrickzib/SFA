@@ -80,6 +80,8 @@ test {
     events "passed", "skipped", "failed" , "standardOut", "standardError"
   }
   dependsOn 'cleanTest'
+  minHeapSize = "512m"
+  maxHeapSize = "4096m"
 }
 
 // Define the main class for the application
