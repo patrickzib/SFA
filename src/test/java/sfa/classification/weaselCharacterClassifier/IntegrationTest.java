@@ -1,4 +1,4 @@
-package sfa.classification;
+package sfa.classification.weaselCharacterClassifier;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -12,16 +12,22 @@ import org.junit.runners.JUnit4;
 
 import sfa.SFAWordsTest;
 import sfa.classification.Classifier.Score;
+import sfa.classification.WEASELCharacterClassifier;
+import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 import subwordTransformer.no.NoParameter;
 import subwordTransformer.no.NoTransformer;
 
 @RunWith(JUnit4.class)
-public class WEASELCharacterClassifierTest {
+public class IntegrationTest {
 
   private static String[] datasets = new String[] { "Coffee", "Beef", "CBF", "variable_length" };
 
+  /**
+   * Tests whether the WEASEL+NoTransformer classifier has the same results as the
+   * WEASEL classifier.
+   */
   @Test
   public void testTransformerIntegration() {
 
@@ -50,8 +56,8 @@ public class WEASELCharacterClassifierTest {
           WEASELClassifier w2 = new WEASELClassifier();
           Score scoreW2 = w2.eval(trainSamples, testSamples);
 
-          assertEquals("Training accuracy differs for dataset " + s + ".", scoreW2.getTrainingAccuracy(), scoreW1.getTrainingAccuracy(), 2.0 / trainSamples.length);
-          assertEquals("Testing accuracy differs for dataset " + s + ".", scoreW2.getTestingAccuracy(), scoreW1.getTestingAccuracy(), 2.0 / testSamples.length);
+          assertEquals("Training accuracy differs for dataset " + s + ".", scoreW2.getTrainingAccuracy(), scoreW1.getTrainingAccuracy());
+          assertEquals("Testing accuracy differs for dataset " + s + ".", scoreW2.getTestingAccuracy(), scoreW1.getTestingAccuracy());
 
           found = true;
           break;

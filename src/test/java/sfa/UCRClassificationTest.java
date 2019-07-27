@@ -11,7 +11,6 @@ import org.junit.runners.JUnit4;
 
 import sfa.classification.Classifier;
 import sfa.classification.WEASELCharacterClassifier;
-import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 import sfa.timeseries.TimeSeriesLoader;
 
@@ -19,8 +18,10 @@ import sfa.timeseries.TimeSeriesLoader;
 public class UCRClassificationTest {
 
   // The datasets to use
-  public static String[] datasets = new String[] { "Coffee", "Beef", "CBF", "ECG200", "FaceFour", "OliveOil", "GunPoint", "DiatomSizeReduction", "ECGFiveDays", "TwoLeadECG", "SonyAIBORobotSurface2",
-      "MoteStrain", "ItalyPowerDemand", "SonyAIBORobotSurface1", };
+  public static String[] datasets = new String[] { "OliveOil",// "Coffee", "Beef", "CBF", "ECG200", "FaceFour", "OliveOil", "GunPoint",
+                                                              // "DiatomSizeReduction", "ECGFiveDays", "TwoLeadECG", "SonyAIBORobotSurface2",
+                                                              // "MoteStrain", "ItalyPowerDemand", "SonyAIBORobotSurface1",
+  };
 
   @Test
   public void testUCRClassification() throws IOException {
@@ -35,7 +36,7 @@ public class UCRClassificationTest {
       File d = new File(dir.getAbsolutePath() + "/" + s);
       if (d.exists() && d.isDirectory()) {
         for (File train : d.listFiles()) {
-          if (train.getName().toUpperCase().endsWith("_TRAIN.TXT")) {
+          if (train.getName().toUpperCase().endsWith("TRAIN")) {
             File test = new File(train.getAbsolutePath().replaceFirst("TRAIN", "TEST"));
 
             if (!test.exists()) {
@@ -55,9 +56,9 @@ public class UCRClassificationTest {
             System.out.println(s + ";" + scoreW.toString());
 
             // The WEASEL-classifier
-            Classifier w1 = new WEASELClassifier();
-            Classifier.Score scoreW1 = w1.eval(trainSamples, testSamples);
-            System.out.println(s + ";" + scoreW1.toString());
+            // Classifier w1 = new WEASELClassifier();
+            // Classifier.Score scoreW1 = w1.eval(trainSamples, testSamples);
+            // System.out.println(s + ";" + scoreW1.toString());
 
 //            // The BOSS ensemble classifier
 //            Classifier boss = new BOSSEnsembleClassifier();
