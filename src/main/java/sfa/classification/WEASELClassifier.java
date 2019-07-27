@@ -209,7 +209,7 @@ public class WEASELClassifier extends Classifier {
       boolean bestNorm = false;
 
       optimize: for (final boolean mean : NORMALIZATION) {
-        int[] windowLengths = getWindowLengths(samples, bestNorm);
+        int[] windowLengths = getWindowLengths(samples, mean);
         WEASEL model = new WEASEL(maxF, maxS, windowLengths, mean, lowerBounding);
         final int[][][] words = model.createWords(samples);
 
@@ -254,6 +254,7 @@ public class WEASELClassifier extends Classifier {
       final boolean mean = bestNorm;
       final int ff = bestF;
       ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+
         @Override
         public void run(int id, AtomicInteger processed) {
           for (int w = 0; w < model.windowLengths.length; w++) {
@@ -286,6 +287,7 @@ public class WEASELClassifier extends Classifier {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
     modelForWindow.trainChiSquared(bopForWindow, chi);
+    // modelForWindow.trainAnova(bopForWindow, chi);
     return bopForWindow;
   }
 
@@ -323,7 +325,7 @@ public class WEASELClassifier extends Classifier {
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
-          features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
+          features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[] {});
