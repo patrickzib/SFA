@@ -16,7 +16,7 @@ public class BPEClassifierTest extends AbstractClassifierTest {
 
     dataSets.add(new DataSet("variable_length", 0.929, 0.964));
     dataSets.add(new DataSet("Coffee", 1.0, 1.0));
-    dataSets.add(new DataSet("Beef", 0.933, 0.9));
+    dataSets.add(new DataSet("Beef", 0.933, 0.833));
     dataSets.add(new DataSet("CBF", 0.967, 0.996));
 
     return dataSets;

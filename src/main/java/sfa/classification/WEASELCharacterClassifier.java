@@ -221,7 +221,7 @@ public class WEASELCharacterClassifier extends Classifier {
 
       // optimize:
       for (final boolean mean : NORMALIZATION) {
-        int[] windowLengths = getWindowLengths(samples, mean); // TODO mean -> bestNorm??
+        int[] windowLengths = getWindowLengths(samples, mean);
         WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, mean, lowerBounding, transformer);
         short[][][][] words = model.createWords(samples);
         model.setTransformerTrainingWords(words);
@@ -308,6 +308,7 @@ public class WEASELCharacterClassifier extends Classifier {
     WEASELCharacter modelForWindow = new WEASELCharacter(f, maxS, windowLengths, mean, lowerBounding, transformer.getOutputAlphabetSize());
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
     modelForWindow.trainChiSquared(bopForWindow, chi);
+    // modelForWindow.trainAnova(bopForWindow, chi);
 
     return bopForWindow;
   }
@@ -345,7 +346,7 @@ public class WEASELCharacterClassifier extends Classifier {
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
-          features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
+          features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[] {});

@@ -2,14 +2,16 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import com.carrotsearch.hppc.IntIntHashMap;
-import com.carrotsearch.hppc.LongIntHashMap;
-import com.carrotsearch.hppc.LongLongHashMap;
-import sfa.timeseries.TimeSeries;
-import sun.jvm.hotspot.debugger.LongHashMap;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+
+import com.carrotsearch.hppc.LongLongHashMap;
+
+import sfa.timeseries.TimeSeries;
 
 /**
  * SFA using the ANOVA F-statistic to determine the best Fourier coefficients
@@ -56,14 +58,14 @@ public class SFASupervised extends SFA {
   }
 
   /**
-   * Trains the SFA representation based on a set of samples. At the end of this call,
-   * the quantization bins are set.
+   * Trains the SFA representation based on a set of samples. At the end of this
+   * call, the quantization bins are set.
    *
    * @param samples    the samples to use for training.
    * @param wordLength Length of the resulting SFA words. Each character of a word
-   *                   corresponds to one Fourier value. As opposed to the normal SFA
-   *                   boss, here characters correspond to those Fourier values that are
-   *                   most distinctive between class labels.
+   *                   corresponds to one Fourier value. As opposed to the normal
+   *                   SFA boss, here characters correspond to those Fourier
+   *                   values that are most distinctive between class labels.
    * @param symbols    the alphabet size, i.e. number of quantization bins to use
    * @param normMean   true: sets mean to 0 for each time series.
    * @return the Fourier transformation of the time series.
@@ -98,15 +100,13 @@ public class SFASupervised extends SFA {
   }
 
   /**
-   * calculate ANOVA F-stat
-   * compare : https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L121
+   * calculate ANOVA F-stat compare :
+   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L121
    *
    * @param transformedSignal
    * @return
    */
-  public static Indices<Double>[] calcBestCoefficients(
-      TimeSeries[] samples,
-      double[][] transformedSignal) {
+  public static Indices<Double>[] calcBestCoefficients(TimeSeries[] samples, double[][] transformedSignal) {
     HashMap<Double, ArrayList<double[]>> classes = new HashMap<>();
     for (int i = 0; i < samples.length; i++) {
       ArrayList<double[]> allTs = classes.get(samples[i].getLabel());
@@ -133,13 +133,13 @@ public class SFASupervised extends SFA {
       }
     }
     Collections.sort(best);
-    return best.toArray(new Indices[]{});
+    return best.toArray(new Indices[] {});
   }
 
   /**
-   * The one-way ANOVA tests the null hypothesis that 2 or more groups have
-   * the same population mean. The test is applied to samples from two or
-   * more groups, possibly with differing sizes.
+   * The one-way ANOVA tests the null hypothesis that 2 or more groups have the
+   * same population mean. The test is applied to samples from two or more groups,
+   * possibly with differing sizes.
    *
    * @param length
    * @param classes
@@ -147,11 +147,7 @@ public class SFASupervised extends SFA {
    * @param nClasses
    * @return
    */
-  public static double[] getFoneway(
-      int length,
-      Map<Double, ArrayList<double[]>> classes,
-      double nSamples,
-      double nClasses) {
+  public static double[] getFoneway(int length, Map<Double, ArrayList<double[]>> classes, double nSamples, double nClasses) {
     double[] ss_alldata = new double[length];
     HashMap<Double, double[]> sums_args = new HashMap<>();
 
@@ -191,8 +187,8 @@ public class SFASupervised extends SFA {
       sstot[i] = ss_alldata[i] - square_of_sums_alldata[i] / nSamples;
     }
 
-    double[] ssbn = new double[ss_alldata.length];    // sum of squares between
-    double[] sswn = new double[ss_alldata.length];    // sum of squares within
+    double[] ssbn = new double[ss_alldata.length]; // sum of squares between
+    double[] sswn = new double[ss_alldata.length]; // sum of squares within
 
     for (Entry<Double, double[]> sums : square_of_sums_args.entrySet()) {
       double n_samples_per_class = classes.get(sums.getKey()).size();
@@ -205,11 +201,11 @@ public class SFASupervised extends SFA {
       ssbn[i] -= square_of_sums_alldata[i] / nSamples;
     }
 
-    double dfbn = nClasses - 1;                     // degrees of freedom between
-    double dfwn = nSamples - nClasses;              // degrees of freedom within
-    double[] msb = new double[ss_alldata.length];   // variance (mean square) between classes
-    double[] msw = new double[ss_alldata.length];   // variance (mean square) within samples
-    double[] f = new double[ss_alldata.length];     // f-ratio
+    double dfbn = nClasses - 1; // degrees of freedom between
+    double dfwn = nSamples - nClasses; // degrees of freedom within
+    double[] msb = new double[ss_alldata.length]; // variance (mean square) between classes
+    double[] msw = new double[ss_alldata.length]; // variance (mean square) within samples
+    double[] f = new double[ss_alldata.length]; // f-ratio
 
     for (int i = 0; i < sswn.length; i++) {
       sswn[i] = sstot[i] - ssbn[i];
@@ -221,9 +217,9 @@ public class SFASupervised extends SFA {
   }
 
   /**
-   * The one-way ANOVA tests the null hypothesis that 2 or more groups have
-   * the same population mean. The test is applied to samples from two or
-   * more groups, possibly with differing sizes.
+   * The one-way ANOVA tests the null hypothesis that 2 or more groups have the
+   * same population mean. The test is applied to samples from two or more groups,
+   * possibly with differing sizes.
    *
    * @param length
    * @param classes
@@ -231,11 +227,7 @@ public class SFASupervised extends SFA {
    * @param nClasses
    * @return
    */
-  public static double[] getFonewaySparse(
-      int length,
-      Map<Double, List<LongLongHashMap>> classes,
-      double nSamples,
-      double nClasses) {
+  public static double[] getFonewaySparse(int length, Map<Double, List<LongLongHashMap>> classes, double nSamples, double nClasses) {
     double[] ss_alldata = new double[length];
     HashMap<Double, double[]> sums_args = new HashMap<>();
 
@@ -275,8 +267,8 @@ public class SFASupervised extends SFA {
       sstot[i] = ss_alldata[i] - square_of_sums_alldata[i] / nSamples;
     }
 
-    double[] ssbn = new double[ss_alldata.length];    // sum of squares between
-    double[] sswn = new double[ss_alldata.length];    // sum of squares within
+    double[] ssbn = new double[ss_alldata.length]; // sum of squares between
+    double[] sswn = new double[ss_alldata.length]; // sum of squares within
 
     for (Entry<Double, double[]> sums : square_of_sums_args.entrySet()) {
       double n_samples_per_class = classes.get(sums.getKey()).size();
@@ -289,11 +281,11 @@ public class SFASupervised extends SFA {
       ssbn[i] -= square_of_sums_alldata[i] / nSamples;
     }
 
-    double dfbn = nClasses - 1;                     // degrees of freedom between
-    double dfwn = nSamples - nClasses;              // degrees of freedom within
-    double[] msb = new double[ss_alldata.length];   // variance (mean square) between classes
-    double[] msw = new double[ss_alldata.length];   // variance (mean square) within samples
-    double[] f = new double[ss_alldata.length];     // f-ratio
+    double dfbn = nClasses - 1; // degrees of freedom between
+    double dfwn = nSamples - nClasses; // degrees of freedom within
+    double[] msb = new double[ss_alldata.length]; // variance (mean square) between classes
+    double[] msw = new double[ss_alldata.length]; // variance (mean square) within samples
+    double[] f = new double[ss_alldata.length]; // f-ratio
 
     for (int i = 0; i < sswn.length; i++) {
       sswn[i] = sstot[i] - ssbn[i];
@@ -313,6 +305,7 @@ public class SFASupervised extends SFA {
       this.value = value;
     }
 
+    @Override
     public int compareTo(Indices<E> o) {
       return o.value.compareTo(this.value); // descending sort!
     }
