@@ -5,17 +5,16 @@ package sfa.transformation;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
-import com.carrotsearch.hppc.cursors.LongLongCursor;
 import org.apache.commons.math3.distribution.FDistribution;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.commons.math3.stat.inference.OneWayAnova;
 import sfa.classification.Classifier.Words;
 import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

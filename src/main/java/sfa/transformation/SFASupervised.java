@@ -2,11 +2,8 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import com.carrotsearch.hppc.IntIntHashMap;
-import com.carrotsearch.hppc.LongIntHashMap;
 import com.carrotsearch.hppc.LongLongHashMap;
 import sfa.timeseries.TimeSeries;
-import sun.jvm.hotspot.debugger.LongHashMap;
 
 import java.util.*;
 import java.util.Map.Entry;
