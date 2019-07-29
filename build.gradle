@@ -31,7 +31,7 @@ apply plugin: 'application'
 apply plugin: 'maven-publish'
 
 group = 'sfa'
-version = '0.1'
+version = '0.2'
 // In this section you declare where to find the dependencies of your project
 repositories {
     // Use jcenter for resolving your dependencies.
@@ -75,6 +75,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+
 test {
   testLogging {
     events "passed", "skipped", "failed" , "standardOut", "standardError"
@@ -84,6 +85,18 @@ test {
   maxHeapSize = "4096m"
 }
 
-// Define the main class for the application
-mainClassName = 'src/sfa/test/UCRClassification'
 
+task fatJar(type: Jar) {
+    // dependsOn test
+    manifest {attributes 'Main-Class': "sfa.UCRClassificationTest"}
+    baseName = 'sfa_fat'    
+    from { 
+        configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    from sourceSets.test.output
+    with jar    
+}
+
+
+// Define the main class for the application
+mainClassName = 'src/sfa/test/UCRClassificationTest'

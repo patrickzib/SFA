@@ -2,33 +2,26 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
+import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.LongFloatCursor;
+import com.carrotsearch.hppc.cursors.LongIntCursor;
+import org.apache.commons.math3.distribution.FDistribution;
+import sfa.classification.Classifier.Words;
+import sfa.classification.ParallelFor;
+import sfa.classification.WEASELClassifier;
+import sfa.timeseries.TimeSeries;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.math3.distribution.FDistribution;
-
-import com.carrotsearch.hppc.IntLongHashMap;
-import com.carrotsearch.hppc.LongFloatHashMap;
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongIntHashMap;
-import com.carrotsearch.hppc.LongLongHashMap;
-import com.carrotsearch.hppc.LongObjectHashMap;
-import com.carrotsearch.hppc.cursors.LongFloatCursor;
-import com.carrotsearch.hppc.cursors.LongIntCursor;
-
-import sfa.classification.Classifier.Words;
-import sfa.classification.ParallelFor;
-import sfa.classification.WEASELClassifier;
-import sfa.timeseries.TimeSeries;
-
 /**
  * The WEASEL-Model as published in
  * <p>
- * Schäfer, P., Leser, U.: Fast and Accurate Time Series Classification with
- * WEASEL. CIKM 2017
+ * Schäfer, P., Leser, U.: Fast and Accurate Time Series
+ * Classification with WEASEL. CIKM 2017
  */
 public class WEASEL {
 
@@ -51,25 +44,24 @@ public class WEASEL {
       BLOCKS = runtime.availableProcessors();
     }
 
-    // BLOCKS = 1; // for testing purposes
+    //    BLOCKS = 1; // for testing purposes
   }
-
-  public WEASEL() {
-  }
+  public WEASEL(){}
 
   /**
    * Create a WEASEL model.
    *
    * @param maxF          Length of the SFA words
    * @param maxS          alphabet size
-   * @param windowLengths the set of window lengths to use for extracting SFA
-   *                      words from time series.
+   * @param windowLengths the set of window lengths to use for extracting SFA words from
+   *                      time series.
    * @param normMean      set to true, if mean should be set to 0 for a window
-   * @param lowerBounding set to true, if the Fourier transform should be normed
-   *                      (typically used to lower bound / mimic Euclidean
-   *                      distance).
+   * @param lowerBounding set to true, if the Fourier transform should be normed (typically
+   *                      used to lower bound / mimic Euclidean distance).
    */
-  public WEASEL(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding) {
+  public WEASEL(
+      int maxF, int maxS,
+      int[] windowLengths, boolean normMean, boolean lowerBounding) {
     this.maxF = maxF;
     this.alphabetSize = maxS;
     this.windowLengths = windowLengths;
@@ -125,7 +117,8 @@ public class WEASEL {
     // SFA quantization
     if (this.signature[index] == null) {
       this.signature[index] = new SFASupervised();
-      this.signature[index].fitWindowing(samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
+      this.signature[index].fitWindowing(
+          samples, this.windowLengths[index], this.maxF, this.alphabetSize, this.normMean, this.lowerBounding);
     }
 
     // create words
@@ -134,7 +127,7 @@ public class WEASEL {
       if (samples[i].getLength() >= this.windowLengths[index]) {
         words[i] = this.signature[index].transformWindowingInt(samples[i], this.maxF);
       } else {
-        words[i] = new int[] {};
+        words[i] = new int[]{};
       }
     }
 
@@ -144,13 +137,16 @@ public class WEASEL {
   /**
    * Create words and bi-grams for all window lengths
    */
-  public BagOfBigrams[] createBagOfPatterns(final int[][] wordsForWindowLength, final TimeSeries[] samples, final int w, // index of used windowSize
+  public BagOfBigrams[] createBagOfPatterns(
+      final int[][] wordsForWindowLength,
+      final TimeSeries[] samples,
+      final int w,    // index of used windowSize
       final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH)) + 1;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -159,7 +155,7 @@ public class WEASEL {
 
       // create subsequences
       for (int offset = 0; offset < wordsForWindowLength[j].length; offset++) {
-        long word = (wordsForWindowLength[j][offset] & mask) << highestBit | w;
+        long word = (wordsForWindowLength[j][offset] & mask) << highestBit | (long) w;
         bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
         // add 2 grams
@@ -176,15 +172,19 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
+
   /**
    * Create words and bi-grams for all window lengths
    */
-  public BagOfBigrams[] createBagOfPatterns(final int[][][] words, final TimeSeries[] samples, final int wordLength) {
+  public BagOfBigrams[] createBagOfPatterns(
+      final int[][][] words,
+      final TimeSeries[] samples,
+      final int wordLength) {
     BagOfBigrams[] bagOfPatterns = new BagOfBigrams[samples.length];
 
     final byte usedBits = (byte) Words.binlog(this.alphabetSize);
     final long mask = (1L << (usedBits * wordLength)) - 1L;
-    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH)) + 1;
+    int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
     // iterate all samples
     // and create a bag of pattern
@@ -194,7 +194,7 @@ public class WEASEL {
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
         for (int offset = 0; offset < words[w][j].length; offset++) {
-          long word = (words[w][j][offset] & mask) << highestBit | w;
+          long word = (words[w][j][offset] & mask) << highestBit | (long) w;
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
           // add 2 grams
@@ -234,7 +234,7 @@ public class WEASEL {
     }
 
     // dense double array
-    highestIndex = highestIndex + 1;
+    highestIndex = highestIndex+1;
 
     double nSamples = bob.length;
     double nClasses = classes.keySet().size();
@@ -250,13 +250,14 @@ public class WEASEL {
     @SuppressWarnings("unchecked")
     List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
     for (int i = 0; i < f.length; i++) {
-      if (!Double.isNaN(f[i]) && f[i] > 0.5) {
+      if (!Double.isNaN(f[i]) && f[i]>0.5) {
         best.add(new SFASupervised.Indices<>(i, f[i]));
       }
     }
 
-    // Collections.sort(best);
-    // best = best.subList(0, (int) Math.min(100, best.size()));
+    //Collections.sort(best);
+    //best = best.subList(0, (int) Math.min(100, best.size()));
+
 
     LongHashSet bestWords = new LongHashSet();
     for (SFASupervised.Indices<Double> index : best) {
@@ -273,10 +274,11 @@ public class WEASEL {
 
   }
 
-  /**
-   * Implementation based on:
-   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
-   */
+
+    /**
+     * Implementation based on:
+     * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
+     */
   public void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
@@ -325,7 +327,8 @@ public class WEASEL {
         double chi = obs.get(feature.key) - expected;
         double newChi = chi * chi / expected;
 
-        if (newChi > 0 && newChi >= chi_limit && !chiSquare.contains(feature.key)) {
+        if (newChi > 0 && newChi >= chi_limit
+            && !chiSquare.contains(feature.key)) {
           chiSquare.add(feature.key);
           pvalues.add(new PValueKey(newChi, feature.key));
         }
