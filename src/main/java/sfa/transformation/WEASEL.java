@@ -214,18 +214,29 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
-  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
+  static class Indices implements Comparable<Indices> {
+    long index;
+    double value;
+    public Indices(long index, double value) {
+      this.index = index;
+      this.value = value;
+    }
+    public int compareTo(Indices o) {
+      return Double.compare(o.value, this.value); // descending sort!
+    }
+  }
 
-    Map<Double, List<IntLongHashMap>> classes = new HashMap<>();
+  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
+    Map<Double, List<LongLongHashMap>> classes = new HashMap<>();
     for (int j = 0; j < bob.length; j++) {
-      List<IntLongHashMap> allTs = classes.get(bob[j].label);
+      List<LongLongHashMap> allTs = classes.get(bob[j].label);
       if (allTs == null) {
         allTs = new ArrayList<>();
         classes.put(bob[j].label, allTs);
       }
-      IntLongHashMap keys = new IntLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
+      LongLongHashMap keys = new LongLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
       for (LongIntCursor word : bob[j].bob) {
-        keys.put((int) word.key, word.value);
+        keys.put(word.key, word.value);
       }
       allTs.add(keys);
     }
@@ -233,28 +244,25 @@ public class WEASEL {
     double nSamples = bob.length;
     double nClasses = classes.keySet().size();
 
-    IntDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
+    LongDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
 
     final FDistribution fdist = new FDistribution(null, nClasses-1, nSamples - nClasses);
-    IntDoubleHashMap f = new IntDoubleHashMap(fstat.size()+1);
-    for (IntDoubleCursor cursor : fstat) {
+    LongDoubleHashMap f = new LongDoubleHashMap(fstat.size()+1);
+    for (LongDoubleCursor cursor : fstat) {
       f.put(cursor.key, 1.0 - fdist.cumulativeProbability(cursor.value));
     }
 
     // sort by largest f-value
     @SuppressWarnings("unchecked")
-    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.size());
-    for (IntDoubleCursor cursor : f) {
+    List<Indices> best = new ArrayList<>(f.size());
+    for (LongDoubleCursor cursor : f) {
       if (!Double.isNaN(cursor.value) && cursor.value>0.5) {
-        best.add(new SFASupervised.Indices<>(cursor.key, cursor.value));
+        best.add(new Indices(cursor.key, cursor.value));
       }
     }
 
-    //Collections.sort(best);
-    //best = best.subList(0, (int) Math.min(100, best.size()));
-
     LongHashSet bestWords = new LongHashSet();
-    for (SFASupervised.Indices<Double> index : best) {
+    for (Indices index : best) {
       bestWords.add(index.index);
     }
 
@@ -265,9 +273,6 @@ public class WEASEL {
         }
       }
     }
-
-    dict.reset();
-
   }
 
 

@@ -228,66 +228,66 @@ public class SFASupervised extends SFA {
    * @param nClasses
    * @return
    */
-  public static IntDoubleHashMap getFonewaySparse(
-      Map<Double, List<IntLongHashMap>> classes,
+  public static LongDoubleHashMap getFonewaySparse(
+      Map<Double, List<LongLongHashMap>> classes,
       double nSamples,
       double nClasses) {
 
     //double[] ss_alldata = new double[length];
-    IntLongHashMap ss_alldata = new IntLongHashMap();
-    HashMap<Double, IntLongHashMap> sums_args = new HashMap<>();
+    LongLongHashMap ss_alldata = new LongLongHashMap();
+    HashMap<Double, LongLongHashMap> sums_args = new HashMap<>();
 
-    for (Entry<Double, List<IntLongHashMap>> allTs : classes.entrySet()) {
-      IntLongHashMap sums = new IntLongHashMap();
+    for (Entry<Double, List<LongLongHashMap>> allTs : classes.entrySet()) {
+      LongLongHashMap sums = new LongLongHashMap();
       sums_args.put(allTs.getKey(), sums);
 
-      for (IntLongHashMap ts : allTs.getValue()) {
+      for (LongLongHashMap ts : allTs.getValue()) {
         long sum = 0;
-        for (IntLongCursor cursor : ts) {
+        for (LongLongCursor cursor : ts) {
           long value = cursor.value; // count
-          int key = cursor.key;
+          long key = cursor.key;
           ss_alldata.putOrAdd(key,  value * value, value * value);
           sums.putOrAdd(key,  value, value);
         }
       }
     }
 
-    IntLongHashMap square_of_sums_alldata = new IntLongHashMap();
-    Map<Double, IntLongHashMap> square_of_sums_args = new HashMap<>();
-    for (Entry<Double, IntLongHashMap> sums : sums_args.entrySet()) {
-      for (IntLongCursor cursor : sums.getValue()) {
+    LongLongHashMap square_of_sums_alldata = new LongLongHashMap();
+    Map<Double, LongLongHashMap> square_of_sums_args = new HashMap<>();
+    for (Entry<Double, LongLongHashMap> sums : sums_args.entrySet()) {
+      for (LongLongCursor cursor : sums.getValue()) {
         square_of_sums_alldata.putOrAdd(cursor.key, cursor.value, cursor.value);
       }
 
-      IntLongHashMap squares = new IntLongHashMap();
+      LongLongHashMap squares = new LongLongHashMap();
       square_of_sums_args.put(sums.getKey(), squares);
 
-      for (IntLongCursor cursor : sums.getValue()) {
+      for (LongLongCursor cursor : sums.getValue()) {
         squares.put(cursor.key, cursor.value*cursor.value);
       }
     }
 
-    for (IntLongCursor cursor : square_of_sums_alldata) {
+    for (LongLongCursor cursor : square_of_sums_alldata) {
       square_of_sums_alldata.put(cursor.key, cursor.value*cursor.value);
     }
 
-    IntDoubleHashMap sstot = new IntDoubleHashMap(ss_alldata.size());
-    for (IntLongCursor cursor : ss_alldata) {
+    LongDoubleHashMap sstot = new LongDoubleHashMap(ss_alldata.size());
+    for (LongLongCursor cursor : ss_alldata) {
       sstot.put(cursor.key, cursor.value - square_of_sums_alldata.get(cursor.key) / nSamples);
     }
 
-    IntDoubleHashMap ssbn = new IntDoubleHashMap(ss_alldata.size());    // sum of squares between
-    IntDoubleHashMap sswn = new IntDoubleHashMap(ss_alldata.size());    // sum of squares within
+    LongDoubleHashMap ssbn = new LongDoubleHashMap(ss_alldata.size());    // sum of squares between
+    LongDoubleHashMap sswn = new LongDoubleHashMap(ss_alldata.size());    // sum of squares within
 
-    for (Entry<Double, IntLongHashMap> sums : square_of_sums_args.entrySet()) {
+    for (Entry<Double, LongLongHashMap> sums : square_of_sums_args.entrySet()) {
       double n_samples_per_class = classes.get(sums.getKey()).size();
-      for (IntLongCursor cursor : sums.getValue()) {
+      for (LongLongCursor cursor : sums.getValue()) {
         double value = cursor.value / n_samples_per_class;
         ssbn.putOrAdd(cursor.key, value, value);
       }
     }
 
-    for (IntLongCursor cursor : square_of_sums_alldata) {
+    for (LongLongCursor cursor : square_of_sums_alldata) {
       double value = - cursor.value / nSamples;
       ssbn.putOrAdd(cursor.key, value, value);
     }
@@ -295,23 +295,23 @@ public class SFASupervised extends SFA {
     double dfbn = nClasses - 1;                     // degrees of freedom between
     double dfwn = nSamples - nClasses;              // degrees of freedom within
 
-    IntDoubleHashMap msb = new IntDoubleHashMap(ss_alldata.size());   // variance (mean square) between classes
-    IntDoubleHashMap msw = new IntDoubleHashMap(ss_alldata.size());   // variance (mean square) within samples
-    IntDoubleHashMap f = new IntDoubleHashMap(ss_alldata.size());     // f-ratio
+    LongDoubleHashMap msb = new LongDoubleHashMap(ss_alldata.size());   // variance (mean square) between classes
+    LongDoubleHashMap msw = new LongDoubleHashMap(ss_alldata.size());   // variance (mean square) within samples
+    LongDoubleHashMap f = new LongDoubleHashMap(ss_alldata.size());     // f-ratio
 
-    for (IntDoubleCursor cursor : sstot) {
+    for (LongDoubleCursor cursor : sstot) {
       sswn.put(cursor.key, cursor.value - ssbn.get(cursor.key));
     }
 
-    for (IntDoubleCursor cursor : ssbn) {
+    for (LongDoubleCursor cursor : ssbn) {
       msb.put(cursor.key, cursor.value / dfbn);
     }
 
-    for (IntDoubleCursor cursor : sswn) {
+    for (LongDoubleCursor cursor : sswn) {
       msw.put(cursor.key, cursor.value / dfwn);
     }
 
-    for (IntDoubleCursor cursor : msw) {
+    for (LongDoubleCursor cursor : msw) {
       double value = cursor.value != 0 ? msb.get(cursor.key) / cursor.value : 1.0;
       f.put(cursor.key, value);
     }
