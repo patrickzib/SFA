@@ -2,7 +2,8 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
-import com.carrotsearch.hppc.LongLongHashMap;
+import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.*;
 import sfa.timeseries.TimeSeries;
 
 import java.util.*;
@@ -222,82 +223,99 @@ public class SFASupervised extends SFA {
    * the same population mean. The test is applied to samples from two or
    * more groups, possibly with differing sizes.
    *
-   * @param length
    * @param classes
    * @param nSamples
    * @param nClasses
    * @return
    */
-  public static double[] getFonewaySparse(
-      int length,
-      Map<Double, List<LongLongHashMap>> classes,
+  public static IntDoubleHashMap getFonewaySparse(
+      Map<Double, List<IntLongHashMap>> classes,
       double nSamples,
       double nClasses) {
-    double[] ss_alldata = new double[length];
-    HashMap<Double, double[]> sums_args = new HashMap<>();
 
-    for (Entry<Double, List<LongLongHashMap>> allTs : classes.entrySet()) {
+    //double[] ss_alldata = new double[length];
+    IntLongHashMap ss_alldata = new IntLongHashMap();
+    HashMap<Double, IntLongHashMap> sums_args = new HashMap<>();
 
-      double[] sums = new double[ss_alldata.length];
+    for (Entry<Double, List<IntLongHashMap>> allTs : classes.entrySet()) {
+      IntLongHashMap sums = new IntLongHashMap();
       sums_args.put(allTs.getKey(), sums);
 
-      for (LongLongHashMap ts : allTs.getValue()) {
-        for (int i = 0; i < ts.size(); i++) {
-          ss_alldata[i] += ts.get(i) * ts.get(i);
-          sums[i] += ts.get(i);
+      for (IntLongHashMap ts : allTs.getValue()) {
+        long sum = 0;
+        for (IntLongCursor cursor : ts) {
+          long value = cursor.value; // count
+          int key = cursor.key;
+          ss_alldata.putOrAdd(key,  value * value, value * value);
+          sums.putOrAdd(key,  value, value);
         }
       }
     }
 
-    double[] square_of_sums_alldata = new double[ss_alldata.length];
-    Map<Double, double[]> square_of_sums_args = new HashMap<>();
-    for (Entry<Double, double[]> sums : sums_args.entrySet()) {
-      for (int i = 0; i < sums.getValue().length; i++) {
-        square_of_sums_alldata[i] += sums.getValue()[i];
+    IntLongHashMap square_of_sums_alldata = new IntLongHashMap();
+    Map<Double, IntLongHashMap> square_of_sums_args = new HashMap<>();
+    for (Entry<Double, IntLongHashMap> sums : sums_args.entrySet()) {
+      for (IntLongCursor cursor : sums.getValue()) {
+        square_of_sums_alldata.putOrAdd(cursor.key, cursor.value, cursor.value);
       }
 
-      double[] squares = new double[sums.getValue().length];
+      IntLongHashMap squares = new IntLongHashMap();
       square_of_sums_args.put(sums.getKey(), squares);
-      for (int i = 0; i < sums.getValue().length; i++) {
-        squares[i] += sums.getValue()[i] * sums.getValue()[i];
+
+      for (IntLongCursor cursor : sums.getValue()) {
+        squares.put(cursor.key, cursor.value*cursor.value);
       }
     }
 
-    for (int i = 0; i < square_of_sums_alldata.length; i++) {
-      square_of_sums_alldata[i] *= square_of_sums_alldata[i];
+    for (IntLongCursor cursor : square_of_sums_alldata) {
+      square_of_sums_alldata.put(cursor.key, cursor.value*cursor.value);
     }
 
-    double[] sstot = new double[ss_alldata.length];
-    for (int i = 0; i < sstot.length; i++) {
-      sstot[i] = ss_alldata[i] - square_of_sums_alldata[i] / nSamples;
+    IntDoubleHashMap sstot = new IntDoubleHashMap(ss_alldata.size());
+    for (IntLongCursor cursor : ss_alldata) {
+      sstot.put(cursor.key, cursor.value - square_of_sums_alldata.get(cursor.key) / nSamples);
     }
 
-    double[] ssbn = new double[ss_alldata.length];    // sum of squares between
-    double[] sswn = new double[ss_alldata.length];    // sum of squares within
+    IntDoubleHashMap ssbn = new IntDoubleHashMap(ss_alldata.size());    // sum of squares between
+    IntDoubleHashMap sswn = new IntDoubleHashMap(ss_alldata.size());    // sum of squares within
 
-    for (Entry<Double, double[]> sums : square_of_sums_args.entrySet()) {
+    for (Entry<Double, IntLongHashMap> sums : square_of_sums_args.entrySet()) {
       double n_samples_per_class = classes.get(sums.getKey()).size();
-      for (int i = 0; i < sums.getValue().length; i++) {
-        ssbn[i] += sums.getValue()[i] / n_samples_per_class;
+      for (IntLongCursor cursor : sums.getValue()) {
+        double value = cursor.value / n_samples_per_class;
+        ssbn.putOrAdd(cursor.key, value, value);
       }
     }
 
-    for (int i = 0; i < square_of_sums_alldata.length; i++) {
-      ssbn[i] -= square_of_sums_alldata[i] / nSamples;
+    for (IntLongCursor cursor : square_of_sums_alldata) {
+      double value = - cursor.value / nSamples;
+      ssbn.putOrAdd(cursor.key, value, value);
     }
 
     double dfbn = nClasses - 1;                     // degrees of freedom between
     double dfwn = nSamples - nClasses;              // degrees of freedom within
-    double[] msb = new double[ss_alldata.length];   // variance (mean square) between classes
-    double[] msw = new double[ss_alldata.length];   // variance (mean square) within samples
-    double[] f = new double[ss_alldata.length];     // f-ratio
 
-    for (int i = 0; i < sswn.length; i++) {
-      sswn[i] = sstot[i] - ssbn[i];
-      msb[i] = ssbn[i] / dfbn;
-      msw[i] = sswn[i] / dfwn;
-      f[i] = msw[i] != 0 ? msb[i] / msw[i] : 1.0;
+    IntDoubleHashMap msb = new IntDoubleHashMap(ss_alldata.size());   // variance (mean square) between classes
+    IntDoubleHashMap msw = new IntDoubleHashMap(ss_alldata.size());   // variance (mean square) within samples
+    IntDoubleHashMap f = new IntDoubleHashMap(ss_alldata.size());     // f-ratio
+
+    for (IntDoubleCursor cursor : sstot) {
+      sswn.put(cursor.key, cursor.value - ssbn.get(cursor.key));
     }
+
+    for (IntDoubleCursor cursor : ssbn) {
+      msb.put(cursor.key, cursor.value / dfbn);
+    }
+
+    for (IntDoubleCursor cursor : sswn) {
+      msw.put(cursor.key, cursor.value / dfwn);
+    }
+
+    for (IntDoubleCursor cursor : msw) {
+      double value = cursor.value != 0 ? msb.get(cursor.key) / cursor.value : 1.0;
+      f.put(cursor.key, value);
+    }
+
     return f;
   }
 

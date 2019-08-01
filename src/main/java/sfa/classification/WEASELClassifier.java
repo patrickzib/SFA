@@ -312,8 +312,8 @@ public class WEASELClassifier extends Classifier {
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
-    modelForWindow.trainChiSquared(bopForWindow, chi);
-    //modelForWindow.trainAnova(bopForWindow, chi);
+    //modelForWindow.trainChiSquared(bopForWindow, chi);
+    modelForWindow.trainAnova(bopForWindow, chi);
     return bopForWindow;
   }
 

@@ -3,6 +3,8 @@
 package sfa.transformation;
 
 import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.IntDoubleCursor;
+import com.carrotsearch.hppc.cursors.LongDoubleCursor;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
 import org.apache.commons.math3.distribution.FDistribution;
@@ -214,54 +216,46 @@ public class WEASEL {
 
   public void trainAnova(final BagOfBigrams[] bob, double p_value) {
 
-    int highestIndex = 0;
-    IntLongHashMap reverseMap = new IntLongHashMap();
-    Map<Double, List<LongLongHashMap>> classes = new HashMap<>();
+    Map<Double, List<IntLongHashMap>> classes = new HashMap<>();
     for (int j = 0; j < bob.length; j++) {
-      List<LongLongHashMap> allTs = classes.get(bob[j].label);
+      List<IntLongHashMap> allTs = classes.get(bob[j].label);
       if (allTs == null) {
         allTs = new ArrayList<>();
         classes.put(bob[j].label, allTs);
       }
-      LongLongHashMap keys = new LongLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
+      IntLongHashMap keys = new IntLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
       for (LongIntCursor word : bob[j].bob) {
-        int index = dict.getWordIndex(word.key);
-        reverseMap.put(index, word.key);
-        keys.put(index, word.value);
-        highestIndex = Math.max(index, highestIndex);
+        keys.put((int) word.key, word.value);
       }
       allTs.add(keys);
     }
 
-    // dense double array
-    highestIndex = highestIndex+1;
-
     double nSamples = bob.length;
     double nClasses = classes.keySet().size();
 
-    double[] f = SFASupervised.getFonewaySparse(highestIndex, classes, nSamples, nClasses);
+    IntDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
 
-    final FDistribution fdist = new FDistribution(null, nClasses - 1, nSamples - nClasses);
-    for (int i = 0; i < f.length; i++) {
-      f[i] = 1.0 - fdist.cumulativeProbability(f[i]);
+    final FDistribution fdist = new FDistribution(null, nClasses-1, nSamples - nClasses);
+    IntDoubleHashMap f = new IntDoubleHashMap(fstat.size()+1);
+    for (IntDoubleCursor cursor : fstat) {
+      f.put(cursor.key, 1.0 - fdist.cumulativeProbability(cursor.value));
     }
 
     // sort by largest f-value
     @SuppressWarnings("unchecked")
-    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
-    for (int i = 0; i < f.length; i++) {
-      if (!Double.isNaN(f[i]) && f[i]>0.5) {
-        best.add(new SFASupervised.Indices<>(i, f[i]));
+    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.size());
+    for (IntDoubleCursor cursor : f) {
+      if (!Double.isNaN(cursor.value) && cursor.value>0.5) {
+        best.add(new SFASupervised.Indices<>(cursor.key, cursor.value));
       }
     }
 
     //Collections.sort(best);
     //best = best.subList(0, (int) Math.min(100, best.size()));
 
-
     LongHashSet bestWords = new LongHashSet();
     for (SFASupervised.Indices<Double> index : best) {
-      bestWords.add(reverseMap.get(index.value.intValue()));
+      bestWords.add(index.index);
     }
 
     for (int j = 0; j < bob.length; j++) {
@@ -271,6 +265,8 @@ public class WEASEL {
         }
       }
     }
+
+    dict.reset();
 
   }
 
