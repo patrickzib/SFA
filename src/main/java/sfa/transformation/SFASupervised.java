@@ -229,7 +229,7 @@ public class SFASupervised extends SFA {
    * @return
    */
   public static LongDoubleHashMap getFonewaySparse(
-      Map<Double, List<LongLongHashMap>> classes,
+      Map<Double, List<LongIntHashMap>> classes,
       double nSamples,
       double nClasses) {
 
@@ -237,17 +237,16 @@ public class SFASupervised extends SFA {
     LongLongHashMap ss_alldata = new LongLongHashMap();
     HashMap<Double, LongLongHashMap> sums_args = new HashMap<>();
 
-    for (Entry<Double, List<LongLongHashMap>> allTs : classes.entrySet()) {
+    for (Entry<Double, List<LongIntHashMap>> allTs : classes.entrySet()) {
       LongLongHashMap sums = new LongLongHashMap();
       sums_args.put(allTs.getKey(), sums);
 
-      for (LongLongHashMap ts : allTs.getValue()) {
-        long sum = 0;
-        for (LongLongCursor cursor : ts) {
-          long value = cursor.value; // count
+      for (LongIntHashMap ts : allTs.getValue()) {
+        for (LongIntCursor cursor : ts) {
           long key = cursor.key;
+          long value = cursor.value; // count
           ss_alldata.putOrAdd(key,  value * value, value * value);
-          sums.putOrAdd(key,  value, value);
+          sums.putOrAdd(key, value, value);
         }
       }
     }

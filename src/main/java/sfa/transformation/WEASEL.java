@@ -13,10 +13,7 @@ import sfa.classification.ParallelFor;
 import sfa.classification.WEASELClassifier;
 import sfa.timeseries.TimeSeries;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -214,31 +211,15 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
-  static class Indices implements Comparable<Indices> {
-    long index;
-    double value;
-    public Indices(long index, double value) {
-      this.index = index;
-      this.value = value;
-    }
-    public int compareTo(Indices o) {
-      return Double.compare(o.value, this.value); // descending sort!
-    }
-  }
-
-  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
-    Map<Double, List<LongLongHashMap>> classes = new HashMap<>();
+  public static void trainAnova(final BagOfBigrams[] bob, double p_value) {
+    Map<Double, List<LongIntHashMap>> classes = new HashMap<>();
     for (int j = 0; j < bob.length; j++) {
-      List<LongLongHashMap> allTs = classes.get(bob[j].label);
+      List<LongIntHashMap> allTs = classes.get(bob[j].label);
       if (allTs == null) {
         allTs = new ArrayList<>();
         classes.put(bob[j].label, allTs);
       }
-      LongLongHashMap keys = new LongLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
-      for (LongIntCursor word : bob[j].bob) {
-        keys.put(word.key, word.value);
-      }
-      allTs.add(keys);
+      allTs.add(bob[j].bob);
     }
 
     double nSamples = bob.length;
@@ -247,23 +228,13 @@ public class WEASEL {
     LongDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
 
     final FDistribution fdist = new FDistribution(null, nClasses-1, nSamples - nClasses);
-    LongDoubleHashMap f = new LongDoubleHashMap(fstat.size()+1);
-    for (LongDoubleCursor cursor : fstat) {
-      f.put(cursor.key, 1.0 - fdist.cumulativeProbability(cursor.value));
-    }
-
-    // sort by largest f-value
-    @SuppressWarnings("unchecked")
-    List<Indices> best = new ArrayList<>(f.size());
-    for (LongDoubleCursor cursor : f) {
-      if (!Double.isNaN(cursor.value) && cursor.value>0.5) {
-        best.add(new Indices(cursor.key, cursor.value));
-      }
-    }
 
     LongHashSet bestWords = new LongHashSet();
-    for (Indices index : best) {
-      bestWords.add(index.index);
+    for (LongDoubleCursor cursor : fstat) {
+      double score = 1.0 - fdist.cumulativeProbability(cursor.value);
+      if (!Double.isNaN(cursor.value) && score <= 0.05) {
+        bestWords.add(cursor.key);
+      }
     }
 
     for (int j = 0; j < bob.length; j++) {
