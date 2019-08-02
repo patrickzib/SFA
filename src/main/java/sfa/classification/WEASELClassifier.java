@@ -29,7 +29,7 @@ public class WEASELClassifier extends Classifier {
 
   public static SolverType solverType = SolverType.L2R_LR_DUAL;
 
-  public static double chi = 2;
+  public static double chi = 0.05; //2;
   public static double bias = 1;
   public static double p = 0.1;
   public static int iterations = 5000;
@@ -312,8 +312,8 @@ public class WEASELClassifier extends Classifier {
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
-    //modelForWindow.trainChiSquared(bopForWindow, chi);
-    modelForWindow.trainAnova(bopForWindow, chi);
+    modelForWindow.trainChiSquared(bopForWindow, chi);
+    //modelForWindow.trainAnova(bopForWindow, chi);
     return bopForWindow;
   }
 

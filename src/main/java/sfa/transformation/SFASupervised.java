@@ -311,7 +311,7 @@ public class SFASupervised extends SFA {
     }
 
     for (LongDoubleCursor cursor : msw) {
-      double value = cursor.value != 0 ? msb.get(cursor.key) / cursor.value : 1.0;
+      double value = cursor.value != 0 ? msb.get(cursor.key) / cursor.value : 0.0;
       f.put(cursor.key, value);
     }
 

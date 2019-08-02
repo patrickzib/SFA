@@ -81,7 +81,7 @@ public class TimeSeriesLoader {
       e.printStackTrace();
     }
 
-    System.out.println("Done reading from " + dataset + " samples " + samples.size() + " queryLength " + samples.get(0).getLength());
+    System.out.println("Done reading from " + dataset.getName() + " samples " + samples.size() + " queryLength " + samples.get(0).getLength());
     return samples.toArray(new TimeSeries[]{});
   }
 
