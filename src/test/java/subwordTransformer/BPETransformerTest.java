@@ -26,7 +26,8 @@ public class BPETransformerTest extends TransformerTest {
     BPEParameter[] parameters = new BPEParameter[] { new BPEParameter(0.5), new BPEParameter(0.3), new BPEParameter(0.2) };
 
     for (int i = 0; i < words.length; i++) {
-      tr.fitParameter(parameters[i]);
+      tr.setParameter(parameters[i]);
+      tr.fit();
       short[][] subwords = tr.transformWord(words[i]);
       assertArrayEqualAnyOrder("transformation result of " + Arrays.toString(words[i]) + " with " + parameters[i] + " does NOT match", expecteds[i], subwords);
     }
@@ -47,7 +48,8 @@ public class BPETransformerTest extends TransformerTest {
     BPEParameter[] parameters = new BPEParameter[] { new BPEParameter(0.3), new BPEParameter(0.2) };
 
     for (int i = 0; i < words.length; i++) {
-      tr.fitParameter(parameters[i]);
+      tr.setParameter(parameters[i]);
+      tr.fit();
       short[][] subwords = tr.transformWord(words[i]);
       assertArrayEqualAnyOrder("transformation result of " + Arrays.toString(words[i]) + " with " + parameters[i] + " does NOT match", expecteds[i], subwords);
     }

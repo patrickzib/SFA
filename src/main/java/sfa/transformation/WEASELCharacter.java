@@ -187,7 +187,8 @@ public class WEASELCharacter {
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < WEASELCharacter.this.transformers.length; i++) {
           if (i % BLOCKS == id) {
-            WEASELCharacter.this.transformers[i].fitParameter(param);
+            WEASELCharacter.this.transformers[i].setParameter(param);
+            WEASELCharacter.this.transformers[i].fit();
           }
         }
       }

@@ -28,7 +28,9 @@ public class NoTransformerTest extends TransformerTest {
         trainingWords[i][j] = (short) r.nextInt(alphabetSize);
       }
     }
-    tr.fit(new NoParameter(), trainingWords);
+    tr.setWords(trainingWords);
+    tr.setParameter(new NoParameter());
+    tr.fit();
 
     for (int i = 0; i < 100; i++) {
       int wordLength = r.nextInt(6) + 1;

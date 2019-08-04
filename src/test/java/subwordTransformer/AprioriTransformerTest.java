@@ -26,7 +26,8 @@ public class AprioriTransformerTest extends TransformerTest {
     AprioriParameter[] parameters = new AprioriParameter[] { new AprioriParameter(2, 0.2), new AprioriParameter(1, 0.3), new AprioriParameter(1, 0.4) };
 
     for (int i = 0; i < words.length; i++) {
-      tr.fitParameter(parameters[i]);
+      tr.setParameter(parameters[i]);
+      tr.fit();
       short[][] subwords = tr.transformWord(words[i]);
       assertArrayEqualAnyOrder("transformation result of " + Arrays.toString(words[i]) + " with " + parameters[i] + " does NOT match", expecteds[i], subwords);
     }

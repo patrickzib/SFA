@@ -26,7 +26,8 @@ public class CNGTransformerTest extends TransformerTest {
     CNGParameter[] parameters = new CNGParameter[] { new CNGParameter(2, 3, 0.2), new CNGParameter(2, 3, 0.3), new CNGParameter(2, 3, 0.4), new CNGParameter(2, 3, 0.5) };
 
     for (int i = 0; i < words.length; i++) {
-      tr.fitParameter(parameters[i]);
+      tr.setParameter(parameters[i]);
+      tr.fit();
       short[][] subwords = tr.transformWord(words[i]);
       assertArrayEqualAnyOrder("transformation result of " + Arrays.toString(words[i]) + " with " + parameters[i] + " does NOT match", expecteds[i], subwords);
     }
@@ -47,7 +48,8 @@ public class CNGTransformerTest extends TransformerTest {
     CNGParameter[] parameters = new CNGParameter[] { new CNGParameter(2, 3, 0.1), new CNGParameter(2, 3, 0.2), new CNGParameter(2, 3, 0.3) };
 
     for (int i = 0; i < words.length; i++) {
-      tr.fitParameter(parameters[i]);
+      tr.setParameter(parameters[i]);
+      tr.fit();
       short[][] subwords = tr.transformWord(words[i]);
       assertArrayEqualAnyOrder("transformation result of " + Arrays.toString(words[i]) + " with " + parameters[i] + " does NOT match", expecteds[i], subwords);
     }
