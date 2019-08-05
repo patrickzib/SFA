@@ -29,7 +29,7 @@ public class WEASELClassifier extends Classifier {
 
   public static SolverType solverType = SolverType.L2R_LR_DUAL;
 
-  public static double chi = 0.05; //2;
+  public static double chi = 0.1; //2;
   public static double bias = 1;
   public static double p = 0.1;
   public static int iterations = 5000;
