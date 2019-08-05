@@ -10,13 +10,13 @@ import de.mrapp.apriori.FrequentItemSets;
 import de.mrapp.apriori.ItemSet;
 import de.mrapp.apriori.Output;
 import de.mrapp.apriori.Transaction;
-import subwordTransformer.SubwordTransformer;
+import subwordTransformer.UnsupervisedTransformer;
 
 /**
  * A transformer that uses the Apriori algorithm to find frequent patterns
  * (character sets). Only works with positional alphabets.
  */
-public class AprioriTransformer extends SubwordTransformer<AprioriParameter> {
+public class AprioriTransformer extends UnsupervisedTransformer<AprioriParameter> {
 
   private FrequentItemSets<CharacterItem> frequentItemSets;
   private double currentMinSupport = 1;

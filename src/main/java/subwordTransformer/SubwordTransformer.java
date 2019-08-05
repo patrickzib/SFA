@@ -1,7 +1,5 @@
 package subwordTransformer;
 
-import java.util.Arrays;
-
 /**
  * Transforms words to subwords after training on a given dataset.
  * 
@@ -11,7 +9,6 @@ public abstract class SubwordTransformer<P extends Parameter> implements Cloneab
 
   private P currentParam;
   private P oldParam;
-  private short[][] currentWords;
   private boolean wordsChanged = false;
   private boolean paramChanged = false;
   private final int inputAlphabetSize;
@@ -81,30 +78,12 @@ public abstract class SubwordTransformer<P extends Parameter> implements Cloneab
     return this.oldParam;
   }
 
-  protected short[][] getWords() {
-    return this.currentWords;
+  protected void setWordsChanged() {
+    this.isTrained = false;
+    this.wordsChanged = true;
   }
 
-  /**
-   * Sets the training words. The given array will be copied and not modified.
-   * 
-   * @param words the training words
-   */
-  public void setWords(short[][] words) {
-    if (!Arrays.deepEquals(this.currentWords, words)) {
-      this.isTrained = false;
-      this.wordsChanged = true;
-      // copy words array
-      int wordCount = words.length;
-      this.currentWords = new short[wordCount][];
-      for (int i = 0; i < wordCount; i++) {
-        short[] word = words[i];
-        int wordLength = word.length;
-        this.currentWords[i] = new short[wordLength];
-        System.arraycopy(word, 0, this.currentWords[i], 0, wordLength);
-      }
-    }
-  }
+  protected abstract boolean hasWords();
 
   /**
    * Sets the training parameter.
@@ -126,7 +105,7 @@ public abstract class SubwordTransformer<P extends Parameter> implements Cloneab
    * Trains the transformer with the given parameter and training words.
    */
   public void fit() {
-    if (this.currentWords == null) {
+    if (!this.hasWords()) {
       throw new IllegalStateException("Requires training words to be set.");
     }
     if (this.currentParam == null) {

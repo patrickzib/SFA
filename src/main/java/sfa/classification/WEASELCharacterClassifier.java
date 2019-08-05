@@ -19,9 +19,9 @@ import sfa.timeseries.TimeSeries;
 import sfa.transformation.WEASELCharacter;
 import sfa.transformation.WEASELCharacter.BagOfBigrams;
 import sfa.transformation.WEASELCharacter.Dictionary;
-import subwordTransformer.SubwordTransformer;
-import subwordTransformer.bpe.BPEParameter;
-import subwordTransformer.bpe.BPETransformer;
+import subwordTransformer.UnsupervisedTransformer;
+import subwordTransformer.cng.CNGParameter;
+import subwordTransformer.cng.CNGTransformer;
 
 /**
  * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as
@@ -50,8 +50,8 @@ public class WEASELCharacterClassifier extends Classifier {
   public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 350;
 
-  public static SubwordTransformer<?> transformer = new BPETransformer(maxS, true);
-  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(BPEParameter.getParameterList(0.4, 0.91, 0.15));
+  public static UnsupervisedTransformer<?> transformer = new CNGTransformer(maxS, true);
+  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(CNGParameter.getParameterList(2, 4, 4, 6, 0.9, 0.9, 1));
 
   // the trained weasel
   WEASELCharacterModel model;
@@ -219,17 +219,22 @@ public class WEASELCharacterClassifier extends Classifier {
       boolean bestNorm = false;
       subwordTransformer.Parameter bestParam = null;
 
-      // optimize:
-      for (final boolean mean : NORMALIZATION) {
+      optimize: for (final boolean mean : NORMALIZATION) {
         int[] windowLengths = getWindowLengths(samples, mean);
         WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, mean, lowerBounding, transformer);
         short[][][][] words = model.createWords(samples);
         model.setTransformerTrainingWords(words);
 
         for (subwordTransformer.Parameter param : transformerParameterList) {
+          // CNGParameter cp = (CNGParameter) param;
+          // if (!((cp.getMinN() == 2 && cp.getMaxN() == 4) || (cp.getMinN() == 4 &&
+          // cp.getMaxN() == 6)))
+          // continue;
           model.fitSubwords(param);
 
           for (int f = minF; f <= maxF; f += 2) {
+            // if (cp.getMaxN() != f)
+            // continue;
             model.dict.reset();
 
             final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
@@ -252,20 +257,22 @@ public class WEASELCharacterClassifier extends Classifier {
             final Problem problem = initLibLinearProblem(bop, model.dict, bias);
             int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
+            System.out.println(correct + " correct with norm=" + mean + ", " + param + ", f=" + f);
+
             if (correct > maxCorrect) { // TODO > or >= ?
               maxCorrect = correct;
               bestF = f;
               bestNorm = mean;
               bestParam = param;
             }
-            // if (correct == samples.length) {
-            // break optimize;
-            // }
+            if (correct == samples.length) {
+              break optimize;
+            }
           }
         }
       }
 
-      System.out.println("Best parameter: " + bestParam);
+      System.out.println("Best parameter: norm=" + bestNorm + ", " + bestParam + ", f=" + bestF);
 
       // obtain the final matrix
       int[] windowLengths = getWindowLengths(samples, bestNorm);
@@ -278,6 +285,7 @@ public class WEASELCharacterClassifier extends Classifier {
       final boolean mean = bestNorm;
       final int ff = bestF;
       ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+
         @Override
         public void run(int id, AtomicInteger processed) {
           for (int w = 0; w < model.windowLengths.length; w++) {
@@ -293,6 +301,67 @@ public class WEASELCharacterClassifier extends Classifier {
       // train liblinear
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+
+      int highestBit = Words.binlog(Integer.highestOneBit(MAX_WINDOW_LENGTH)) + 1;
+      byte usedBits = (byte) Words.binlogRoundedUp(transformer.getOutputAlphabetSize());
+      int shortsPerInt = 32 / usedBits;
+      long subwordCount = 0;
+      long wordCount = 0;
+      long biGramSubwordCount = 0;
+      long biGramCount = 0;
+      for (LongIntCursor cursor : model.dict.dict) {
+        if (cursor.value > 0) {
+          long biGram = cursor.key;
+          int prevWord = (int) (biGram >>> 32);
+          int word = (int) ((biGram & 0xffffffffL) >>> highestBit);
+
+          boolean wildcardFound = false;
+          long shiftOffset = 1;
+          for (int i = 0; i < shortsPerInt; i++) {
+            boolean isWildcard = true;
+            for (int j = 0; j < usedBits; j++) {
+              if ((word & shiftOffset) == 0) {
+                isWildcard = false;
+              }
+              shiftOffset <<= 1;
+            }
+            if (isWildcard) {
+              wildcardFound = true;
+              break;
+            }
+          }
+
+          if (prevWord == 0) {
+            wordCount++;
+            if (wildcardFound) {
+              subwordCount++;
+            }
+          } else {
+            biGramCount++;
+
+            if (wildcardFound) {
+              biGramSubwordCount++;
+            } else {
+              shiftOffset = 1;
+              for (int i = 0; i < shortsPerInt; i++) {
+                boolean isWildcard = true;
+                for (int j = 0; j < usedBits; j++) {
+                  if ((prevWord & shiftOffset) == 0) {
+                    isWildcard = false;
+                  }
+                  shiftOffset <<= 1;
+                }
+                if (isWildcard) {
+                  biGramSubwordCount++;
+                  break;
+                }
+              }
+            }
+
+          }
+        }
+      }
+      System.out.println("dictSize " + model.dict.size() + "  subwords: unigrams " + subwordCount + "/" + wordCount + "  bigrams " + biGramSubwordCount + "/" + biGramCount);
 
       return new WEASELCharacterModel(bestNorm, bestF, model, linearModel, 0, // testing
           1, maxCorrect, // training

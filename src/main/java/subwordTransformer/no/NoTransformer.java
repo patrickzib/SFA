@@ -1,11 +1,11 @@
 package subwordTransformer.no;
 
-import subwordTransformer.SubwordTransformer;
+import subwordTransformer.UnsupervisedTransformer;
 
 /**
  * A transformer that does not transform words (for testing purposes).
  */
-public class NoTransformer extends SubwordTransformer<NoParameter> {
+public class NoTransformer extends UnsupervisedTransformer<NoParameter> {
 
   /**
    * @param alphabetSize the alphabet size of the input words

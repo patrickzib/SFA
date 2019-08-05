@@ -24,7 +24,7 @@ import sfa.classification.ParallelFor;
 import sfa.classification.WEASELCharacterClassifier;
 import sfa.timeseries.TimeSeries;
 import subwordTransformer.Parameter;
-import subwordTransformer.SubwordTransformer;
+import subwordTransformer.UnsupervisedTransformer;
 
 /**
  * The WEASEL-Model as published in
@@ -43,7 +43,7 @@ public class WEASELCharacter {
   public SFA[] signature;
   public Dictionary dict;
 
-  public SubwordTransformer[] transformers;
+  public UnsupervisedTransformer[] transformers;
   public int outputAlphabetSize;
 
   public final static int BLOCKS;
@@ -84,11 +84,11 @@ public class WEASELCharacter {
     this.signature = new SFA[windowLengths.length];
   }
 
-  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding, SubwordTransformer<? extends Parameter> transformer) {
+  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding, UnsupervisedTransformer<? extends Parameter> transformer) {
     this(maxF, maxS, windowLengths, normMean, lowerBounding);
-    this.transformers = new SubwordTransformer[windowLengths.length];
+    this.transformers = new UnsupervisedTransformer[windowLengths.length];
     for (int i = 0; i < windowLengths.length; i++) {
-      this.transformers[i] = transformer.clone();
+      this.transformers[i] = (UnsupervisedTransformer<?>) transformer.clone();
     }
     this.outputAlphabetSize = this.transformers[0].getOutputAlphabetSize();
   }

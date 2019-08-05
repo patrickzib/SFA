@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import subwordTransformer.SubwordTransformer;
+import subwordTransformer.UnsupervisedTransformer;
 
 /**
  * A transformer that searches for frequent character-n-grams.
  */
-public class CNGTransformer extends SubwordTransformer<CNGParameter> {
+public class CNGTransformer extends UnsupervisedTransformer<CNGParameter> {
 
   private Map<Integer, Map<List<Short>, Integer>> nGramCounts;
   private List<short[]> dictionary;

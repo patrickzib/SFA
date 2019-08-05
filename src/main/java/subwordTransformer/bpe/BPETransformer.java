@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import subwordTransformer.SubwordTransformer;
+import subwordTransformer.UnsupervisedTransformer;
 
 /**
  * A transformer that uses byte pair encoding to find long representative
  * subsequences.
  */
-public class BPETransformer extends SubwordTransformer<BPEParameter> {
+public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
 
   private Map<List<List<Short>>, Integer> vocab;
   private List<List<List<Short>>> merges;
