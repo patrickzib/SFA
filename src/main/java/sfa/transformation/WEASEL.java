@@ -314,7 +314,7 @@ public class WEASEL {
     }
 
     LongHashSet chiSquare = new LongHashSet(featureCount.size());
-    //ArrayList<PValueKey> values = new ArrayList<PValueKey>(featureCount.size());
+    ArrayList<PValueKey> values = new ArrayList<PValueKey>(featureCount.size());
     final ChiSquaredDistribution distribution
         = new ChiSquaredDistribution(null, classProb.keys().size()-1);
 
@@ -324,30 +324,30 @@ public class WEASEL {
       if (pvalue <= chi_limit) {
         //System.out.println(newChi + " " + pvalue);
         chiSquare.add(feature.key);
-        //values.add(new PValueKey(pvalue, feature.key));
+        values.add(new PValueKey(pvalue, feature.key));
       }
     }
 
-//    // limit number of features per window size to avoid excessive features
-//    int limit = 100;
-//    if (values.size() > limit) {
-//      // sort by chi-squared value
-//      Collections.sort(values, new Comparator<PValueKey>() {
-//        @Override
-//        public int compare(PValueKey o1, PValueKey o2) {
-//          int comp = Double.compare(o1.pvalue, o2.pvalue);
-//          if (comp != 0) { // tie breaker
-//            return comp;
-//          }
-//          return Long.compare(o1.key, o2.key);
-//        }
-//      });
-//
-//      chiSquare.clear();
-//      for (PValueKey val : values.subList(0, limit)) {
-//        chiSquare.add(val.key);
-//      }
-//    }
+    // limit number of features per window size to avoid excessive features
+    int limit = 1000;
+    if (values.size() > limit) {
+      // sort by chi-squared value
+      Collections.sort(values, new Comparator<PValueKey>() {
+        @Override
+        public int compare(PValueKey o1, PValueKey o2) {
+          int comp = Double.compare(o1.pvalue, o2.pvalue);
+          if (comp != 0) { // tie breaker
+            return comp;
+          }
+          return Long.compare(o1.key, o2.key);
+        }
+      });
+
+      chiSquare.clear();
+      for (PValueKey val : values.subList(0, limit)) {
+        chiSquare.add(val.key);
+      }
+    }
 
     for (int j = 0; j < bob.length; j++) {
       for (LongIntCursor cursor : bob[j].bob) {
