@@ -83,13 +83,7 @@ public class CNGTransformer extends UnsupervisedTransformer<CNGParameter> {
 
   @Override
   public short[][] transform(short[] word) {
-    List<short[]> matchingSubwords = new ArrayList<>();
-    for (short[] subword : dictionary) {
-      if ((this.hasPositionalAlphabets() && CNGUtils.matchesWord(subword, word, this.getFillCharacter())) || (!this.hasPositionalAlphabets() && CNGUtils.isSubArray(subword, word))) {
-        matchingSubwords.add(subword);
-      }
-    }
-    return matchingSubwords.toArray(new short[matchingSubwords.size()][]);
+    return CNGUtils.transform(word, dictionary, this.hasPositionalAlphabets(), this.getFillCharacter());
   }
 
 }

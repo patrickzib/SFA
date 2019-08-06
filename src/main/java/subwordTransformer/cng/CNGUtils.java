@@ -55,7 +55,7 @@ class CNGUtils {
     return wordArray;
   }
 
-  static boolean isSubArray(short[] subArray, short[] array) {
+  private static boolean isSubArray(short[] subArray, short[] array) {
     int subArrayLength = subArray.length;
     int arrayLength = array.length;
     boolean contained = false;
@@ -75,7 +75,7 @@ class CNGUtils {
     return contained;
   }
 
-  static boolean matchesWord(short[] pattern, short[] word, short wildcard) {
+  private static boolean matchesWord(short[] pattern, short[] word, short wildcard) {
     if (pattern.length != word.length) {
       return false;
     }
@@ -85,5 +85,15 @@ class CNGUtils {
       }
     }
     return true;
+  }
+
+  static short[][] transform(short[] word, List<short[]> dictionary, boolean positionalAlphabets, short fillCharacter) {
+    List<short[]> matchingSubwords = new ArrayList<>();
+    for (short[] subword : dictionary) {
+      if ((positionalAlphabets && matchesWord(subword, word, fillCharacter)) || (!positionalAlphabets && isSubArray(subword, word))) {
+        matchingSubwords.add(subword);
+      }
+    }
+    return matchingSubwords.toArray(new short[matchingSubwords.size()][]);
   }
 }

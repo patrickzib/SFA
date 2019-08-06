@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import subwordTransformer.SupervisedTransformer;
+import subwordTransformer.SupervisedUtils;
 
 /**
  * A transformer that searches for frequent character-n-grams.
@@ -95,7 +96,7 @@ public class SupervisedCNGTransformer extends SupervisedTransformer<CNGParameter
               Integer count = classCounts.get(j).get(word);
               counts[j] = count == null ? 0 : count.intValue();
             }
-            if (sigmaTest(counts, classSizes, this.getParameter().getMinSupport(), max)) {
+            if (SupervisedUtils.sigma(counts, classSizes, max) >= this.getParameter().getMinSupport()) {
               dictionary.add(CNGUtils.shortListToArray(word));
             }
           }
@@ -104,41 +105,9 @@ public class SupervisedCNGTransformer extends SupervisedTransformer<CNGParameter
     }
   }
 
-  private static boolean sigmaTest(int[] wordCounts, int[] classSizes, double minSigma, double max) {
-    int numClasses = wordCounts.length;
-    double[] supports = new double[numClasses];
-    double supportSum = 0;
-    for (int i = 0; i < numClasses; i++) {
-      double support = ((double) wordCounts[i]) / classSizes[i];
-      supports[i] = support;
-      supportSum += support;
-    }
-    double[] confidences = new double[numClasses];
-    double confidenceAvg = 0;
-    for (int i = 0; i < numClasses; i++) {
-      double confidence = supports[i] / supportSum;
-      confidences[i] = confidence;
-      confidenceAvg += confidence;
-    }
-    confidenceAvg /= numClasses;
-    double sigma = 0;
-    for (int i = 0; i < numClasses; i++) {
-      sigma += Math.pow(confidences[i] - confidenceAvg, 2);
-    }
-    sigma /= numClasses;
-    sigma = Math.sqrt(sigma) / max;
-    return sigma >= minSigma;
-  }
-
   @Override
   public short[][] transform(short[] word) {
-    List<short[]> matchingSubwords = new ArrayList<>();
-    for (short[] subword : dictionary) {
-      if ((this.hasPositionalAlphabets() && CNGUtils.matchesWord(subword, word, this.getFillCharacter())) || (!this.hasPositionalAlphabets() && CNGUtils.isSubArray(subword, word))) {
-        matchingSubwords.add(subword);
-      }
-    }
-    return matchingSubwords.toArray(new short[matchingSubwords.size()][]);
+    return CNGUtils.transform(word, dictionary, this.hasPositionalAlphabets(), this.getFillCharacter());
   }
 
 }
