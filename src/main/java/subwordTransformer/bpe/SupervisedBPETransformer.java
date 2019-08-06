@@ -1,23 +1,25 @@
 package subwordTransformer.bpe;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
-import subwordTransformer.UnsupervisedTransformer;
+import subwordTransformer.SupervisedTransformer;
+import subwordTransformer.SupervisedUtils;
 
 /**
  * A transformer that uses byte pair encoding to find long representative
  * subsequences.
  */
-public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
+public class SupervisedBPETransformer extends SupervisedTransformer<BPEParameter> {
 
-  private Map<List<List<Short>>, Integer> vocab;
+  private List<Map<List<List<Short>>, Integer>> vocabs;
   private List<List<List<Short>>> merges;
 
   private List<List<Short>> bestPair;
-  private int bestCount;
+  private double bestSigma;
 
   /**
    * @param alphabetSize        the alphabet size of the input words
@@ -25,7 +27,7 @@ public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
    *                            alphabets, i.e. different positions in words have
    *                            different meanings
    */
-  public BPETransformer(int alphabetSize, boolean positionalAlphabets) {
+  public SupervisedBPETransformer(int alphabetSize, boolean positionalAlphabets) {
     super(alphabetSize, positionalAlphabets);
   }
 
@@ -37,7 +39,7 @@ public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
    * @param fillCharacter       the character to be used for wildcards (default:
    *                            -1)
    */
-  public BPETransformer(int alphabetSize, boolean positionalAlphabets, short fillCharacter) {
+  public SupervisedBPETransformer(int alphabetSize, boolean positionalAlphabets, short fillCharacter) {
     super(alphabetSize, positionalAlphabets, fillCharacter);
   }
 
@@ -53,7 +55,10 @@ public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
   @Override
   protected void buildDictionary() {
     // build vocab from words
-    vocab = BPEUtils.buildVocab(this.getWords(), this.hasPositionalAlphabets(), this.getInputAlphabetSize());
+    vocabs = new ArrayList<>();
+    for (short[][] classWords : this.getWords()) {
+      vocabs.add(BPEUtils.buildVocab(classWords, this.hasPositionalAlphabets(), this.getInputAlphabetSize()));
+    }
     // now find merges
     merges = new ArrayList<>();
     this.findMerges(false);
@@ -69,23 +74,42 @@ public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
   }
 
   private void findMerges(boolean continueSearch) {
-    int minCount = (int) Math.ceil(this.getWords().length * this.getParameter().getMinSupport());
+    int numClasses = vocabs.size();
+    int[] classSizes = new int[numClasses];
+    for (int i = 0; i < numClasses; i++) {
+      classSizes[i] = this.getWords()[i].length;
+    }
+    double max = Math.sqrt((numClasses - 1) / Math.pow(numClasses, 2));
     while (true) {
       if (!continueSearch) {
-        Map<List<List<Short>>, Integer> pairs = BPEUtils.getStats(this.vocab);
+        List<Map<List<List<Short>>, Integer>> pairsPerClass = this.getStats();
         // find most frequent pair
         bestPair = null;
-        bestCount = -1;
-        for (Entry<List<List<Short>>, Integer> e : pairs.entrySet()) {
-          if (e.getValue() > bestCount) {
-            bestPair = e.getKey();
-            bestCount = e.getValue();
+        bestSigma = -1;
+
+        Set<List<List<Short>>> seenPairs = new HashSet<>();
+        for (int i = 0; i < numClasses; i++) {
+          for (List<List<Short>> pair : pairsPerClass.get(i).keySet()) {
+            if (!seenPairs.contains(pair)) {
+              seenPairs.add(pair);
+              int[] counts = new int[numClasses];
+              for (int j = 0; j < numClasses; j++) {
+                Integer count = pairsPerClass.get(j).get(pair);
+                counts[j] = count == null ? 0 : count.intValue();
+              }
+              double sigma = SupervisedUtils.sigma(counts, classSizes, max);
+              if (sigma > bestSigma) {
+                bestPair = pair;
+                bestSigma = sigma;
+              }
+            }
           }
         }
+
       } else {
         continueSearch = false;
       }
-      if (bestCount >= minCount) {
+      if (bestSigma >= this.getParameter().getMinSupport()) {
         merges.add(bestPair);
         this.mergeVocab(bestPair);
       } else {
@@ -94,9 +118,21 @@ public class BPETransformer extends UnsupervisedTransformer<BPEParameter> {
     }
   }
 
+  private List<Map<List<List<Short>>, Integer>> getStats() {
+    List<Map<List<List<Short>>, Integer>> stats = new ArrayList<>();
+    for (Map<List<List<Short>>, Integer> vocab : vocabs) {
+      stats.add(BPEUtils.getStats(vocab));
+    }
+    return stats;
+  }
+
   private void mergeVocab(List<List<Short>> pair) {
     List<Short> mergedPair = BPEUtils.getMergedPair(pair);
-    vocab = BPEUtils.mergeVocab(vocab, pair, mergedPair);
+    List<Map<List<List<Short>>, Integer>> newVocabs = new ArrayList<>();
+    for (Map<List<List<Short>>, Integer> vocab : vocabs) {
+      newVocabs.add(BPEUtils.mergeVocab(vocab, pair, mergedPair));
+    }
+    vocabs = newVocabs;
   }
 
   @Override
