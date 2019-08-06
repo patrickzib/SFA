@@ -1,15 +1,11 @@
 package subwordTransformer.apriori;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import de.mrapp.apriori.Apriori;
 import de.mrapp.apriori.Filter;
 import de.mrapp.apriori.FrequentItemSets;
 import de.mrapp.apriori.ItemSet;
-import de.mrapp.apriori.Output;
-import de.mrapp.apriori.Transaction;
 import subwordTransformer.UnsupervisedTransformer;
 
 /**
@@ -45,13 +41,7 @@ public class AprioriTransformer extends UnsupervisedTransformer<AprioriParameter
   @Override
   protected void buildDictionary() {
     currentMinSupport = this.getParameter().getMinSupport();
-    List<Transaction<CharacterItem>> transactions = new ArrayList<>(this.getWords().length);
-    for (short[] word : this.getWords()) {
-      transactions.add(new CharacterTransaction(word, this.getInputAlphabetSize()));
-    }
-    Apriori<CharacterItem> apriori = new Apriori.Builder<CharacterItem>(currentMinSupport).create();
-    Output<CharacterItem> output = apriori.execute(transactions);
-    frequentItemSets = output.getFrequentItemSets();
+    frequentItemSets = AprioriUtils.getFrequentItemSets(this.getWords(), currentMinSupport, this.getInputAlphabetSize());
     this.fillDictionary(frequentItemSets);
   }
 
@@ -73,41 +63,13 @@ public class AprioriTransformer extends UnsupervisedTransformer<AprioriParameter
     FrequentItemSets<CharacterItem> filteredFrequentItemSets = frequentItemSets.filter(filter);
     dictionary = new ArrayList<>();
     for (ItemSet<CharacterItem> itemSet : filteredFrequentItemSets) {
-      int patternLength = itemSet.last().getPosition() + 1;
-      short[] pattern = new short[patternLength];
-      Arrays.fill(pattern, this.getFillCharacter());
-      for (CharacterItem item : itemSet) {
-        pattern[item.getPosition()] = item.getCharacter();
-      }
-      dictionary.add(pattern);
+      dictionary.add(AprioriUtils.itemSetToPattern(itemSet, this.getFillCharacter()));
     }
   }
 
   @Override
   public short[][] transform(short[] word) {
-    List<short[]> matchingSubwords = new ArrayList<>();
-    short wildcard = this.getFillCharacter();
-    for (short[] pattern : dictionary) {
-      if (matchesWord(pattern, word, wildcard)) {
-        short[] subword = new short[word.length];
-        Arrays.fill(subword, this.getFillCharacter());
-        System.arraycopy(pattern, 0, subword, 0, pattern.length);
-        matchingSubwords.add(subword);
-      }
-    }
-    return matchingSubwords.toArray(new short[matchingSubwords.size()][]);
-  }
-
-  private static boolean matchesWord(short[] pattern, short[] word, short wildcard) {
-    if (pattern.length > word.length) {
-      return false;
-    }
-    for (int i = 0; i < pattern.length; i++) {
-      if (pattern[i] != wildcard && pattern[i] != word[i]) {
-        return false;
-      }
-    }
-    return true;
+    return AprioriUtils.transform(word, dictionary, this.getFillCharacter());
   }
 
 }
