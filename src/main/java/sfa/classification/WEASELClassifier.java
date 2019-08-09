@@ -313,7 +313,6 @@ public class WEASELClassifier extends Classifier {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
     modelForWindow.trainChiSquared(bopForWindow, chi);
-    modelForWindow.trainChiSquared2(bopForWindow, chi);
     //modelForWindow.trainAnova(bopForWindow, chi);
     return bopForWindow;
   }
@@ -327,8 +326,6 @@ public class WEASELClassifier extends Classifier {
       }
       else {
         bop[i].bob.putAll(bopForWindow[i].bob);
-        bop[i].bigrams.putAll(bopForWindow[i].bigrams);
-
       }
     }
   }
@@ -361,11 +358,6 @@ public class WEASELClassifier extends Classifier {
       BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
-        if (word.value > 0) {
-          features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
-        }
-      }
-      for (LongIntCursor word : bop.bigrams) {
         if (word.value > 0) {
           features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
         }
