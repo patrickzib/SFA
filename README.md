@@ -442,7 +442,8 @@ OffsetPrediction offsetPred = t.predict(testSamples, true);
 
 **References**
 
-TBA
+"Schäfer, P., Leser, U.: TEASER: Early and Accurate Time Series Classification."
+arXiv 2017, [[LINK]](https://arxiv.org/pdf/1908.03405)
 
 
 # Use Cases / Tests
