@@ -372,9 +372,11 @@ public class WEASEL {
     }
 
     for (int j = 0; j < bob.length; j++) {
-      for (LongIntCursor cursor : bob[j].bob) {
+      LongIntHashMap oldMap = bob[j].bob;
+      bob[j].bob = new LongIntHashMap();
+      for (LongIntCursor cursor : oldMap) {
         if (!chiSquare.contains(cursor.key)) {
-          bob[j].bob.values[cursor.index] = 0;
+          bob[j].bob.put(cursor.key, cursor.value);
         }
       }
     }
