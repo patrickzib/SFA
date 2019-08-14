@@ -29,7 +29,7 @@ public class WEASELClassifier extends Classifier {
 
   public static SolverType solverType = SolverType.L2R_LR_DUAL;
 
-  public static double chi = 0.1; //2;
+  public static double p_value = 0.1;
   public static double bias = 1;
   public static double p = 0.1;
   public static int iterations = 5000;
@@ -246,6 +246,7 @@ public class WEASELClassifier extends Classifier {
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
+          System.out.println("Train Dict Size: " + model.dict.size());
           int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
           if (correct > maxCorrect) {
@@ -284,9 +285,8 @@ public class WEASELClassifier extends Classifier {
 
       // train liblinear
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
+      System.out.println("Final Dict Size: " + model.dict.size());
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
-
-      System.out.println("Train Dict Size: " + model.dict.size());
 
       return new WEASELModel(
           bestNorm,
@@ -312,8 +312,8 @@ public class WEASELClassifier extends Classifier {
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
-    modelForWindow.trainChiSquared(bopForWindow, chi);
-    //modelForWindow.trainAnova(bopForWindow, chi);
+    modelForWindow.trainChiSquared(bopForWindow, p_value);
+    //modelForWindow.trainAnova(bopForWindow, p_value);
     return bopForWindow;
   }
 

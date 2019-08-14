@@ -283,8 +283,8 @@ public class WEASEL {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // chi-squared: observed minus expected occurrence
-    LongFloatHashMap chiSquareSum = new LongFloatHashMap(featureCount.size());
+    // p_value-squared: observed minus expected occurrence
+    LongDoubleHashMap chiSquareSum = new LongDoubleHashMap(featureCount.size());
 
     for (DoubleIntCursor prob : classProb) {
       double p = ((double)prob.value) / bob.length;
@@ -294,13 +294,13 @@ public class WEASEL {
         double expected = p * feature.value;
 
         double chi = obs.get(feature.key) - expected;
-        float newChi = (float)(chi * chi / expected);
+        double newChi = chi * chi / expected;
 
         if (newChi > 0) {
-          // build the sum among chi-values of all classes
+          // build the sum among p_value-values of all classes
           chiSquareSum.putOrAdd(feature.key, newChi, newChi);
 
-          // Alternatively: compute the max among chi-values of all classes
+          // Alternatively: compute the max among p_value-values of all classes
 //          int index = 0;
 //          if ((index = chiSquareSum.indexOf(feature.key)) > -1) {
 //            double oldChi = chiSquareSum.indexGet(index);
@@ -317,7 +317,7 @@ public class WEASEL {
     final ChiSquaredDistribution distribution
         = new ChiSquaredDistribution(null, classProb.keys().size()-1);
 
-    for (LongFloatCursor feature : chiSquareSum) {
+    for (LongDoubleCursor feature : chiSquareSum) {
       double newChi = feature.value;
       double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
       if (pvalue <= p_limit) {
@@ -330,7 +330,7 @@ public class WEASEL {
     // limit number of features per window size to avoid excessive features
     int limit = 100;
     if (values.size() > limit) {
-      // sort by chi-squared value
+      // sort by p_value-squared value
       Collections.sort(values, new Comparator<PValueKey>() {
         @Override
         public int compare(PValueKey o1, PValueKey o2) {

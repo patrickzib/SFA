@@ -304,7 +304,7 @@ public class MUSE {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // chi-squared: observed minus expected occurrence
+    // p_value-squared: observed minus expected occurrence
     ObjectHashSet<MuseWord> chiSquare = new ObjectHashSet<>(featureCount.size());
     for (LongDoubleCursor classLabel : classProb) {
       classLabel.value /= (double) bob.length;
