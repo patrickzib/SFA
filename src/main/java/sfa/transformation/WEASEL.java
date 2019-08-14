@@ -248,7 +248,7 @@ public class WEASEL {
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+  public void trainChiSquared(final BagOfBigrams[] bob, double p_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     DoubleIntHashMap classProb = new DoubleIntHashMap(10);
@@ -284,7 +284,7 @@ public class WEASEL {
     }
 
     // chi-squared: observed minus expected occurrence
-    LongDoubleHashMap chiSquareSum = new LongDoubleHashMap(featureCount.size());
+    LongFloatHashMap chiSquareSum = new LongFloatHashMap(featureCount.size());
 
     for (DoubleIntCursor prob : classProb) {
       double p = ((double)prob.value) / bob.length;
@@ -294,7 +294,7 @@ public class WEASEL {
         double expected = p * feature.value;
 
         double chi = obs.get(feature.key) - expected;
-        double newChi = chi * chi / expected;
+        float newChi = (float)(chi * chi / expected);
 
         if (newChi > 0) {
           // build the sum among chi-values of all classes
@@ -317,10 +317,10 @@ public class WEASEL {
     final ChiSquaredDistribution distribution
         = new ChiSquaredDistribution(null, classProb.keys().size()-1);
 
-    for (LongDoubleCursor feature : chiSquareSum) {
+    for (LongFloatCursor feature : chiSquareSum) {
       double newChi = feature.value;
       double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
-      if (pvalue <= chi_limit) {
+      if (pvalue <= p_limit) {
         //System.out.println(newChi + " " + pvalue);
         chiSquare.add(feature.key);
         values.add(new PValueKey(pvalue, feature.key));
@@ -365,20 +365,18 @@ public class WEASEL {
           break;
         }
       }
-
-//      for (PValueKey val : values.subList(0, limit)) {
-//        chiSquare.add(val.key);
-//      }
     }
 
+    // remove values
     for (int j = 0; j < bob.length; j++) {
       LongIntHashMap oldMap = bob[j].bob;
       bob[j].bob = new LongIntHashMap();
       for (LongIntCursor cursor : oldMap) {
-        if (!chiSquare.contains(cursor.key)) {
+        if (chiSquare.contains(cursor.key)) {
           bob[j].bob.put(cursor.key, cursor.value);
         }
       }
+      oldMap.clear();
     }
   }
 
