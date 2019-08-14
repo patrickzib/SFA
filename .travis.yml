@@ -1,4 +1,4 @@
-install: gradle wrapper --gradle-version 5.0
+install: gradle wrapper --gradle-version 5.4
 
 language: java
 
