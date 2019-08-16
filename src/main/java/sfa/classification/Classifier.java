@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -760,6 +762,28 @@ public abstract class Classifier {
     Kryo kryo = initKryo();
     T classifier = (T) kryo.readClassAndObject(kryoInput);
     return classifier;
+  }
+
+
+  private long getGcCount() {
+    long sum = 0;
+    for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
+      long count = b.getCollectionCount();
+      if (count != -1) { sum += count; }
+    }
+    return sum;
+  }
+
+  public long getReallyUsedMemory() {
+    long before = getGcCount();
+    System.gc();
+    while (getGcCount() == before);
+    return getCurrentlyAllocatedMemory();
+  }
+
+  private long getCurrentlyAllocatedMemory() {
+    final Runtime runtime = Runtime.getRuntime();
+    return (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
   }
 
 }

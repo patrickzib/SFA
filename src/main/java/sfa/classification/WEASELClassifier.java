@@ -246,7 +246,7 @@ public class WEASELClassifier extends Classifier {
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
-          System.out.println("Train Dict Size: " + model.dict.size());
+          System.out.println("Train Dict Size: " + model.dict.size() + " Memory: " + getReallyUsedMemory() + " MB");
           int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
           if (correct > maxCorrect) {
@@ -285,7 +285,7 @@ public class WEASELClassifier extends Classifier {
 
       // train liblinear
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
-      System.out.println("Final Dict Size: " + model.dict.size());
+      System.out.println("Final Dict Size: " + model.dict.size() + " Memory: " + getReallyUsedMemory() + " MB");
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
       return new WEASELModel(
