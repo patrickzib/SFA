@@ -2,9 +2,10 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ParallelFor {
 
-  private static int CPUs = Runtime.getRuntime().availableProcessors();
+  private static int CPUs = Math.min(Runtime.getRuntime().availableProcessors(), 40);
   private static ExecutorService executor = Executors.newFixedThreadPool(CPUs);
 
   public interface Each {
@@ -22,10 +23,11 @@ public class ParallelFor {
   public static int withIndex(ExecutorService executor, final int chunksize, final Each body) {
     final CountDownLatch latch = new CountDownLatch(chunksize);
     final AtomicInteger processed = new AtomicInteger(0);
+    LinkedList<Future<?>> futures = new LinkedList<>();
 
     for (int i = 0; i < chunksize; i++) {
       final int ii = i;
-      executor.submit(new Runnable() {
+      futures.add(executor.submit(new Runnable() {
         public void run() {
           try {
             body.run(ii, processed);
@@ -35,13 +37,20 @@ public class ParallelFor {
             latch.countDown();
           }
         }
-      });
+      }));
     }
     try {
       latch.await();
+
+      while (!futures.isEmpty()) {
+        futures.removeFirst().get();
+      }
+
     } catch (InterruptedException e) {
       e.printStackTrace();
-      executor.shutdownNow();
+      //executor.shutdownNow();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 //    finally {
 //      executor.shutdown();

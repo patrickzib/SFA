@@ -769,12 +769,14 @@ public abstract class Classifier {
     long sum = 0;
     for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
       long count = b.getCollectionCount();
-      if (count != -1) { sum += count; }
+      if (count != -1) {
+        sum += count;
+      }
     }
     return sum;
   }
 
-  public long getReallyUsedMemory() {
+  public long getUsedMemory() {
     long before = getGcCount();
     System.gc();
     while (getGcCount() == before);

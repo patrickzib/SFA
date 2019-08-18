@@ -90,16 +90,20 @@ public class WEASEL {
   public int[][][] createWords(final TimeSeries[] samples) {
     // create bag of words for each window queryLength
     final int[][][] words = new int[this.windowLengths.length][samples.length][];
-    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+    int processed = ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int w = 0; w < WEASEL.this.windowLengths.length; w++) {
           if (w % BLOCKS == id) {
             words[w] = createWords(samples, w);
+            processed.incrementAndGet();
           }
         }
-      }
+     }
     });
+    if (processed < WEASEL.this.windowLengths.length) {
+      System.err.println("Processed: " + processed + " < " + WEASEL.this.windowLengths.length + " windowlengths.");
+    }
     return words;
   }
 

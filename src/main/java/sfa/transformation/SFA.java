@@ -370,6 +370,7 @@ public class SFA implements Serializable {
       divideHistogramInformationGain();
     }
 
+    // free memory for orderline
     this.orderLine = null;
 
     return transformedSamples;
