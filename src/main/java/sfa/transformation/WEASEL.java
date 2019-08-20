@@ -190,7 +190,7 @@ public class WEASEL {
     // iterate all samples
     // and create a bag of pattern
     for (int j = 0; j < samples.length; j++) {
-      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length * 6, samples[j].getLabel());
+      bagOfPatterns[j] = new BagOfBigrams(words[0][j].length * 2, samples[j].getLabel());
 
       // create subsequences
       for (int w = 0; w < this.windowLengths.length; w++) {
