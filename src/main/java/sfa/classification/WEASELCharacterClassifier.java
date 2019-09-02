@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.carrotsearch.hppc.cursors.LongIntCursor;
 
@@ -136,6 +137,11 @@ public class WEASELCharacterClassifier extends Classifier {
 
   @Override
   public Double[] predict(TimeSeries[] samples) {
+    final AtomicLong timeCreateWords = new AtomicLong(0);
+    final AtomicLong timeTransform = new AtomicLong(0);
+    final AtomicLong timeBOP = new AtomicLong(0);
+    long time = System.currentTimeMillis();
+
     // iterate each sample to classify
     final BagOfBigrams[] bagTest = new BagOfBigrams[samples.length];
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
@@ -143,16 +149,30 @@ public class WEASELCharacterClassifier extends Classifier {
       public void run(int id, AtomicInteger processed) {
         for (int w = 0; w < model.weasel.windowLengths.length; w++) {
           if (w % BLOCKS == id) {
+            long subTime = System.currentTimeMillis();
             final short[][][] words = model.weasel.createWords(samples, w);
-            final int[][][] intSubwords = model.weasel.transformSubwordsOneWindow(words, w);
+            timeCreateWords.addAndGet(System.currentTimeMillis() - subTime);
 
+            subTime = System.currentTimeMillis();
+            final int[][][] intSubwords = model.weasel.transformSubwordsOneWindow(words, w);
+            timeTransform.addAndGet(System.currentTimeMillis() - subTime);
+
+            subTime = System.currentTimeMillis();
             BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(intSubwords, samples, w, model.features);
             model.weasel.dict.filterChiSquared(bopForWindow);
             mergeBobs(bagTest, bopForWindow);
+            timeBOP.addAndGet(System.currentTimeMillis() - subTime);
           }
         }
       }
     });
+
+    time = System.currentTimeMillis() - time;
+    System.out.println("test_createWords " + (long) (time * (1.0 * timeCreateWords.get() / (timeCreateWords.get() + timeTransform.get() + timeBOP.get()))));
+    System.out.println("test_transformSubwords " + (long) (time * (1.0 * timeTransform.get() / (timeCreateWords.get() + timeTransform.get() + timeBOP.get()))));
+    System.out.println("test_createBOP " + (long) (time * (1.0 * timeBOP.get() / (timeCreateWords.get() + timeTransform.get() + timeBOP.get()))));
+
+    time = System.currentTimeMillis();
 
     FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
     Double[] labels = new Double[samples.length];
@@ -168,6 +188,8 @@ public class WEASELCharacterClassifier extends Classifier {
         }
       }
     });
+
+    System.out.println("test_liblinear " + (System.currentTimeMillis() - time));
 
     return labels;
   }
@@ -230,11 +252,18 @@ public class WEASELCharacterClassifier extends Classifier {
       boolean bestNorm = false;
       subwordTransformer.Parameter bestParam = null;
 
+      long time;
       optimize: for (final boolean mean : NORMALIZATION) {
         int[] windowLengths = getWindowLengths(samples, mean);
         WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, mean, lowerBounding, transformer);
+
+        time = System.currentTimeMillis();
         short[][][][] words = model.createWords(samples);
+        System.out.println("train_createWords " + (System.currentTimeMillis() - time));
+
+        time = System.currentTimeMillis();
         model.setTransformerTrainingWords(words, samples);
+        System.out.println("train_setTrainingWords " + (System.currentTimeMillis() - time));
 
         for (subwordTransformer.Parameter param : transformerParameterList) {
           if (param instanceof CNGParameter) {
@@ -246,7 +275,10 @@ public class WEASELCharacterClassifier extends Classifier {
             if (!(ap.getMinSize() == 2 || ap.getMinSize() == 4))
               continue;
           }
+
+          time = System.currentTimeMillis();
           model.fitSubwords(param);
+          System.out.println("train_fitSubwords " + (System.currentTimeMillis() - time));
 
           for (int f = minF; f <= maxF; f += 2) {
             if (param instanceof CNGParameter) {
@@ -260,6 +292,10 @@ public class WEASELCharacterClassifier extends Classifier {
             }
             model.dict.reset();
 
+            final AtomicLong timeTransform = new AtomicLong(0);
+            final AtomicLong timeBOP = new AtomicLong(0);
+            time = System.currentTimeMillis();
+
             final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
             final int ff = f;
 
@@ -268,17 +304,29 @@ public class WEASELCharacterClassifier extends Classifier {
               public void run(int id, AtomicInteger processed) {
                 for (int w = 0; w < model.windowLengths.length; w++) {
                   if (w % BLOCKS == id) {
+                    long subTime = System.currentTimeMillis();
                     final int[][][] intSubwords = model.transformSubwordsOneWindow(words[w], w);
+                    timeTransform.addAndGet(System.currentTimeMillis() - subTime);
+
+                    subTime = System.currentTimeMillis();
                     BagOfBigrams[] bobForOneWindow = fitOneWindow(samples, model.windowLengths, mean, intSubwords, ff, w);
                     mergeBobs(bop, bobForOneWindow);
+                    timeBOP.addAndGet(System.currentTimeMillis() - subTime);
                   }
                 }
               }
             });
 
+            time = System.currentTimeMillis() - time;
+            System.out.println("train_transformSubwords " + (long) (time * (1.0 * timeTransform.get() / (timeTransform.get() + timeBOP.get()))));
+            System.out.println("train_createBOP " + (long) (time * (1.0 * timeBOP.get() / (timeTransform.get() + timeBOP.get()))));
+
+            time = System.currentTimeMillis();
             // train liblinear
             final Problem problem = initLibLinearProblem(bop, model.dict, bias);
             int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
+
+            System.out.println("train_liblinear " + (System.currentTimeMillis() - time));
 
             System.out.println(correct + " correct with norm=" + mean + ", " + param + ", f=" + f);
 
@@ -300,9 +348,22 @@ public class WEASELCharacterClassifier extends Classifier {
       // obtain the final matrix
       int[] windowLengths = getWindowLengths(samples, bestNorm);
       WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, bestNorm, lowerBounding, transformer);
+
+      time = System.currentTimeMillis();
       short[][][][] words = model.createWords(samples);
+      System.out.println("train_createWords " + (System.currentTimeMillis() - time));
+
+      time = System.currentTimeMillis();
       model.setTransformerTrainingWords(words, samples);
+      System.out.println("train_setTrainingWords " + (System.currentTimeMillis() - time));
+
+      time = System.currentTimeMillis();
       model.fitSubwords(bestParam);
+      System.out.println("train_fitSubwords " + (System.currentTimeMillis() - time));
+
+      final AtomicLong timeTransform = new AtomicLong(0);
+      final AtomicLong timeBOP = new AtomicLong(0);
+      time = System.currentTimeMillis();
 
       final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
       final boolean mean = bestNorm;
@@ -313,17 +374,29 @@ public class WEASELCharacterClassifier extends Classifier {
         public void run(int id, AtomicInteger processed) {
           for (int w = 0; w < model.windowLengths.length; w++) {
             if (w % BLOCKS == id) {
+              long subTime = System.currentTimeMillis();
               final int[][][] intSubwords = model.transformSubwordsOneWindow(words[w], w);
+              timeTransform.addAndGet(System.currentTimeMillis() - subTime);
+
+              subTime = System.currentTimeMillis();
               BagOfBigrams[] bobForOneWindow = fitOneWindow(samples, model.windowLengths, mean, intSubwords, ff, w);
               mergeBobs(bop, bobForOneWindow);
+              timeBOP.addAndGet(System.currentTimeMillis() - subTime);
             }
           }
         }
       });
 
+      time = System.currentTimeMillis() - time;
+      System.out.println("train_transformSubwords " + (long) (time * (1.0 * timeTransform.get() / (timeTransform.get() + timeBOP.get()))));
+      System.out.println("train_createBOP " + (long) (time * (1.0 * timeBOP.get() / (timeTransform.get() + timeBOP.get()))));
+
+      time = System.currentTimeMillis();
       // train liblinear
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+
+      System.out.println("train_liblinear " + (System.currentTimeMillis() - time));
 
       int highestBit = Words.binlog(Integer.highestOneBit(MAX_WINDOW_LENGTH)) + 1;
       byte usedBits = (byte) Words.binlogRoundedUp(transformer.getOutputAlphabetSize());
