@@ -210,7 +210,7 @@ boss.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
 boss.factor = 0.92 	// the best models within this factor are kept for ensembling. default: 0.92
 
 // train the BOSS model
-Score score = boss.fit(trainSamples);
+Classifier.Score score = boss.fit(trainSamples);
 ```
 
 Finally, predict test labels:
@@ -256,7 +256,7 @@ bossvs.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
 bossvs.factor = 0.95 	// the best models within this factor are kept for ensembling. default: 0.95
 
 // train the BOSS VS model
-Score score = bossvs.fit(trainSamples);
+Classifier.Score score = bossvs.fit(trainSamples);
 ```
 
 Finally, predict test labels:
@@ -296,7 +296,7 @@ weasel.maxF   = 6;	// represents the maximal length for training SFA words. defa
 weasel.maxS   = 4; 	// symbols of the discretization alphabet. default: 4.
 
 // train the BOSS VS model
-Score score = weasel.fit(trainSamples);
+Classifier.Score score = weasel.fit(trainSamples);
 ```
 
 Finally, predict test labels:
@@ -346,7 +346,7 @@ SFA.HistogramType[] histTypes = ...; // the binning method(s) to use for discret
 
 
 // train the BOSS VS model
-Score score = muse.fit(trainSamples);
+Classifier.Score score = muse.fit(trainSamples);
 ```
 
 Finally, predict test labels:
@@ -422,7 +422,7 @@ length n. S is typically a constant set to 20, such that a prediction will be ma
 every 5% of the full time series length. */
 TEASERClassifier.S = 20.0;
 
-Score scoreT = t.fit(trainSamples);
+Classifier.Score scoreT = t.fit(trainSamples);
 
 ```
 
