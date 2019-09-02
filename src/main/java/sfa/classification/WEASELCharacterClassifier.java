@@ -19,9 +19,10 @@ import sfa.timeseries.TimeSeries;
 import sfa.transformation.WEASELCharacter;
 import sfa.transformation.WEASELCharacter.BagOfBigrams;
 import sfa.transformation.WEASELCharacter.Dictionary;
-import subwordTransformer.UnsupervisedTransformer;
+import subwordTransformer.SubwordTransformer;
+import subwordTransformer.apriori.AprioriParameter;
+import subwordTransformer.apriori.SupervisedAprioriTransformer;
 import subwordTransformer.cng.CNGParameter;
-import subwordTransformer.cng.CNGTransformer;
 
 /**
  * The WEASEL (Word ExtrAction for time SEries cLassification) classifier as
@@ -50,8 +51,18 @@ public class WEASELCharacterClassifier extends Classifier {
   public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 350;
 
-  public static UnsupervisedTransformer<?> transformer = new CNGTransformer(maxS, true);
-  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(CNGParameter.getParameterList(2, 4, 4, 6, 0.9, 0.9, 1));
+  public static SubwordTransformer<?> transformer = new SupervisedAprioriTransformer(maxS);
+  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(AprioriParameter.getParameterList(2, 4, 0.5, 1, 1));
+
+  // public static SubwordTransformer<?> transformer = new
+  // SupervisedBPETransformer(maxS, true);
+  // public static List<subwordTransformer.Parameter> transformerParameterList =
+  // new ArrayList<>(BPEParameter.getParameterList(0.5, 1, 1));
+
+  // public static SubwordTransformer<?> transformer = new
+  // SupervisedCNGTransformer(maxS, true);
+  // public static List<subwordTransformer.Parameter> transformerParameterList =
+  // new ArrayList<>(CNGParameter.getParameterList(2, 4, 4, 6, 0.5, 1, 1));
 
   // the trained weasel
   WEASELCharacterModel model;
@@ -223,18 +234,30 @@ public class WEASELCharacterClassifier extends Classifier {
         int[] windowLengths = getWindowLengths(samples, mean);
         WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, mean, lowerBounding, transformer);
         short[][][][] words = model.createWords(samples);
-        model.setTransformerTrainingWords(words);
+        model.setTransformerTrainingWords(words, samples);
 
         for (subwordTransformer.Parameter param : transformerParameterList) {
-          // CNGParameter cp = (CNGParameter) param;
-          // if (!((cp.getMinN() == 2 && cp.getMaxN() == 4) || (cp.getMinN() == 4 &&
-          // cp.getMaxN() == 6)))
-          // continue;
+          if (param instanceof CNGParameter) {
+            CNGParameter cp = (CNGParameter) param;
+            if (!((cp.getMinN() == 2 && cp.getMaxN() == 4) || (cp.getMinN() == 4 && cp.getMaxN() == 6)))
+              continue;
+          } else if (param instanceof AprioriParameter) {
+            AprioriParameter ap = (AprioriParameter) param;
+            if (!(ap.getMinSize() == 2 || ap.getMinSize() == 4))
+              continue;
+          }
           model.fitSubwords(param);
 
           for (int f = minF; f <= maxF; f += 2) {
-            // if (cp.getMaxN() != f)
-            // continue;
+            if (param instanceof CNGParameter) {
+              CNGParameter cp = (CNGParameter) param;
+              if (cp.getMaxN() != f)
+                continue;
+            } else if (param instanceof AprioriParameter) {
+              AprioriParameter ap = (AprioriParameter) param;
+              if (ap.getMinSize() != f - 2)
+                continue;
+            }
             model.dict.reset();
 
             final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
@@ -278,7 +301,7 @@ public class WEASELCharacterClassifier extends Classifier {
       int[] windowLengths = getWindowLengths(samples, bestNorm);
       WEASELCharacter model = new WEASELCharacter(maxF, maxS, windowLengths, bestNorm, lowerBounding, transformer);
       short[][][][] words = model.createWords(samples);
-      model.setTransformerTrainingWords(words);
+      model.setTransformerTrainingWords(words, samples);
       model.fitSubwords(bestParam);
 
       final BagOfBigrams[] bop = new BagOfBigrams[samples.length];

@@ -8,13 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.math3.distribution.FDistribution;
-
-import com.carrotsearch.hppc.IntLongHashMap;
 import com.carrotsearch.hppc.LongFloatHashMap;
 import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.LongIntHashMap;
-import com.carrotsearch.hppc.LongLongHashMap;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.cursors.LongFloatCursor;
 import com.carrotsearch.hppc.cursors.LongIntCursor;
@@ -24,6 +20,8 @@ import sfa.classification.ParallelFor;
 import sfa.classification.WEASELCharacterClassifier;
 import sfa.timeseries.TimeSeries;
 import subwordTransformer.Parameter;
+import subwordTransformer.SubwordTransformer;
+import subwordTransformer.SupervisedTransformer;
 import subwordTransformer.UnsupervisedTransformer;
 
 /**
@@ -43,7 +41,8 @@ public class WEASELCharacter {
   public SFA[] signature;
   public Dictionary dict;
 
-  public UnsupervisedTransformer[] transformers;
+  @SuppressWarnings("rawtypes")
+  public SubwordTransformer[] transformers;
   public int outputAlphabetSize;
 
   public final static int BLOCKS;
@@ -84,11 +83,11 @@ public class WEASELCharacter {
     this.signature = new SFA[windowLengths.length];
   }
 
-  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding, UnsupervisedTransformer<? extends Parameter> transformer) {
+  public WEASELCharacter(int maxF, int maxS, int[] windowLengths, boolean normMean, boolean lowerBounding, SubwordTransformer<? extends Parameter> transformer) {
     this(maxF, maxS, windowLengths, normMean, lowerBounding);
-    this.transformers = new UnsupervisedTransformer[windowLengths.length];
+    this.transformers = new SubwordTransformer[windowLengths.length];
     for (int i = 0; i < windowLengths.length; i++) {
-      this.transformers[i] = (UnsupervisedTransformer<?>) transformer.clone();
+      this.transformers[i] = transformer.clone();
     }
     this.outputAlphabetSize = this.transformers[0].getOutputAlphabetSize();
   }
@@ -115,7 +114,7 @@ public class WEASELCharacter {
    * Create SFA words and bigrams for all samples
    *
    * @param samples
-   * @return
+   * @return words
    */
   public short[/* windowLength */][/* sample */][/* offset */][/* character */] createWords(final TimeSeries[] samples) {
     // create bag of words for each window queryLength
@@ -134,10 +133,11 @@ public class WEASELCharacter {
   }
 
   /**
-   * Create SFA words and bigrams for all samples
+   * Create SFA words and bigrams for all samples for one window length
    *
    * @param samples
-   * @return
+   * @param index   window length index
+   * @return words
    */
   public short[][][] createWords(final TimeSeries[] samples, final int index) {
 
@@ -160,29 +160,78 @@ public class WEASELCharacter {
     return words;
   }
 
-  public void setTransformerTrainingWords(short[][][][] words) {
-    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
-      @Override
-      public void run(int id, AtomicInteger processed) {
-        for (int i = 0; i < words.length; i++) {
-          if (i % BLOCKS == id) {
-            List<short[]> wordsList = new ArrayList<>();
-            for (int j = 0; j < words[i].length; j++) {
-              for (int k = 0; k < words[i][j].length; k++) {
-                wordsList.add(words[i][j][k]);
+  /**
+   * Sets the training word for the subword transformer that finds frequent
+   * subwords.
+   * 
+   * @param words
+   * @param samples
+   */
+  public void setTransformerTrainingWords(short[][][][] words, TimeSeries[] samples) {
+    if (this.transformers[0] instanceof UnsupervisedTransformer<?>) {
+      ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+        @Override
+        public void run(int id, AtomicInteger processed) {
+          for (int i = 0; i < words.length; i++) {
+            if (i % BLOCKS == id) {
+              List<short[]> wordsList = new ArrayList<>();
+              for (int j = 0; j < words[i].length; j++) {
+                for (int k = 0; k < words[i][j].length; k++) {
+                  wordsList.add(words[i][j][k]);
+                }
               }
+              short[][] wordsArray = new short[wordsList.size()][];
+              wordsArray = wordsList.toArray(wordsArray);
+              ((UnsupervisedTransformer<?>) WEASELCharacter.this.transformers[i]).setWords(wordsArray);
             }
-            short[][] wordsArray = new short[wordsList.size()][];
-            wordsArray = wordsList.toArray(wordsArray);
-            WEASELCharacter.this.transformers[i].setWords(wordsArray);
           }
         }
-      }
-    });
+      });
+    } else {
+      ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+
+        @Override
+        public void run(int id, AtomicInteger processed) {
+          for (int i = 0; i < words.length; i++) {
+            if (i % BLOCKS == id) {
+              Map<Double, List<short[]>> wordsList = new HashMap<>();
+              for (int j = 0; j < words[i].length; j++) {
+                double label = samples[j].getLabel();
+                List<short[]> list;
+                if (!wordsList.containsKey(label)) {
+                  list = new ArrayList<>();
+                  wordsList.put(label, list);
+                } else {
+                  list = wordsList.get(label);
+                }
+                for (int k = 0; k < words[i][j].length; k++) {
+                  list.add(words[i][j][k]);
+                }
+              }
+              short[][][] wordsArray = new short[wordsList.size()][][];
+              int k = 0;
+              for (List<short[]> classWords : wordsList.values()) {
+                wordsArray[k] = new short[classWords.size()][];
+                wordsArray[k] = classWords.toArray(wordsArray[k]);
+                k++;
+              }
+              ((SupervisedTransformer<?>) WEASELCharacter.this.transformers[i]).setWords(wordsArray);
+            }
+          }
+        }
+
+      });
+    }
   }
 
+  /**
+   * Trains the subwords transformer with the given parameter.
+   * 
+   * @param param
+   */
   public void fitSubwords(Parameter param) {
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @SuppressWarnings("unchecked")
       @Override
       public void run(int id, AtomicInteger processed) {
         for (int i = 0; i < WEASELCharacter.this.transformers.length; i++) {
@@ -195,6 +244,13 @@ public class WEASELCharacter {
     });
   }
 
+  /**
+   * Transforms words into subwords and converts them into integers.
+   * 
+   * @param words
+   * @param w     window length index
+   * @return integer words
+   */
   public int[][][] transformSubwordsOneWindow(short[][][] words, int w) {
     byte neededBits = (byte) Words.binlogRoundedUp(this.outputAlphabetSize);
     int[][][] intWords = new int[words.length][][];
@@ -222,6 +278,12 @@ public class WEASELCharacter {
 
   /**
    * Create words and bi-grams for all window lengths
+   * 
+   * @param wordsForWindowLength
+   * @param samples
+   * @param w                    window length index
+   * @param wordLength
+   * @return bag-of-patterns
    */
   public BagOfBigrams[] createBagOfPatterns(final int[][][] wordsForWindowLength, final TimeSeries[] samples, final int w, // index of used windowSize
       final int wordLength) {
@@ -243,9 +305,12 @@ public class WEASELCharacter {
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
           // add 2 grams
+          // if (subword == wordsForWindowLength[j][offset].length - 1) { // add bigrams
+          // only for non subwords
           int prevOffset = offset - this.windowLengths[w];
           if (prevOffset >= 0) {
             for (int prevSubword = 0; prevSubword < wordsForWindowLength[j][prevOffset].length; prevSubword++) {
+              // int prevSubword = wordsForWindowLength[j][prevOffset].length - 1;
               long prevWord = (wordsForWindowLength[j][prevOffset][prevSubword] & mask);
               if (prevWord != 0) {
                 long newWord = (prevWord << 32 | word);
@@ -261,67 +326,67 @@ public class WEASELCharacter {
     return bagOfPatterns;
   }
 
-  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
-
-    int highestIndex = 0;
-    IntLongHashMap reverseMap = new IntLongHashMap();
-    Map<Double, List<LongLongHashMap>> classes = new HashMap<>();
-    for (int j = 0; j < bob.length; j++) {
-      List<LongLongHashMap> allTs = classes.get(bob[j].label);
-      if (allTs == null) {
-        allTs = new ArrayList<>();
-        classes.put(bob[j].label, allTs);
-      }
-      LongLongHashMap keys = new LongLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
-      for (LongIntCursor word : bob[j].bob) {
-        int index = dict.getWordIndex(word.key);
-        reverseMap.put(index, word.key);
-        keys.put(index, word.value);
-        highestIndex = Math.max(index, highestIndex);
-      }
-      allTs.add(keys);
-    }
-
-    // dense double array
-    highestIndex = highestIndex + 1;
-
-    double nSamples = bob.length;
-    double nClasses = classes.keySet().size();
-
-    double[] f = SFASupervised.getFonewaySparse(highestIndex, classes, nSamples, nClasses);
-
-    final FDistribution fdist = new FDistribution(null, nClasses - 1, nSamples - nClasses);
-    for (int i = 0; i < f.length; i++) {
-      f[i] = 1.0 - fdist.cumulativeProbability(f[i]);
-    }
-
-    // sort by largest f-value
-    @SuppressWarnings("unchecked")
-    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
-    for (int i = 0; i < f.length; i++) {
-      if (!Double.isNaN(f[i]) && f[i] > 0.5) {
-        best.add(new SFASupervised.Indices<>(i, f[i]));
-      }
-    }
-
-    // Collections.sort(best);
-    // best = best.subList(0, (int) Math.min(100, best.size()));
-
-    LongHashSet bestWords = new LongHashSet();
-    for (SFASupervised.Indices<Double> index : best) {
-      bestWords.add(reverseMap.get(index.value.intValue()));
-    }
-
-    for (int j = 0; j < bob.length; j++) {
-      for (LongIntCursor cursor : bob[j].bob) {
-        if (!bestWords.contains(cursor.key)) {
-          bob[j].bob.values[cursor.index] = 0;
-        }
-      }
-
-    }
-
-  }
+//  public void trainAnova(final BagOfBigrams[] bob, double p_value) {
+//
+//    int highestIndex = 0;
+//    IntLongHashMap reverseMap = new IntLongHashMap();
+//    Map<Double, List<LongLongHashMap>> classes = new HashMap<>();
+//    for (int j = 0; j < bob.length; j++) {
+//      List<LongLongHashMap> allTs = classes.get(bob[j].label);
+//      if (allTs == null) {
+//        allTs = new ArrayList<>();
+//        classes.put(bob[j].label, allTs);
+//      }
+//      LongLongHashMap keys = new LongLongHashMap(bob[j].bob.size()); // ugly to copy everything ...
+//      for (LongIntCursor word : bob[j].bob) {
+//        int index = dict.getWordIndex(word.key);
+//        reverseMap.put(index, word.key);
+//        keys.put(index, word.value);
+//        highestIndex = Math.max(index, highestIndex);
+//      }
+//      allTs.add(keys);
+//    }
+//
+//    // dense double array
+//    highestIndex = highestIndex + 1;
+//
+//    double nSamples = bob.length;
+//    double nClasses = classes.keySet().size();
+//
+//    double[] f = SFASupervised.getFonewaySparse(highestIndex, classes, nSamples, nClasses);
+//
+//    final FDistribution fdist = new FDistribution(null, nClasses - 1, nSamples - nClasses);
+//    for (int i = 0; i < f.length; i++) {
+//      f[i] = 1.0 - fdist.cumulativeProbability(f[i]);
+//    }
+//
+//    // sort by largest f-value
+//    @SuppressWarnings("unchecked")
+//    List<SFASupervised.Indices<Double>> best = new ArrayList<>(f.length);
+//    for (int i = 0; i < f.length; i++) {
+//      if (!Double.isNaN(f[i]) && f[i] > 0.5) {
+//        best.add(new SFASupervised.Indices<>(i, f[i]));
+//      }
+//    }
+//
+//    // Collections.sort(best);
+//    // best = best.subList(0, (int) Math.min(100, best.size()));
+//
+//    LongHashSet bestWords = new LongHashSet();
+//    for (SFASupervised.Indices<Double> index : best) {
+//      bestWords.add(reverseMap.get(index.value.intValue()));
+//    }
+//
+//    for (int j = 0; j < bob.length; j++) {
+//      for (LongIntCursor cursor : bob[j].bob) {
+//        if (!bestWords.contains(cursor.key)) {
+//          bob[j].bob.values[cursor.index] = 0;
+//        }
+//      }
+//
+//    }
+//
+//  }
 
   /**
    * Implementation based on:
@@ -380,6 +445,7 @@ public class WEASELCharacter {
         if (newChi > 0 && newChi >= chi_limit && !chiSquare.contains(feature.key)) {
           chiSquare.add(feature.key);
           pvalues.add(new PValueKey(newChi, feature.key));
+
         }
       }
     }

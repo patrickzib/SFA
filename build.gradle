@@ -93,7 +93,9 @@ task fatJar(type: Jar) {
     from { 
         configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }
     }
-    from sourceSets.test.output
+    from sourceSets.test.output 
+    exclude("datasets/**")
+
     with jar    
 }
 

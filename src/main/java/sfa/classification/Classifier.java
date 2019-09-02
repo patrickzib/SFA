@@ -331,7 +331,7 @@ public abstract class Classifier {
   }
 
   public static double formatError(int correct, int testSize) {
-    return Math.round(1000 * (testSize - correct) / (double) (testSize)) / 1000.0;
+    return (testSize - correct) / (double) (testSize);
   }
 
   @SuppressWarnings("static-access")
