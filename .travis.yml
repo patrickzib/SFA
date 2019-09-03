@@ -3,7 +3,7 @@ install: gradle wrapper --gradle-version 5.4
 language: java
 
 jdk:
-  - oraclejdk8
+  - oraclejdk10
 
 dist: trusty
 
