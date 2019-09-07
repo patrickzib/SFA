@@ -22,7 +22,8 @@ import sfa.transformation.WEASELCharacter.BagOfBigrams;
 import sfa.transformation.WEASELCharacter.Dictionary;
 import subwordTransformer.SubwordTransformer;
 import subwordTransformer.apriori.AprioriParameter;
-import subwordTransformer.apriori.SupervisedAprioriTransformer;
+import subwordTransformer.bpe.BPEParameter;
+import subwordTransformer.bpe.SupervisedBPETransformer;
 import subwordTransformer.cng.CNGParameter;
 
 /**
@@ -52,13 +53,13 @@ public class WEASELCharacterClassifier extends Classifier {
   public static int MIN_WINDOW_LENGTH = 2;
   public static int MAX_WINDOW_LENGTH = 350;
 
-  public static SubwordTransformer<?> transformer = new SupervisedAprioriTransformer(maxS);
-  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(AprioriParameter.getParameterList(2, 4, 0.5, 1, 1));
-
   // public static SubwordTransformer<?> transformer = new
-  // SupervisedBPETransformer(maxS, true);
+  // SupervisedAprioriTransformer(maxS);
   // public static List<subwordTransformer.Parameter> transformerParameterList =
-  // new ArrayList<>(BPEParameter.getParameterList(0.5, 1, 1));
+  // new ArrayList<>(AprioriParameter.getParameterList(2, 4, 0.5, 1, 1));
+
+  public static SubwordTransformer<?> transformer = new SupervisedBPETransformer(maxS, true);
+  public static List<subwordTransformer.Parameter> transformerParameterList = new ArrayList<>(BPEParameter.getParameterList(0.8, 1, 1));
 
   // public static SubwordTransformer<?> transformer = new
   // SupervisedCNGTransformer(maxS, true);
@@ -171,6 +172,7 @@ public class WEASELCharacterClassifier extends Classifier {
     System.out.println("test_createWords " + (long) (time * (1.0 * timeCreateWords.get() / (timeCreateWords.get() + timeTransform.get() + timeBOP.get()))));
     System.out.println("test_transformSubwords " + (long) (time * (1.0 * timeTransform.get() / (timeCreateWords.get() + timeTransform.get() + timeBOP.get()))));
     System.out.println("test_createBOP " + (long) (time * (1.0 * timeBOP.get() / (timeCreateWords.get() + timeTransform.get() + timeBOP.get()))));
+    System.out.println("Memory: " + getUsedMemory() + " MB");
 
     time = System.currentTimeMillis();
 
@@ -190,6 +192,7 @@ public class WEASELCharacterClassifier extends Classifier {
     });
 
     System.out.println("test_liblinear " + (System.currentTimeMillis() - time));
+    System.out.println("Memory: " + getUsedMemory() + " MB");
 
     return labels;
   }
@@ -260,10 +263,12 @@ public class WEASELCharacterClassifier extends Classifier {
         time = System.currentTimeMillis();
         short[][][][] words = model.createWords(samples);
         System.out.println("train_createWords " + (System.currentTimeMillis() - time));
+        System.out.println("Memory: " + getUsedMemory() + " MB");
 
         time = System.currentTimeMillis();
         model.setTransformerTrainingWords(words, samples);
         System.out.println("train_setTrainingWords " + (System.currentTimeMillis() - time));
+        System.out.println("Memory: " + getUsedMemory() + " MB");
 
         for (subwordTransformer.Parameter param : transformerParameterList) {
           if (param instanceof CNGParameter) {
@@ -279,6 +284,7 @@ public class WEASELCharacterClassifier extends Classifier {
           time = System.currentTimeMillis();
           model.fitSubwords(param);
           System.out.println("train_fitSubwords " + (System.currentTimeMillis() - time));
+          System.out.println("Memory: " + getUsedMemory() + " MB");
 
           for (int f = minF; f <= maxF; f += 2) {
             if (param instanceof CNGParameter) {
@@ -320,6 +326,7 @@ public class WEASELCharacterClassifier extends Classifier {
             time = System.currentTimeMillis() - time;
             System.out.println("train_transformSubwords " + (long) (time * (1.0 * timeTransform.get() / (timeTransform.get() + timeBOP.get()))));
             System.out.println("train_createBOP " + (long) (time * (1.0 * timeBOP.get() / (timeTransform.get() + timeBOP.get()))));
+            System.out.println("Memory: " + getUsedMemory() + " MB");
 
             time = System.currentTimeMillis();
             // train liblinear
@@ -327,6 +334,7 @@ public class WEASELCharacterClassifier extends Classifier {
             int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
             System.out.println("train_liblinear " + (System.currentTimeMillis() - time));
+            System.out.println("Memory: " + getUsedMemory() + " MB");
 
             System.out.println(correct + " correct with norm=" + mean + ", " + param + ", f=" + f);
 
@@ -352,14 +360,17 @@ public class WEASELCharacterClassifier extends Classifier {
       time = System.currentTimeMillis();
       short[][][][] words = model.createWords(samples);
       System.out.println("train_createWords " + (System.currentTimeMillis() - time));
+      System.out.println("Memory: " + getUsedMemory() + " MB");
 
       time = System.currentTimeMillis();
       model.setTransformerTrainingWords(words, samples);
       System.out.println("train_setTrainingWords " + (System.currentTimeMillis() - time));
+      System.out.println("Memory: " + getUsedMemory() + " MB");
 
       time = System.currentTimeMillis();
       model.fitSubwords(bestParam);
       System.out.println("train_fitSubwords " + (System.currentTimeMillis() - time));
+      System.out.println("Memory: " + getUsedMemory() + " MB");
 
       final AtomicLong timeTransform = new AtomicLong(0);
       final AtomicLong timeBOP = new AtomicLong(0);
@@ -390,6 +401,7 @@ public class WEASELCharacterClassifier extends Classifier {
       time = System.currentTimeMillis() - time;
       System.out.println("train_transformSubwords " + (long) (time * (1.0 * timeTransform.get() / (timeTransform.get() + timeBOP.get()))));
       System.out.println("train_createBOP " + (long) (time * (1.0 * timeBOP.get() / (timeTransform.get() + timeBOP.get()))));
+      System.out.println("Memory: " + getUsedMemory() + " MB");
 
       time = System.currentTimeMillis();
       // train liblinear
@@ -397,6 +409,7 @@ public class WEASELCharacterClassifier extends Classifier {
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
       System.out.println("train_liblinear " + (System.currentTimeMillis() - time));
+      System.out.println("Memory: " + getUsedMemory() + " MB");
 
       int highestBit = Words.binlog(Integer.highestOneBit(MAX_WINDOW_LENGTH)) + 1;
       byte usedBits = (byte) Words.binlogRoundedUp(transformer.getOutputAlphabetSize());
