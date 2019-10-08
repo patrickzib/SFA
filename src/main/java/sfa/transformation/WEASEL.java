@@ -405,14 +405,19 @@ public class WEASEL {
    * Condenses the SFA word space.
    */
   public static class Dictionary {
-    public LongIntHashMap dict;
+    public LongIntHashMap dict; /* stores the ID of each word */
+    public ArrayList<Long> inverseDict; /* map IDs back to words */
 
     public Dictionary() {
       this.dict = new LongIntHashMap();
+      this.inverseDict = new ArrayList<>();
+      this.inverseDict.add(0l); // add dummy
     }
 
     public void reset() {
       this.dict = new LongIntHashMap();
+      this.inverseDict = new ArrayList<>(1);
+      this.inverseDict.add(0l); // add dummy
     }
 
     public int getWordIndex(long word) {
@@ -422,6 +427,10 @@ public class WEASEL {
       } else {
         int newWord = this.dict.size() + 1;
         this.dict.put(word, newWord);
+        inverseDict.add(/*newWord,*/ word);
+//        if (inverseDict.get(newWord) != word) {
+//          System.out.println("Error");
+//        }
         return newWord;
       }
     }
