@@ -128,7 +128,7 @@ public class WEASELClassifier extends Classifier {
 
   public Double[] predict(TimeSeries[] samples) {
 
-    /* // iterate each sample to classify
+    // iterate each sample to classify
     final BagOfBigrams[] bagTest = new BagOfBigrams[samples.length];
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -143,10 +143,6 @@ public class WEASELClassifier extends Classifier {
         }
       }
     });
-    */
-
-    final int[][][] wordsTest = model.weasel.createWords(samples);
-    BagOfBigrams[] bagTest = model.weasel.createBagOfPatterns(wordsTest, samples, model.features);
 
     FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
     Double[] labels = new Double[samples.length];
@@ -169,22 +165,6 @@ public class WEASELClassifier extends Classifier {
   public Predictions predictProbabilities(TimeSeries[] samples) {
     final Double[] labels = new Double[samples.length];
     final double[][] probabilities = new double[samples.length][];
-
-    /* TODO // iterate each sample to classify
-    final BagOfBigrams[] bagTest = new BagOfBigrams[samples.length];
-    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
-      @Override
-      public void run(int id, AtomicInteger processed) {
-        for (int w = 0; w < model.weasel.windowLengths.length; w++) {
-          if (w % BLOCKS == id) {
-            int[][] wordsTest = model.weasel.createWords(samples, w);
-            BagOfBigrams[] bopForWindow = model.weasel.createBagOfPatterns(wordsTest, samples, w, model.features);
-            model.weasel.dict.filterChiSquared(bopForWindow);
-            mergeBobs(bagTest, bopForWindow);
-          }
-        }
-      }
-    });*/
 
     // iterate each sample to classify
     final BagOfBigrams[] bagTest = new BagOfBigrams[samples.length];
@@ -246,8 +226,7 @@ public class WEASELClassifier extends Classifier {
         for (int f = minF; f <= maxF; f += 2) {
           model.dict.reset();
 
-          /*
-            final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
+          final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
           final int ff = f;
 
           ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
@@ -264,10 +243,6 @@ public class WEASELClassifier extends Classifier {
               }
             }
           });
-           */
-
-          BagOfBigrams[] bop = model.createBagOfPatterns(words, samples, f);
-          model.filterChiSquared(bop, chi);
 
           // train liblinear
           final Problem problem = initLibLinearProblem(bop, model.dict, bias);
@@ -289,41 +264,35 @@ public class WEASELClassifier extends Classifier {
       int[] windowLengths = getWindowLengths(samples, bestNorm);
       WEASEL model = new WEASEL(maxF, maxS, windowLengths, bestNorm, lowerBounding);
 
-      /*
-      final BagOfBigrams[] bop = new BagOfBigrams[samples.length];
+      final BagOfBigrams[] bob = new BagOfBigrams[samples.length];
       final boolean mean = bestNorm;
       final int ff = bestF;
+      final int[/* Fensterlänge */][/* Sample */][/* Offset*/] words = model.createWords(samples);
+
       ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
         @Override
         public void run(int id, AtomicInteger processed) {
           for (int w = 0; w < model.windowLengths.length; w++) {
             if (w % BLOCKS == id) {
-              int[][] words = model.createWords(samples, w);
               BagOfBigrams[] bobForOneWindow = fitOneWindow(
                   samples,
                   model.windowLengths, mean,
-                  words, ff, w);
-              mergeBobs(bop, bobForOneWindow);
+                  words[w], ff, w);
+              mergeBobs(bob, bobForOneWindow);
             }
           }
         }
       });
-       */
 
-      int[/* Fensterlänge */][/* Sample */][/* Offset*/] words = model.createWords(samples);
 
       // For Histogram Representation
-      // TODO uncomment if not needed, requires more memory.
       // generate the actual words from the int representation
-      short[/* Fensterlänge */][/* Sample */][/* Offset*/][/* Wortlänge */] wordsSymbols = generateWordFromInt(words);
-
-      BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, bestF);
-      model.filterChiSquared(bob, words, chi);
-      model.dict.remapChi(words);
+      // short[/* Fensterlänge */][/* Sample */][/* Offset*/][/* Wortlänge */] wordsSymbols = generateWordFromInt(words);
 
       // train liblinear
-      Problem problem = initLibLinearProblem(bop, model.dict, bias);
+      Problem problem = initLibLinearProblem(bob, model.dict, bias);
       System.out.println("Final Dict Size: " + model.dict.size() + " Memory: " + getUsedMemory() + " MB");
+      Linear.resetRandom();
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
       Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
@@ -348,9 +317,13 @@ public class WEASELClassifier extends Classifier {
             for (int pos = 0; pos < wordsForOneSample.length; pos++) {  // Offsets
               int word = wordsForOneSample[pos];
 
-              if (word > -1) { // words that were filtered are "-1"
-                double liblinearWeight = weights[word]; // LibLinear Gewicht
+              int index = 0;
+              if ((index = model.dict.getWordIndex(word, false)) > -1) { // words that were filtered are "-1"
+                double liblinearWeight = weights[index]; // LibLinear Gewicht
                 int wordFrequency = sampleBob.bob.get(word);
+
+                // the short representation of the word
+                short[] sfaWord = Words.toShortArray(word, maxF, (byte) Words.binlog(maxS));
 
                 // double timeSeriesValueAtOffset = timeSeriesValues[pos];               // Wert der Zeitreihe an Stelle 'pos'
 
@@ -458,7 +431,7 @@ public class WEASELClassifier extends Classifier {
       ArrayList<FeatureNode> features = new ArrayList<>(bop.bob.size());
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
-          features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
+          features.add(new FeatureNode(dict.getWordIndex(word.key, true), word.value));
         }
       }
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});

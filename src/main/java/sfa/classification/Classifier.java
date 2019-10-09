@@ -402,8 +402,6 @@ public abstract class Classifier {
       fold_start[i] = i * l / nr_fold;
     }
 
-    System.out.println(Arrays.toString(fold_start));
-
     final AtomicInteger correct = new AtomicInteger(0);
 
     final int fold = nr_fold;

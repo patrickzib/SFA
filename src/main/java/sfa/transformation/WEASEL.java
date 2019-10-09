@@ -159,20 +159,19 @@ public class WEASEL {
         long word = (wordsForWindowLength[j][offset] & mask) << highestBit | (long) w;
         bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
-        // add 2 grams
-        if (offset - this.windowLengths[w] >= 0) {
-          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
-          if (prevWord != 0) {
-            long newWord = (prevWord << 32 | word);
-            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
-          }
-        }
+//        // add 2 grams
+//        if (offset - this.windowLengths[w] >= 0) {
+//          long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
+//          if (prevWord != 0) {
+//            long newWord = (prevWord << 32 | word);
+//            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+//          }
+//        }
       }
     }
 
     return bagOfPatterns;
   }
-
 
   /**
    * Create words and bi-grams for all window lengths
@@ -198,14 +197,13 @@ public class WEASEL {
           long word = (words[w][j][offset] & mask) << highestBit | (long) w;
           bagOfPatterns[j].bob.putOrAdd(word, 1, 1);
 
-          // remember new word mapping
-          // words[w][j][offset] = word;
-
 //          // add 2 grams
 //          if (offset - this.windowLengths[w] >= 0) {
-//            long prevWord = this.dict.getWord((words[w][j][offset - this.windowLengths[w]] & mask) << highestBit | (long) w);
-//            int newWord = this.dict.getWord((prevWord << 32 | word ) << highestBit);
-//            bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+//            long prevWord = (words[w][j][offset - this.windowLengths[w]] & mask);
+//            if (prevWord != 0) {
+//              long newWord = (prevWord << 32 | word);
+//              bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
+//            }
 //          }
         }
       }
@@ -377,11 +375,11 @@ public class WEASEL {
       this.inverseDict.add(0l); // add dummy
     }
 
-    public int getWordIndex(long word) {
+    public int getWordIndex(long word, boolean add) {
       int index = 0;
       if ((index = this.dict.indexOf(word)) > -1) {
         return this.dict.indexGet(index);
-      } else {
+      } else if (add) {
         int newWord = this.dict.size() + 1;
         this.dict.put(word, newWord);
         inverseDict.add(/*newWord,*/ word);
@@ -389,6 +387,8 @@ public class WEASEL {
 //          System.out.println("Error");
 //        }
         return newWord;
+      } else {
+        return -1;
       }
     }
 
@@ -414,8 +414,8 @@ public class WEASEL {
         for (int j = 0; j < words[i].length; j++) {
           for (int k = 0; k < words[i][j].length; k++) {
             int index = 0;
-            if ((index = this.dictChi.indexOf(words[i][j][k])) > -1) {
-              words[i][j][k] = this.dictChi.indexGet(index);
+            if ((index = this.dict.indexOf(words[i][j][k])) > -1) {
+              words[i][j][k] = this.dict.indexGet(index);
             }
             else {
               words[i][j][k] = -1;
