@@ -292,10 +292,9 @@ public class WEASELClassifier extends Classifier {
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
       System.out.println("Final Dict Size: " + model.dict.size() + " Memory: " + getUsedMemory() + " MB");
-      Linear.resetRandom();
       de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
 
-      Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
+      // Feature[/* zeitreihe */][/* anzahl features */] features = problem.x;
       double[] weights = linearModel.getFeatureWeights();
       System.out.println(Arrays.toString(weights));
 
