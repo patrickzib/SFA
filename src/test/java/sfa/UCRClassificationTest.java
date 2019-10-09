@@ -18,7 +18,8 @@ public class UCRClassificationTest {
   // The datasets to use
   public static String[] datasets = new String[]{
           "Coffee", "Beef", "CBF",
-          "ECG200", "FaceFour", "OliveOil",
+          "ECG200",
+          "FaceFour", "OliveOil",
           "Gun_Point",
           "DiatomSizeReduction",
           "ECGFiveDays",
@@ -87,6 +88,10 @@ public class UCRClassificationTest {
                 "Please download datasets from [http://www.cs.ucr.edu/~eamonn/time_series_data/].");
       }
     }
+  }
 
+  public static void main(String[] args) throws IOException {
+    UCRClassificationTest ucr = new UCRClassificationTest();
+    ucr.testUCRClassification();
   }
 }

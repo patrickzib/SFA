@@ -2,6 +2,8 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.transformation;
 
+import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.*;
 import sfa.timeseries.TimeSeries;
 
 import java.util.*;
@@ -116,10 +118,6 @@ public class SFASupervised extends SFA {
     double nSamples = transformedSignal.length;
     double nClasses = classes.keySet().size();
 
-//    int length = 0;
-//    for (int i = 0; i < transformedSignal.length; i++) {
-//      length = Math.max(transformedSignal[i].length, length);
-//    }
     int length = (transformedSignal != null && transformedSignal.length > 0) ? transformedSignal[0].length : 0;
 
     double[] f = getFoneway(length, classes, nSamples, nClasses);
@@ -205,7 +203,7 @@ public class SFASupervised extends SFA {
       ssbn[i] -= square_of_sums_alldata[i] / nSamples;
     }
 
-    double dfbn = nClasses - 1;                       // degrees of freedom between
+    double dfbn = nClasses - 1;                     // degrees of freedom between
     double dfwn = nSamples - nClasses;              // degrees of freedom within
     double[] msb = new double[ss_alldata.length];   // variance (mean square) between classes
     double[] msw = new double[ss_alldata.length];   // variance (mean square) within samples
@@ -217,6 +215,106 @@ public class SFASupervised extends SFA {
       msw[i] = sswn[i] / dfwn;
       f[i] = msb[i] / msw[i];
     }
+    return f;
+  }
+
+  /**
+   * The one-way ANOVA tests the null hypothesis that 2 or more groups have
+   * the same population mean. The test is applied to samples from two or
+   * more groups, possibly with differing sizes.
+   *
+   * @param classes
+   * @param nSamples
+   * @param nClasses
+   * @return
+   */
+  public static LongDoubleHashMap getFonewaySparse(
+      Map<Double, List<LongIntHashMap>> classes,
+      double nSamples,
+      double nClasses) {
+
+    //double[] ss_alldata = new double[length];
+    LongLongHashMap ss_alldata = new LongLongHashMap();
+    HashMap<Double, LongLongHashMap> sums_args = new HashMap<>();
+
+    for (Entry<Double, List<LongIntHashMap>> allTs : classes.entrySet()) {
+      LongLongHashMap sums = new LongLongHashMap();
+      sums_args.put(allTs.getKey(), sums);
+
+      for (LongIntHashMap ts : allTs.getValue()) {
+        for (LongIntCursor cursor : ts) {
+          long key = cursor.key;
+          long value = cursor.value; // count
+          ss_alldata.putOrAdd(key,  value * value, value * value);
+          sums.putOrAdd(key, value, value);
+        }
+      }
+    }
+
+    LongLongHashMap square_of_sums_alldata = new LongLongHashMap();
+    Map<Double, LongLongHashMap> square_of_sums_args = new HashMap<>();
+    for (Entry<Double, LongLongHashMap> sums : sums_args.entrySet()) {
+      for (LongLongCursor cursor : sums.getValue()) {
+        square_of_sums_alldata.putOrAdd(cursor.key, cursor.value, cursor.value);
+      }
+
+      LongLongHashMap squares = new LongLongHashMap();
+      square_of_sums_args.put(sums.getKey(), squares);
+
+      for (LongLongCursor cursor : sums.getValue()) {
+        squares.put(cursor.key, cursor.value*cursor.value);
+      }
+    }
+
+    for (LongLongCursor cursor : square_of_sums_alldata) {
+      square_of_sums_alldata.put(cursor.key, cursor.value*cursor.value);
+    }
+
+    LongDoubleHashMap sstot = new LongDoubleHashMap(ss_alldata.size());
+    for (LongLongCursor cursor : ss_alldata) {
+      sstot.put(cursor.key, cursor.value - square_of_sums_alldata.get(cursor.key) / nSamples);
+    }
+
+    LongDoubleHashMap ssbn = new LongDoubleHashMap(ss_alldata.size());    // sum of squares between
+    LongDoubleHashMap sswn = new LongDoubleHashMap(ss_alldata.size());    // sum of squares within
+
+    for (Entry<Double, LongLongHashMap> sums : square_of_sums_args.entrySet()) {
+      double n_samples_per_class = classes.get(sums.getKey()).size();
+      for (LongLongCursor cursor : sums.getValue()) {
+        double value = cursor.value / n_samples_per_class;
+        ssbn.putOrAdd(cursor.key, value, value);
+      }
+    }
+
+    for (LongLongCursor cursor : square_of_sums_alldata) {
+      double value = - cursor.value / nSamples;
+      ssbn.putOrAdd(cursor.key, value, value);
+    }
+
+    double dfbn = nClasses - 1;                     // degrees of freedom between
+    double dfwn = nSamples - nClasses;              // degrees of freedom within
+
+    LongDoubleHashMap msb = new LongDoubleHashMap(ss_alldata.size());   // variance (mean square) between classes
+    LongDoubleHashMap msw = new LongDoubleHashMap(ss_alldata.size());   // variance (mean square) within samples
+    LongDoubleHashMap f = new LongDoubleHashMap(ss_alldata.size());     // f-ratio
+
+    for (LongDoubleCursor cursor : sstot) {
+      sswn.put(cursor.key, cursor.value - ssbn.get(cursor.key));
+    }
+
+    for (LongDoubleCursor cursor : ssbn) {
+      msb.put(cursor.key, cursor.value / dfbn);
+    }
+
+    for (LongDoubleCursor cursor : sswn) {
+      msw.put(cursor.key, cursor.value / dfwn);
+    }
+
+    for (LongDoubleCursor cursor : msw) {
+      double value = cursor.value != 0 ? msb.get(cursor.key) / cursor.value : 0.0;
+      f.put(cursor.key, value);
+    }
+
     return f;
   }
 

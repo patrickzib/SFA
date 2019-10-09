@@ -4,6 +4,7 @@ package sfa.classification;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
 
+import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -172,13 +173,20 @@ public class MUSEClassifier extends Classifier {
       for (final SFA.HistogramType histType : histTypes) {
         for (final boolean mean : NORMALIZATION) {
           int[] windowLengths = getWindowLengths(samples, mean);
-          final MUSE model = new MUSE(maxF, maxS, histType, windowLengths, mean, lowerBounding);
-          final int[][][] words = model.createWords(samples);
-          for (int f = minF; f <= maxF; f += 2) {
 
-            model.dict.reset();
-            MUSE.BagOfBigrams[] bag = model.createBagOfPatterns(words, samples, dimensionality, f);
-            model.filterChiSquared(bag, chi);
+          for (int f = minF; f <= maxF; f += 2) {
+            final MUSE model = new MUSE(f, maxS, histType, windowLengths, mean, lowerBounding);
+            MUSE.BagOfBigrams[] bag = null;
+
+            for (int w = 0; w < model.windowLengths.length; w++) {
+              int[][] words = model.createWords(samples, w);
+              MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+                  samples,
+                  windowLengths, mean, histType,
+                  model,
+                  words, f, dimensionality, w);
+              bag = mergeBobs(bag, bobForOneWindow);
+            }
 
             // train liblinear
             final Problem problem = initLibLinearProblem(bag, model.dict, bias);
@@ -205,9 +213,19 @@ public class MUSEClassifier extends Classifier {
 
       // obtain the final matrix
       MUSE model = new MUSE(bestF, maxS, bestHistType, windowLengths, bestNorm, lowerBounding);
-      int[][][] words = model.createWords(samples);
-      MUSE.BagOfBigrams[] bob = model.createBagOfPatterns(words, samples, dimensionality, bestF);
-      model.filterChiSquared(bob, chi);
+      MUSE.BagOfBigrams[] bob = null;
+
+      for (int w = 0; w < model.windowLengths.length; w++) {
+        int[][] words = model.createWords(samples, w);
+
+        MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+            samples,
+            windowLengths, bestNorm, bestHistType,
+            model,
+            words,
+            bestF, dimensionality, w);
+        bob = mergeBobs(bob, bobForOneWindow);
+      }
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
@@ -232,6 +250,36 @@ public class MUSEClassifier extends Classifier {
     return null;
   }
 
+  private MUSE.BagOfBigrams[] fitOneWindow(
+      MultiVariateTimeSeries[] samples,
+      int[] windowLengths, boolean mean,
+      SFA.HistogramType histType,
+      MUSE model,
+      int[][] word, int f, int dimensionality, int w) {
+    MUSE modelForWindow = new MUSE(f, maxS, histType, windowLengths, mean, lowerBounding);
+
+    MUSE.BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, dimensionality, f);
+    modelForWindow.filterChiSquared(bopForWindow, chi);
+
+    // now, merge dicts
+    model.dict.dictChi.putAll(modelForWindow.dict.dictChi);
+
+    return bopForWindow;
+  }
+
+  private MUSE.BagOfBigrams[] mergeBobs(
+      MUSE.BagOfBigrams[] bop,
+      MUSE.BagOfBigrams[] bopForWindow) {
+    if (bop == null) {
+      bop = bopForWindow;
+    } else {
+      for (int i = 0; i < bop.length; i++) {
+        bop[i].bob.putAll(bopForWindow[i].bob);
+      }
+    }
+    return bop;
+  }
+
   public int[] getWindowLengths(final MultiVariateTimeSeries[] samples, boolean norm) {
     int min = norm && MIN_WINDOW_LENGTH<=2? Math.max(3,MIN_WINDOW_LENGTH) : MIN_WINDOW_LENGTH;
     int max = getMax(samples, MAX_WINDOW_LENGTH);
@@ -245,16 +293,18 @@ public class MUSEClassifier extends Classifier {
   public Double[] predict(final MultiVariateTimeSeries[] samples) {
     // iterate each sample to classify
     int dimensionality = samples[0].getDimensions();
-    final int[][][] wordsTest = model.muse.createWords(samples);
-    MUSE.BagOfBigrams[] bagTest = model.muse.createBagOfPatterns(wordsTest, samples, dimensionality, model.features);
 
-    // chi square changes key mappings => remap
-    model.muse.dict.remap(bagTest);
+    MUSE.BagOfBigrams[] bagTest = null;
+    for (int w = 0; w < model.muse.windowLengths.length; w++) {
+      int[][] wordsTest = model.muse.createWords(samples, w);
+      MUSE.BagOfBigrams[] bopForWindow = model.muse.createBagOfPatterns(wordsTest, samples, w, dimensionality, model.features);
+      model.muse.dict.filterChiSquared(bopForWindow);
+      bagTest = mergeBobs(bagTest, bopForWindow);
+    }
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.linearModel.getNrFeature());
+    FeatureNode[][] features = initLibLinear(bagTest, model.muse.dict);
 
     Double[] labels = new Double[samples.length];
-
     for (int ind = 0; ind < features.length; ind++) {
       double label = Linear.predict(model.linearModel, features[ind]);
       labels[ind] = label;
@@ -269,13 +319,13 @@ public class MUSEClassifier extends Classifier {
 
     Problem problem = new Problem();
     problem.bias = bias;
-    problem.n = dict.size() + 1;
     problem.y = getLabels(bob);
 
-    final FeatureNode[][] features = initLibLinear(bob, problem.n);
+    final FeatureNode[][] features = initLibLinear(bob, dict);
+
+    problem.n = dict.size() + 1;
     problem.l = features.length;
     problem.x = features;
-
     return problem;
   }
 
@@ -287,14 +337,17 @@ public class MUSEClassifier extends Classifier {
     return labels;
   }
 
-  protected static FeatureNode[][] initLibLinear(final MUSE.BagOfBigrams[] bob, int max_feature) {
+  protected static FeatureNode[][] initLibLinear(
+      final MUSE.BagOfBigrams[] bob,
+      final MUSE.Dictionary dict) {
+
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
       MUSE.BagOfBigrams bop = bob[j];
       ArrayList<FeatureNode> features = new ArrayList<FeatureNode>(bop.bob.size());
-      for (IntIntCursor word : bop.bob) {
-        if (word.value > 0 && word.key <= max_feature) {
-          features.add(new FeatureNode(word.key, word.value));
+      for (ObjectIntCursor<MUSE.MuseWord> word : bop.bob) {
+        if (word.value > 0 ) {
+          features.add(new FeatureNode(dict.getWordChi(word.key), word.value));
         }
       }
 

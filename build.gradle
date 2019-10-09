@@ -7,12 +7,13 @@
  */
 
 plugins {
-  id 'com.gradle.build-scan' version '1.16'
+  id 'com.gradle.build-scan' version '2.2.1'
 }
 
 buildScan {
-  licenseAgreementUrl = 'https://gradle.com/terms-of-service'
-  licenseAgree = 'yes'
+  termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+  termsOfServiceAgree = 'yes'
+  publishAlways()
 }
 
 // Apply the java plugin to add support for Java
@@ -31,7 +32,7 @@ apply plugin: 'application'
 apply plugin: 'maven-publish'
 
 group = 'sfa'
-version = '0.1'
+version = '0.2'
 // In this section you declare where to find the dependencies of your project
 repositories {
     // Use jcenter for resolving your dependencies.
@@ -45,7 +46,7 @@ publishing {
         maven(MavenPublication) {
             groupId 'com.github.patrickzib'
             artifactId 'sfa'
-            version '0.1'
+            version '0.2'
             from components.java
         }
     }
@@ -55,7 +56,7 @@ dependencies {
     // multithreaded FFT
     compile 'com.github.wendykierp:JTransforms:3.1'
     // liblinear in java
-    compile 'de.bwaldvogel:liblinear:2.20'
+    compile 'de.bwaldvogel:liblinear:2.30'
     // efficient collection implementation without "object boxing"
     compile 'com.carrotsearch:hppc:0.7.2'
     // java serialiser
@@ -63,9 +64,14 @@ dependencies {
     // libSVM in java
     compile "tw.edu.ntu.csie:libsvm:3.17"
 
+    // commons.math
+    compile "org.apache.commons:commons-math3:3.5"
+
+
     compile 'junit:junit:4.12'
     testCompile 'junit:junit:4.12'
 }
+
 
 test {
   testLogging {
@@ -74,6 +80,20 @@ test {
   dependsOn 'cleanTest'
 }
 
-// Define the main class for the application
-mainClassName = 'src/sfa/test/UCRClassification'
 
+task fatJar(type: Jar) {
+    // dependsOn test
+    manifest {attributes 'Main-Class': "sfa.UCRClassificationTest"}
+    baseName = 'sfa_fat'    
+    from { 
+        configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    from sourceSets.test.output 
+    exclude("datasets/**")
+    
+    with jar    
+}
+
+
+// Define the main class for the application
+mainClassName = 'src/sfa/test/UCRClassificationTest'
