@@ -407,22 +407,5 @@ public class WEASEL {
         }
       }
     }
-
-    // TODO needed????
-    public void remapChi(int[][][] words) {
-      for (int i = 0; i < words.length; i++) {
-        for (int j = 0; j < words[i].length; j++) {
-          for (int k = 0; k < words[i][j].length; k++) {
-            int index = 0;
-            if ((index = this.dict.indexOf(words[i][j][k])) > -1) {
-              words[i][j][k] = this.dict.indexGet(index);
-            }
-            else {
-              words[i][j][k] = -1;
-            }
-          }
-        }
-      }
-    }
   }
 }
