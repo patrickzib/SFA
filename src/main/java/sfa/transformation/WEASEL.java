@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class WEASEL {
 
+  public static final int WORD_LIMIT = 1000;
   public int alphabetSize;
   public int maxF;
 
@@ -248,11 +249,130 @@ public class WEASEL {
     }
   }
 
+  public LongHashSet trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+    // Chi2 Test
+    LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
+    DoubleIntHashMap classProb = new DoubleIntHashMap(10);
+    DoubleObjectHashMap<LongIntHashMap> observed = new DoubleObjectHashMap<>();
+
+    // count number of samples with this word
+    for (BagOfBigrams bagOfPattern : bob) {
+      long label = bagOfPattern.label.longValue();
+      int index = -1;
+      LongIntHashMap obs = null;
+      if ((index = observed.indexOf(label)) > -1) {
+        obs = observed.indexGet(index);
+      } else {
+        obs = new LongIntHashMap();
+        observed.put(label, obs);
+      }
+
+      for (LongIntCursor word : bagOfPattern.bob) {
+        if (word.value > 0) {
+          featureCount.putOrAdd(word.key, 1,1); //word.value, word.value);
+
+          // count observations per class for this feature
+          obs.putOrAdd(word.key, 1,1); //word.value, word.value);
+        }
+      }
+    }
+
+    // samples per class
+    for (BagOfBigrams bagOfPattern : bob) {
+      long label = bagOfPattern.label.longValue();
+      classProb.putOrAdd(label, 1, 1);
+    }
+
+    // p_value-squared: observed minus expected occurrence
+    LongDoubleHashMap chiSquareSum = new LongDoubleHashMap(featureCount.size());
+
+    // chi-squared: observed minus expected occurrence
+    LongHashSet chiSquare = new LongHashSet(featureCount.size());
+    ArrayList<PValueKey> values = new ArrayList<PValueKey>(featureCount.size());
+
+    for (DoubleIntCursor prob : classProb) {
+      double p = ((double)prob.value) / bob.length;
+      LongIntHashMap obs = observed.get(prob.key);
+
+      for (LongIntCursor feature : featureCount) {
+        double expected = p * feature.value;
+        double chi = obs.get(feature.key) - expected;
+        double newChi = chi * chi / expected;
+
+        if (newChi >= 0) {
+          chiSquareSum.putOrAdd(feature.key, newChi, newChi);
+        }
+      }
+    }
+
+    for (LongDoubleCursor feature : chiSquareSum) {
+      double newChi = feature.value;
+      if (newChi >= 2) {
+        chiSquare.add(feature.key);
+        values.add(new PValueKey(newChi, feature.key));
+      }
+    }
+
+    // limit number of features per window size to avoid excessive features
+    int limit = WORD_LIMIT;
+    if (values.size() > limit) {
+      // sort by p_value-squared value
+      Collections.sort(values, new Comparator<PValueKey>() {
+        @Override
+        public int compare(PValueKey o1, PValueKey o2) {
+          int comp = Double.compare(o2.pvalue, o1.pvalue);
+          if (comp != 0) { // tie breaker
+            return comp;
+          }
+          return Long.compare(o1.key, o2.key);
+        }
+      });
+
+      chiSquare.clear();
+
+      // use 1000 unigrams and 1000 bigrams
+      int countUnigram = 0;
+      int countBigram = 0;
+      for (int i = 0; i < values.size(); i++) {
+        // bigram?
+        long val = values.get(i).key;
+        if (val > (1l << 32) && countBigram < limit) {
+          chiSquare.add(val);
+          countBigram++;
+        }
+        // unigram?
+        else if (val < (1l << 32) && countUnigram < limit){
+          chiSquare.add(val);
+          countUnigram++;
+        }
+
+        if (countUnigram >= limit && countBigram >= limit) {
+          break;
+        }
+      }
+    }
+
+    // remove values
+    for (int j = 0; j < bob.length; j++) {
+      LongIntHashMap oldMap = bob[j].bob;
+      bob[j].bob = new LongIntHashMap();
+      for (LongIntCursor cursor : oldMap) {
+        if (chiSquare.contains(cursor.key)) {
+          bob[j].bob.put(cursor.key, cursor.value);
+        }
+      }
+      oldMap.clear();
+    }
+
+    return chiSquare;
+  }
+
+
   /**
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public void trainChiSquared(final BagOfBigrams[] bob, double p_limit) {
+  public void trainChiSquared_new(final BagOfBigrams[] bob, double p_limit) {
     // Chi2 Test
     LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
     DoubleIntHashMap classProb = new DoubleIntHashMap(10);
@@ -332,7 +452,7 @@ public class WEASEL {
     }
 
     // limit number of features per window size to avoid excessive features
-    int limit = 100;
+    int limit = WORD_LIMIT;
     if (values.size() > limit) {
       // sort by p_value-squared value
       Collections.sort(values, new Comparator<PValueKey>() {
@@ -348,8 +468,7 @@ public class WEASEL {
 
       chiSquare.clear();
 
-
-      // use 100 unigrams and 100 bigrams
+      // use 1000 unigrams and 1000 bigrams
       int countUnigram = 0;
       int countBigram = 0;
       for (int i = 0; i < values.size(); i++) {
