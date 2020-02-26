@@ -29,7 +29,7 @@ public class WEASELClassifier extends Classifier {
 
   public static SolverType solverType = SolverType.L2R_LR_DUAL;
 
-  public static double p_value = 0.1;
+  public static double chi = 2;
   public static double bias = 1;
   public static double p = 0.1;
   public static int iterations = 5000;
@@ -88,7 +88,7 @@ public class WEASELClassifier extends Classifier {
 
     // training score
     if (DEBUG) {
-      System.out.println(score.toString());
+      System.out.println("WEASEL Training:\t");
       outputResult(score.training, startTime, trainSamples.length);
     }
 
@@ -144,7 +144,7 @@ public class WEASELClassifier extends Classifier {
       }
     });
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
+    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict, false);
     Double[] labels = new Double[samples.length];
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
@@ -182,7 +182,7 @@ public class WEASELClassifier extends Classifier {
       }
     });
 
-    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict);
+    FeatureNode[][] features = initLibLinear(bagTest, model.weasel.dict, false);
 
     ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
       @Override
@@ -316,8 +316,7 @@ public class WEASELClassifier extends Classifier {
       int w) {
     WEASEL modelForWindow = new WEASEL(f, maxS, windowLengths, mean, lowerBounding);
     BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, f);
-    modelForWindow.trainChiSquared(bopForWindow, p_value);
-    //modelForWindow.trainAnova(bopForWindow, p_value);
+    modelForWindow.trainChiSquared(bopForWindow, chi);
     return bopForWindow;
   }
 
@@ -345,7 +344,7 @@ public class WEASELClassifier extends Classifier {
     problem.bias = bias;
     problem.y = getLabels(bob);
 
-    final FeatureNode[][] features = initLibLinear(bob, dict);
+    final FeatureNode[][] features = initLibLinear(bob, dict, true);
 
     problem.n = dict.size() + 1;
     problem.l = features.length;
@@ -355,7 +354,8 @@ public class WEASELClassifier extends Classifier {
 
   protected static FeatureNode[][] initLibLinear(
       final BagOfBigrams[] bob,
-      final Dictionary dict) {
+      final Dictionary dict,
+      final boolean normScale) {
 
     FeatureNode[][] featuresTrain = new FeatureNode[bob.length][];
     for (int j = 0; j < bob.length; j++) {
@@ -364,8 +364,14 @@ public class WEASELClassifier extends Classifier {
       for (LongIntCursor word : bop.bob) {
         if (word.value > 0) {
           features.add(new FeatureNode(dict.getWordIndex(word.key), word.value));
+
+//          long key = 1 << 62 | word.key;
+//          long key2 = 1 << 61 | word.key;
+//          features.add(new FeatureNode(dict.getWordIndex(key), word.value*word.value)); // x^2 features
+//          features.add(new FeatureNode(dict.getWordIndex(key2), word.value*word.value*word.value)); // x^3 features
         }
       }
+
       FeatureNode[] featuresArray = features.toArray(new FeatureNode[]{});
       Arrays.parallelSort(featuresArray, new Comparator<FeatureNode>() {
         public int compare(FeatureNode o1, FeatureNode o2) {
@@ -374,6 +380,29 @@ public class WEASELClassifier extends Classifier {
       });
       featuresTrain[j] = featuresArray;
     }
+
+
+//    if (normScale) {
+//      dict.maxValues = new double[dict.dict.size()+1];
+//      //double[] minValues = new double[dict.dict.size()];
+//      //Arrays.fill(minValues, Double.MAX_VALUE);
+//      for (int i = 0; i < featuresTrain.length; i++) {
+//        for (int j = 0; j < featuresTrain[i].length; j++) {
+//          //minValues[featuresTrain[i][j].index] = Math.min(featuresTrain[i][j].value, minValues[featuresTrain[i][j].index]);
+//          dict.maxValues[featuresTrain[i][j].index] = Math.max(featuresTrain[i][j].value, dict.maxValues[featuresTrain[i][j].index]);
+//        }
+//      }
+//    }
+//
+//    // norm by maximum
+//    for (int i = 0; i < featuresTrain.length; i++) {
+//      for (int j = 0; j < featuresTrain[i].length; j++) {
+//        //double minValue = minValues[featuresTrain[i][j].index];
+//        double maxValue = dict.maxValues[featuresTrain[i][j].index];
+//        featuresTrain[i][j].value = featuresTrain[i][j].value / maxValue;
+//      }
+//    }
+
     return featuresTrain;
   }
 

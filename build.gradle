@@ -83,7 +83,7 @@ test {
 
 task fatJar(type: Jar) {
     // dependsOn test
-    manifest {attributes 'Main-Class': "sfa.UCRClassificationTest"}
+    manifest {attributes 'Main-Class': "sfa.EarlyClassificationTest"}
     baseName = 'sfa_fat'    
     from { 
         configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }

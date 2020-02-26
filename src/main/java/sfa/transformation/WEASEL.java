@@ -150,6 +150,7 @@ public class WEASEL {
     final long mask = (1L << (usedBits * wordLength)) - 1L;
     int highestBit = Words.binlog(Integer.highestOneBit(WEASELClassifier.MAX_WINDOW_LENGTH))+1;
 
+    //long maxBit = 0;
     // iterate all samples
     // and create a bag of pattern
     for (int j = 0; j < samples.length; j++) {
@@ -165,12 +166,14 @@ public class WEASEL {
           long prevWord = (wordsForWindowLength[j][offset - this.windowLengths[w]] & mask);
           if (prevWord != 0) {
             long newWord = (prevWord << 32 | word);
+            //maxBit = Math.max(maxBit, Long.highestOneBit(newWord));
             bagOfPatterns[j].bob.putOrAdd(newWord, 1, 1);
           }
         }
       }
     }
 
+    //System.out.println(maxBit);
     return bagOfPatterns;
   }
 
@@ -212,41 +215,6 @@ public class WEASEL {
     }
 
     return bagOfPatterns;
-  }
-
-  public static void trainAnova(final BagOfBigrams[] bob, double p_value) {
-    Map<Double, List<LongIntHashMap>> classes = new HashMap<>();
-    for (int j = 0; j < bob.length; j++) {
-      List<LongIntHashMap> allTs = classes.get(bob[j].label);
-      if (allTs == null) {
-        allTs = new ArrayList<>();
-        classes.put(bob[j].label, allTs);
-      }
-      allTs.add(bob[j].bob);
-    }
-
-    double nSamples = bob.length;
-    double nClasses = classes.keySet().size();
-
-    LongDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
-
-    final FDistribution fdist = new FDistribution(null, nClasses-1, nSamples - nClasses);
-
-    LongHashSet bestWords = new LongHashSet();
-    for (LongDoubleCursor cursor : fstat) {
-      double score = 1.0 - fdist.cumulativeProbability(cursor.value);
-      if (!Double.isNaN(cursor.value) && score < 0.01) {
-        bestWords.add(cursor.key);
-      }
-    }
-
-    for (int j = 0; j < bob.length; j++) {
-      for (LongIntCursor cursor : bob[j].bob) {
-        if (!bestWords.contains(cursor.key)) {
-          bob[j].bob.values[cursor.index] = 0;
-        }
-      }
-    }
   }
 
   public LongHashSet trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
@@ -299,7 +267,7 @@ public class WEASEL {
         double chi = obs.get(feature.key) - expected;
         double newChi = chi * chi / expected;
 
-        if (newChi >= 0) {
+        if (newChi >= chi_limit) {
           chiSquareSum.putOrAdd(feature.key, newChi, newChi);
         }
       }
@@ -367,142 +335,6 @@ public class WEASEL {
     return chiSquare;
   }
 
-
-  /**
-   * Implementation based on:
-   * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
-   */
-  public void trainChiSquared_new(final BagOfBigrams[] bob, double p_limit) {
-    // Chi2 Test
-    LongIntHashMap featureCount = new LongIntHashMap(bob[0].bob.size());
-    DoubleIntHashMap classProb = new DoubleIntHashMap(10);
-    DoubleObjectHashMap<LongIntHashMap> observed = new DoubleObjectHashMap<>();
-
-    // count number of samples with this word
-    for (BagOfBigrams bagOfPattern : bob) {
-      double label = bagOfPattern.label;
-
-      int index = -1;
-      LongIntHashMap obs = null;
-      if ((index = observed.indexOf(label)) > -1) {
-        obs = observed.indexGet(index);
-      } else {
-        obs = new LongIntHashMap();
-        observed.put(label, obs);
-      }
-
-      for (LongIntCursor word : bagOfPattern.bob) {
-        if (word.value > 0) {
-          featureCount.putOrAdd(word.key, 1,1); //word.value, word.value);
-
-          // count observations per class for this feature
-          obs.putOrAdd(word.key, 1,1); //word.value, word.value);
-        }
-      }
-    }
-
-    // samples per class
-    for (BagOfBigrams bagOfPattern : bob) {
-      double label = bagOfPattern.label;
-      classProb.putOrAdd(label, 1, 1);
-    }
-
-    // p_value-squared: observed minus expected occurrence
-    LongDoubleHashMap chiSquareSum = new LongDoubleHashMap(featureCount.size());
-
-    for (DoubleIntCursor prob : classProb) {
-      double p = ((double)prob.value) / bob.length;
-      LongIntHashMap obs = observed.get(prob.key);
-
-      for (LongIntCursor feature : featureCount) {
-        double expected = p * feature.value;
-
-        double chi = obs.get(feature.key) - expected;
-        double newChi = chi * chi / expected;
-
-        if (newChi > 0) {
-          // build the sum among p_value-values of all classes
-          chiSquareSum.putOrAdd(feature.key, newChi, newChi);
-
-          // Alternatively: compute the max among p_value-values of all classes
-//          int index = 0;
-//          if ((index = chiSquareSum.indexOf(feature.key)) > -1) {
-//            double oldChi = chiSquareSum.indexGet(index);
-//            chiSquareSum.indexReplace(index, Math.max(newChi, oldChi));
-//          } else {
-//            chiSquareSum.put(feature.key, newChi);
-//          }
-        }
-      }
-    }
-
-    LongHashSet chiSquare = new LongHashSet(featureCount.size());
-    ArrayList<PValueKey> values = new ArrayList<PValueKey>(featureCount.size());
-    final ChiSquaredDistribution distribution
-        = new ChiSquaredDistribution(null, classProb.keys().size()-1);
-
-    for (LongDoubleCursor feature : chiSquareSum) {
-      double newChi = feature.value;
-      double pvalue = 1.0 - distribution.cumulativeProbability(newChi);
-      if (pvalue <= p_limit) {
-        //System.out.println(newChi + " " + pvalue);
-        chiSquare.add(feature.key);
-        values.add(new PValueKey(pvalue, feature.key));
-      }
-    }
-
-    // limit number of features per window size to avoid excessive features
-    int limit = WORD_LIMIT;
-    if (values.size() > limit) {
-      // sort by p_value-squared value
-      Collections.sort(values, new Comparator<PValueKey>() {
-        @Override
-        public int compare(PValueKey o1, PValueKey o2) {
-          int comp = Double.compare(o1.pvalue, o2.pvalue);
-          if (comp != 0) { // tie breaker
-            return comp;
-          }
-          return Long.compare(o1.key, o2.key);
-        }
-      });
-
-      chiSquare.clear();
-
-      // use 1000 unigrams and 1000 bigrams
-      int countUnigram = 0;
-      int countBigram = 0;
-      for (int i = 0; i < values.size(); i++) {
-        // bigram?
-        long val = values.get(i).key;
-        if (val > (1l << 32) && countBigram < limit) {
-          chiSquare.add(val);
-          countBigram++;
-        }
-        // unigram?
-        else if (val < (1l << 32) && countUnigram < limit){
-          chiSquare.add(val);
-          countUnigram++;
-        }
-
-        if (countUnigram >= limit && countBigram >= limit) {
-          break;
-        }
-      }
-    }
-
-    // remove values
-    for (int j = 0; j < bob.length; j++) {
-      LongIntHashMap oldMap = bob[j].bob;
-      bob[j].bob = new LongIntHashMap();
-      for (LongIntCursor cursor : oldMap) {
-        if (chiSquare.contains(cursor.key)) {
-          bob[j].bob.put(cursor.key, cursor.value);
-        }
-      }
-      oldMap.clear();
-    }
-  }
-
   static class PValueKey {
     public double pvalue;
     public long key;
@@ -527,6 +359,8 @@ public class WEASEL {
     public LongIntHashMap dict; /* stores the ID of each word */
     public ArrayList<Long> inverseDict; /* map IDs back to words */
 
+    public double[] maxValues;
+
     public Dictionary() {
       this.dict = new LongIntHashMap();
       this.inverseDict = new ArrayList<>();
@@ -537,6 +371,7 @@ public class WEASEL {
       this.dict = new LongIntHashMap();
       this.inverseDict = new ArrayList<>(1);
       this.inverseDict.add(0l); // add dummy
+      this.maxValues = null;
     }
 
     public int getWordIndex(long word) {
@@ -547,9 +382,6 @@ public class WEASEL {
         int newWord = this.dict.size() + 1;
         this.dict.put(word, newWord);
         inverseDict.add(/*newWord,*/ word);
-//        if (inverseDict.get(newWord) != word) {
-//          System.out.println("Error");
-//        }
         return newWord;
       }
     }
