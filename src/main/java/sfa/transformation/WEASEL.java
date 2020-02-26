@@ -214,40 +214,40 @@ public class WEASEL {
     return bagOfPatterns;
   }
 
-  public static void trainAnova(final BagOfBigrams[] bob, double p_value) {
-    Map<Double, List<LongIntHashMap>> classes = new HashMap<>();
-    for (int j = 0; j < bob.length; j++) {
-      List<LongIntHashMap> allTs = classes.get(bob[j].label);
-      if (allTs == null) {
-        allTs = new ArrayList<>();
-        classes.put(bob[j].label, allTs);
-      }
-      allTs.add(bob[j].bob);
-    }
-
-    double nSamples = bob.length;
-    double nClasses = classes.keySet().size();
-
-    LongDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
-
-    final FDistribution fdist = new FDistribution(null, nClasses-1, nSamples - nClasses);
-
-    LongHashSet bestWords = new LongHashSet();
-    for (LongDoubleCursor cursor : fstat) {
-      double score = 1.0 - fdist.cumulativeProbability(cursor.value);
-      if (!Double.isNaN(cursor.value) && score < 0.01) {
-        bestWords.add(cursor.key);
-      }
-    }
-
-    for (int j = 0; j < bob.length; j++) {
-      for (LongIntCursor cursor : bob[j].bob) {
-        if (!bestWords.contains(cursor.key)) {
-          bob[j].bob.values[cursor.index] = 0;
-        }
-      }
-    }
-  }
+//  public static void trainAnova(final BagOfBigrams[] bob, double p_value) {
+//    Map<Double, List<LongIntHashMap>> classes = new HashMap<>();
+//    for (int j = 0; j < bob.length; j++) {
+//      List<LongIntHashMap> allTs = classes.get(bob[j].label);
+//      if (allTs == null) {
+//        allTs = new ArrayList<>();
+//        classes.put(bob[j].label, allTs);
+//      }
+//      allTs.add(bob[j].bob);
+//    }
+//
+//    double nSamples = bob.length;
+//    double nClasses = classes.keySet().size();
+//
+//    LongDoubleHashMap fstat = SFASupervised.getFonewaySparse(classes, nSamples, nClasses);
+//
+//    final FDistribution fdist = new FDistribution(null, nClasses-1, nSamples - nClasses);
+//
+//    LongHashSet bestWords = new LongHashSet();
+//    for (LongDoubleCursor cursor : fstat) {
+//      double score = 1.0 - fdist.cumulativeProbability(cursor.value);
+//      if (!Double.isNaN(cursor.value) && score < 0.01) {
+//        bestWords.add(cursor.key);
+//      }
+//    }
+//
+//    for (int j = 0; j < bob.length; j++) {
+//      for (LongIntCursor cursor : bob[j].bob) {
+//        if (!bestWords.contains(cursor.key)) {
+//          bob[j].bob.values[cursor.index] = 0;
+//        }
+//      }
+//    }
+//  }
 
   public LongHashSet trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi2 Test
@@ -299,7 +299,7 @@ public class WEASEL {
         double chi = obs.get(feature.key) - expected;
         double newChi = chi * chi / expected;
 
-        if (newChi >= 0) {
+        if (newChi >= chi_limit) {
           chiSquareSum.putOrAdd(feature.key, newChi, newChi);
         }
       }
