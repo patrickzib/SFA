@@ -2,8 +2,6 @@
 // Distributed under the GLP 3.0 (See accompanying file LICENSE)
 package sfa.classification;
 
-import com.carrotsearch.hppc.cursors.IntIntCursor;
-
 import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
@@ -259,7 +257,7 @@ public class MUSEClassifier extends Classifier {
     MUSE modelForWindow = new MUSE(f, maxS, histType, windowLengths, mean, lowerBounding);
 
     MUSE.BagOfBigrams[] bopForWindow = modelForWindow.createBagOfPatterns(word, samples, w, dimensionality, f);
-    modelForWindow.filterChiSquared(bopForWindow, chi);
+    modelForWindow.trainChiSquared(bopForWindow, chi);
 
     // now, merge dicts
     model.dict.dictChi.putAll(modelForWindow.dict.dictChi);

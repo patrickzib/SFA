@@ -183,51 +183,51 @@ public class MUSE {
   }
 
 
-  /**
-   * Create words and bi-grams for all window lengths
-   */
-  public BagOfBigrams[] createBagOfPatterns(
-      final int[][][] words,
-      final MultiVariateTimeSeries[] samples,
-      final int dimensionality,
-      final int wordLength) {
-    List<BagOfBigrams> bagOfPatterns = new ArrayList<BagOfBigrams>(
-        samples[0].getDimensions() * samples.length);
-
-    final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
-    final int mask = (1 << (usedBits * wordLength)) - 1;
-
-    // iterate all samples and create a muse model for each
-    for (int i = 0, j = 0; i < samples.length; i++, j += dimensionality) {
-      BagOfBigrams bop = new BagOfBigrams(100, samples[i].getLabel());
-
-      // create subsequences
-      for (int w = 0; w < this.windowLengths.length; w++) {
-        if (this.windowLengths[w] >= wordLength) {
-          for (int dim = 0; dim < dimensionality; dim++) {
-            for (int offset = 0; offset < words[w][j + dim].length; offset++) {
-              MuseWord word = new MuseWord(w, dim, words[w][j + dim][offset] & mask, 0);
-              //int dict = this.dict.getWord(word);
-              bop.bob.putOrAdd(word, 1, 1);
-
-              // add bigrams
-              if (this.windowLengths[this.windowLengths.length-1] < 200 // avoid for large datasets
-                  && MUSEClassifier.BIGRAMS 
-                  && (offset - this.windowLengths[w] >= 0)) {
-                MuseWord bigram = new MuseWord(w, dim,
-                    (words[w][j + dim][offset - this.windowLengths[w]] & mask),
-                    words[w][j + dim][offset] & mask);
-                //int newWord = this.dict.getWord(bigram);
-                bop.bob.putOrAdd(bigram, 1, 1);
-              }
-            }
-          }
-        }
-      }
-      bagOfPatterns.add(bop);
-    }
-    return bagOfPatterns.toArray(new BagOfBigrams[]{});
-  }
+//  /**
+//   * Create words and bi-grams for all window lengths
+//   */
+//  public BagOfBigrams[] createBagOfPatterns(
+//      final int[][][] words,
+//      final MultiVariateTimeSeries[] samples,
+//      final int dimensionality,
+//      final int wordLength) {
+//    List<BagOfBigrams> bagOfPatterns = new ArrayList<BagOfBigrams>(
+//        samples[0].getDimensions() * samples.length);
+//
+//    final byte usedBits = (byte) Classifier.Words.binlog(this.alphabetSize);
+//    final int mask = (1 << (usedBits * wordLength)) - 1;
+//
+//    // iterate all samples and create a muse model for each
+//    for (int i = 0, j = 0; i < samples.length; i++, j += dimensionality) {
+//      BagOfBigrams bop = new BagOfBigrams(100, samples[i].getLabel());
+//
+//      // create subsequences
+//      for (int w = 0; w < this.windowLengths.length; w++) {
+//        if (this.windowLengths[w] >= wordLength) {
+//          for (int dim = 0; dim < dimensionality; dim++) {
+//            for (int offset = 0; offset < words[w][j + dim].length; offset++) {
+//              MuseWord word = new MuseWord(w, dim, words[w][j + dim][offset] & mask, 0);
+//              //int dict = this.dict.getWord(word);
+//              bop.bob.putOrAdd(word, 1, 1);
+//
+//              // add bigrams
+//              if (this.windowLengths[this.windowLengths.length-1] < 200 // avoid for large datasets
+//                  && MUSEClassifier.BIGRAMS
+//                  && (offset - this.windowLengths[w] >= 0)) {
+//                MuseWord bigram = new MuseWord(w, dim,
+//                    (words[w][j + dim][offset - this.windowLengths[w]] & mask),
+//                    words[w][j + dim][offset] & mask);
+//                //int newWord = this.dict.getWord(bigram);
+//                bop.bob.putOrAdd(bigram, 1, 1);
+//              }
+//            }
+//          }
+//        }
+//      }
+//      bagOfPatterns.add(bop);
+//    }
+//    return bagOfPatterns.toArray(new BagOfBigrams[]{});
+//  }
 
   /**
    * Create words and bi-grams for all window lengths
@@ -278,7 +278,7 @@ public class MUSE {
    * Implementation based on:
    * https://github.com/scikit-learn/scikit-learn/blob/c957249/sklearn/feature_selection/univariate_selection.py#L170
    */
-  public void filterChiSquared(final BagOfBigrams[] bob, double chi_limit) {
+  public void trainChiSquared(final BagOfBigrams[] bob, double chi_limit) {
     // Chi^2 Test
     ObjectIntHashMap<MuseWord> featureCount = new ObjectIntHashMap<>(bob[0].bob.size());
     LongDoubleHashMap classProb = new LongDoubleHashMap(10);
@@ -304,7 +304,7 @@ public class MUSE {
       classProb.putOrAdd(label, 1, 1);
     }
 
-    // p_value-squared: observed minus expected occurrence
+    // chi-squared: observed minus expected occurrence
     ObjectHashSet<MuseWord> chiSquare = new ObjectHashSet<>(featureCount.size());
     for (LongDoubleCursor classLabel : classProb) {
       classLabel.value /= (double) bob.length;

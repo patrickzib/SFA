@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class WEASEL {
 
-  public static final int WORD_LIMIT = 1000;
+  public static int WORD_LIMIT = 1000;
   public int alphabetSize;
   public int maxF;
 
@@ -284,7 +284,7 @@ public class WEASEL {
     }
 
     // p_value-squared: observed minus expected occurrence
-    LongDoubleHashMap chiSquareSum = new LongDoubleHashMap(featureCount.size());
+    //LongDoubleHashMap chiSquareSum = new LongDoubleHashMap(featureCount.size());
 
     // chi-squared: observed minus expected occurrence
     LongHashSet chiSquare = new LongHashSet(featureCount.size());
@@ -299,19 +299,24 @@ public class WEASEL {
         double chi = obs.get(feature.key) - expected;
         double newChi = chi * chi / expected;
 
-        if (newChi >= chi_limit) {
-          chiSquareSum.putOrAdd(feature.key, newChi, newChi);
+        if (newChi >= chi_limit
+            && !chiSquare.contains(feature.key)) {
+          chiSquare.add(feature.key);
+          values.add(new PValueKey(newChi, feature.key));
         }
+        //if (newChi > 0) {
+        //  chiSquareSum.putOrAdd(feature.key, newChi, newChi);
+        //}
       }
     }
 
-    for (LongDoubleCursor feature : chiSquareSum) {
-      double newChi = feature.value;
-      if (newChi >= 2) {
-        chiSquare.add(feature.key);
-        values.add(new PValueKey(newChi, feature.key));
-      }
-    }
+//    for (LongDoubleCursor feature : chiSquareSum) {
+//      double newChi = feature.value;
+//      if (newChi >= chi_limit) {
+//        chiSquare.add(feature.key);
+//        values.add(new PValueKey(newChi, feature.key));
+//      }
+//    }
 
     // limit number of features per window size to avoid excessive features
     int limit = WORD_LIMIT;

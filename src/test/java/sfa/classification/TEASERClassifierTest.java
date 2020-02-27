@@ -1,5 +1,7 @@
 package sfa.classification;
 
+import sfa.transformation.WEASEL;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +13,7 @@ public class TEASERClassifierTest extends AbstractClassifierTest{
 
         List<DataSet> dataSets=new ArrayList<>();
         //variable_length;TEASER;
-        dataSets.add(new DataSet("variable_length", 0.964, 0.929, 0.333));
+        dataSets.add(new DataSet("variable_length", 0.964, 0.929, 0.39));
         //Coffee;TEASER;
         dataSets.add(new DataSet("Coffee", 1.0, 1.0, 0.47));
         //CBF;TEASER;
