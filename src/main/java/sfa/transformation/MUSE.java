@@ -149,7 +149,7 @@ public class MUSE {
     return words;
   }
 
-  public class MuseWord {
+  public static class MuseWord {
     int w = 0;
     int dim = 0;
     int word = 0;
@@ -339,13 +339,18 @@ public class MUSE {
    */
   public static class Dictionary {
     public ObjectIntHashMap<MuseWord> dictChi;
+    public ArrayList<MuseWord> inverseDict; /* map IDs back to words */
 
     public Dictionary() {
       this.dictChi = new ObjectIntHashMap<MuseWord>();
+      this.inverseDict = new ArrayList<>();
+      this.inverseDict.add(new MUSE.MuseWord(0, 0, 0, 0)); // add dummy
     }
 
     public void reset() {
       this.dictChi = new ObjectIntHashMap<MuseWord>();
+      this.inverseDict = new ArrayList<>();
+      this.inverseDict.add(new MUSE.MuseWord(0, 0, 0, 0)); // add dummy
     }
 
     public int getWordChi(MuseWord word) {
@@ -355,6 +360,7 @@ public class MUSE {
       } else {
         int newWord = this.dictChi.size() + 1;
         this.dictChi.put(word, newWord);
+        inverseDict.add(/*newWord,*/ word);
         return newWord;
       }
     }
