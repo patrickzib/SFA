@@ -6,10 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import com.carrotsearch.hppc.DoubleArrayList;
 
@@ -83,6 +80,90 @@ public class TimeSeriesLoader {
 
     System.out.println("Done reading from " + dataset.getName() + " samples " + samples.size() + " queryLength " + samples.get(0).getLength());
     return samples.toArray(new TimeSeries[]{});
+  }
+
+  /**
+   * Loads datasets from the novel UCR dataset archive in ARFF format
+   * @param dataset
+   * @param name
+   * @param classMapping mapping from classes as strings to numbers
+   * @param derivatives
+   * @return
+   */
+  public static MultiVariateTimeSeries[] loadMultivariateDatsetArff(
+      File dataset,
+      String name,
+      Map<String, Double> classMapping,
+      boolean derivatives) {
+    List<MultiVariateTimeSeries> samples = new ArrayList<>();
+    List<Double>[] mts = null;
+    long length = 0;
+    try {
+      try (BufferedReader br = new BufferedReader(new FileReader(dataset))) {
+        String line = null;
+        Double label = null;
+
+        while ((line = br.readLine()) != null) {
+          // ignore arff specific-attributes
+          if (line.contains("@") || line.contains("%") || line.isEmpty()) {
+            continue;
+          }
+
+          line = line.replaceAll("\\\\n", ";");
+
+          String labelStr = line.substring(line.lastIndexOf(",")+1, line.length());
+          try {
+            label = Double.valueOf(labelStr);
+          } catch (NumberFormatException nfe) {
+            String key = name + "_" + labelStr;
+            if (classMapping.containsKey(key)) {
+              label = classMapping.get(key);
+            }
+            else {
+              label = (double) classMapping.size()+1.0;
+              System.out.println("Novel class mapping: " + label + "<->" + labelStr);
+              classMapping.put(key, label);
+            }
+          }
+
+          // remove label and escaping
+          line = line.substring(1, line.lastIndexOf(",")-1);
+
+          String[] dimensions = line.split(";");
+          mts = new ArrayList[dimensions.length];
+          for (int i = 0; i < mts.length; i++) {
+            mts[i] = new ArrayList<>();
+          }
+
+          int id = 0;
+          for (String dimension : dimensions) {
+            for (String dim : dimension.split(",")) {
+              try {
+                if (!dim.equals("?")) { // missing values are encoded by '?'
+                  double d = Double.parseDouble(dim);
+                  mts[id].add(d);
+                  length++;
+                }
+              } catch (NumberFormatException nfe) {
+                nfe.printStackTrace();
+              }
+            }
+            id++;
+          }
+
+          addMTS(samples, mts, label);
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    System.out.println("Done reading from " + dataset
+        + " samples " + samples.size()
+        + " dimensions " + samples.get(0).getDimensions());
+
+    MultiVariateTimeSeries[] m = samples.toArray(new MultiVariateTimeSeries[]{});
+    return (derivatives)? getDerivatives(m) : m;
   }
 
   public static MultiVariateTimeSeries[] loadMultivariateDatset(
