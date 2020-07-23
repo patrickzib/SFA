@@ -720,7 +720,7 @@ public class SFATrie implements Serializable {
   /**
    * Euclidean distance between a window in raw ts and the query q
    */
-  protected double getEuclideanDistance(
+  protected static double getEuclideanDistance(
       double[] tsData,
       TimeSeries q,
       double meanTs,

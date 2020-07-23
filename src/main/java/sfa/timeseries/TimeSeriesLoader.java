@@ -268,6 +268,11 @@ public class TimeSeriesLoader {
               value = value.trim();
               if (isNonEmptyColumn(value)) {
                 data.add(Double.parseDouble(value));
+
+                // only read one dimension
+                //if (dataSetConfig.stopAfterFirstDimension()) {
+                  break;
+                //}
               }
             } catch (NumberFormatException nfe) {
               // Parse-Exception ignored
