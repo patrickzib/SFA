@@ -198,10 +198,10 @@ public class TightnessOfLowerBounds {
     }
     System.out.println();
 
-    for (int c = 0; c < tightnessOfLowerBounds[0][0].length; c++) {
+    for (int c = startCoeff, a = 0; c <= endCoeff; c*=2, a++) {
       System.out.print(c);
       for (int i=0; i < representations.length; i++) {
-        System.out.print("\t"+(Math.round(1000.0*avgTightnessOfLowerBounds[i][c] / tightnessOfLowerBounds.length)/1000.0));
+        System.out.print("\t"+(Math.round(1000.0*avgTightnessOfLowerBounds[i][a] / tightnessOfLowerBounds.length)/1000.0));
       }
       System.out.println("");
     }
