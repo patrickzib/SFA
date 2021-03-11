@@ -216,7 +216,7 @@ public class BOSSEnsembleClassifier extends Classifier {
                 }
 
                 // update nearest neighbor
-                if (distance != noMatchDistance && distance < minDistance) {
+                if (distance != noMatchDistance && distance < minDistance && distance > 0) {
                   minDistance = distance;
                   p.labels[i] = bagOfPatternsTrainSamples[j].label;
                 }

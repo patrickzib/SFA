@@ -336,4 +336,18 @@ public class SFASupervised extends SFA {
       return "(" + this.index + ":" + this.value + ")";
     }
   }
+
+  public void printBins() {
+    System.out.print("[");
+    for (int bestIndex : this.bestValues) {
+      double[] element = this.bins[bestIndex];
+      System.out.print("-Inf\t");
+      for (double element2 : element) {
+        String e = element2 != Double.MAX_VALUE ? ("" + element2) : "Inf";
+        System.out.print("," + e + "\t");
+      }
+      System.out.println(";");
+    }
+    System.out.println("]");
+  }
 }

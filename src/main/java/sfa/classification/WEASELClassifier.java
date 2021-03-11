@@ -31,7 +31,7 @@ public class WEASELClassifier extends Classifier {
 
   public static double chi = 2;
   public static double bias = 1;
-  public static double p = 0.1;
+  public static double eps = 0.1;
   public static int iterations = 5000;
   public static double c = 1;
 
@@ -249,7 +249,7 @@ public class WEASELClassifier extends Classifier {
 
           if (DEBUG)
             System.out.println("Train Dict Size: " + model.dict.size() + " Memory: " + getUsedMemory() + " MB");
-          int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
+          int correct = trainLibLinear(problem, solverType, c, iterations, eps, folds);
 
           if (correct > maxCorrect) {
             maxCorrect = correct;
@@ -289,7 +289,7 @@ public class WEASELClassifier extends Classifier {
       Problem problem = initLibLinearProblem(bop, model.dict, bias);
       if (DEBUG)
         System.out.println("Final Dict Size: " + model.dict.size() + " Memory: " + getUsedMemory() + " MB");
-      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, eps));
 
       return new WEASELModel(
           bestNorm,

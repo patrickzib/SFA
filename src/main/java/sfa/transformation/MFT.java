@@ -10,6 +10,7 @@ import sfa.timeseries.TimeSeries;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * The Momentary Fourier Transform is alternative algorithm of
@@ -145,7 +146,7 @@ public class MFT /*extends Approximation*/ implements Serializable {
         this.fft.realForward(dft);
         dft[1] = 0; // DC-coefficient imag part
 
-        // if windowSize > mftData.queryLength, the remaining data should be 0 now.
+        // if windowSize > mftData.length, the remaining data should be 0 now.
         System.arraycopy(dft, 0, mftData, 0, Math.min(mftData.length, dft.length));
       }
 
