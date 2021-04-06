@@ -438,9 +438,13 @@ public class SFA implements Serializable {
     for (int i = 0; i < this.bins.length; i++) {
       // Divide into equi-depth intervals
       double depth = this.orderLine[i].size() / (double) (this.alphabetSize);
-      for (int pos = 0; pos < alphabetSize-1; pos++) {
-        int offset = (int) Math.floor(depth * (pos + 1));
-        this.bins[i][pos] = this.orderLine[i].get(offset).value;
+      int pos = 0;
+      long count = 0;
+      for (ValueLabel value : this.orderLine[i]) {
+        if (++count > Math.ceil(depth * (pos + 1))
+            && (pos == 0 || this.bins[i][pos - 1] != value.value)) {
+          this.bins[i][pos++] = value.value;
+        }
       }
     }
   }
