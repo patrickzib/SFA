@@ -12,7 +12,7 @@ public class WEASELClassifierTest extends AbstractClassifierTest{
         //Coffee;Weasel;1.0;1.0
         dataSets.add(new DataSet("Coffee", 1.0, 1.0));
         //Beef;Weasel;0.933;0.833
-        dataSets.add(new DataSet("Beef", 0.967, 0.8));
+        dataSets.add(new DataSet("Beef", 0.9, 0.8));
         //CBF;Weasel;0.967;0.993
         dataSets.add(new DataSet("CBF", 0.967, 0.998));
 
