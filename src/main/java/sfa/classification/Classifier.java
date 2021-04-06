@@ -490,16 +490,9 @@ public abstract class Classifier {
               ++k;
             }
             final svm_model submodel = mySVM.get().svm_train(subprob, param);
-            ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
-              @Override
-              public void run(int id, AtomicInteger processed) {
-                for (int j = begin; j < end; j++) {
-                  if (j % BLOCKS == id) {
-                    target[perm[j]] = mySVM.get().svm_predict(submodel, prob.x[perm[j]]);
-                  }
-                }
-              }
-            });
+            for (int j = begin; j < end; j++) {
+                target[perm[j]] = mySVM.get().svm_predict(submodel, prob.x[perm[j]]);
+            }
           }
         }
       }
