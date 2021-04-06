@@ -62,8 +62,13 @@ public class NewMTSArchiveClassificationTest {
       // the relative path to the datasets
       ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-      File dir = new File(classLoader.getResource("datasets/Multivariate_arff/").getFile());
+      File dir = new File(classLoader.getResource("datasets/multivariate_arff/").getFile());
       //File dir = new File("/Users/bzcschae/Downloads/Multivariate_arff/");
+
+      if (!dir.exists()) {
+        System.out.println("Datasets could not be found: " + dir.getAbsolutePath() + ".");
+        System.exit(-1);
+      }
 
       TimeSeries.APPLY_Z_NORM = false;
 
@@ -95,6 +100,8 @@ public class NewMTSArchiveClassificationTest {
           System.out.println("Dataset could not be found: " + d.getAbsolutePath() + ".");
         }
       }
+    } catch (Exception e) {
+      e.printStackTrace();
     } finally {
       TimeSeries.APPLY_Z_NORM = true; // FIXME static variable breaks some test cases!
     }

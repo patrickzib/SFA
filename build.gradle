@@ -6,9 +6,6 @@
  * user guide available at https://docs.gradle.org/4.0.2/userguide/tutorial_java_projects.html
  */
 
-plugins {
-  id 'com.gradle.build-scan' version '2.2.1'
-}
 
 buildScan {
   termsOfServiceUrl = 'https://gradle.com/terms-of-service'

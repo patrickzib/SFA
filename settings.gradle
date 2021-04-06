@@ -14,5 +14,9 @@ include 'shared'
 include 'api'
 include 'services:webservice'
 */
+plugins {
+    id "com.gradle.enterprise" version "3.6"
+}
 
 rootProject.name = 'sfa'
+

@@ -439,7 +439,7 @@ public class SFA implements Serializable {
       // Divide into equi-depth intervals
       double depth = this.orderLine[i].size() / (double) (this.alphabetSize);
       for (int pos = 0; pos < alphabetSize-1; pos++) {
-        int offset = (int) Math.ceil(depth * (pos + 1));
+        int offset = (int) Math.floor(depth * (pos + 1));
         this.bins[i][pos] = this.orderLine[i].get(offset).value;
       }
     }
