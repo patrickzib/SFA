@@ -51,22 +51,22 @@ publishing {
 
 dependencies {
     // multithreaded FFT
-    compile 'com.github.wendykierp:JTransforms:3.1'
+    implementation 'com.github.wendykierp:JTransforms:3.1'
     // liblinear in java
-    compile 'de.bwaldvogel:liblinear:2.30'
+    implementation 'de.bwaldvogel:liblinear:2.30'
     // efficient collection implementation without "object boxing"
-    compile 'com.carrotsearch:hppc:0.7.2'
+    implementation 'com.carrotsearch:hppc:0.7.2'
     // java serialiser
-    compile 'com.esotericsoftware:kryo:4.0.1'
+    implementation 'com.esotericsoftware:kryo:4.0.1'
     // libSVM in java
-    compile "tw.edu.ntu.csie:libsvm:3.17"
+    implementation "tw.edu.ntu.csie:libsvm:3.17"
 
     // commons.math
-    compile "org.apache.commons:commons-math3:3.5"
+    implementation "org.apache.commons:commons-math3:3.5"
 
 
-    compile 'junit:junit:4.12'
-    testCompile 'junit:junit:4.12'
+    implementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
 }
 
 
