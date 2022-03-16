@@ -98,7 +98,7 @@ public class WEASELClassifier extends Classifier {
     if (DEBUG) {
       System.out.println("WEASEL Testing:\t");
       outputResult(correctTesting, startTime, testSamples.length);
-      System.out.println("");
+      System.out.println(" ");
     }
 
     return new Score(
@@ -380,7 +380,7 @@ public class WEASELClassifier extends Classifier {
   protected static double[] getLabels(final BagOfBigrams[] bagOfPatternsTestSamples) {
     double[] labels = new double[bagOfPatternsTestSamples.length];
     for (int i = 0; i < bagOfPatternsTestSamples.length; i++) {
-      labels[i] = Double.valueOf(bagOfPatternsTestSamples[i].label);
+      labels[i] = bagOfPatternsTestSamples[i].label;
     }
     return labels;
   }

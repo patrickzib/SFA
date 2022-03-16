@@ -1,8 +1,5 @@
 package sfa.classification;
 
-import sfa.timeseries.TimeSeries;
-import sfa.transformation.WEASEL;
-
 import java.util.ArrayList;
 import java.util.List;
 

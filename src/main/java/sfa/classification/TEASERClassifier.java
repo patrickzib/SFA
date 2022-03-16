@@ -67,7 +67,7 @@ public class TEASERClassifier extends Classifier {
   }
 
 
-  class OffsetPrediction {
+  static class OffsetPrediction {
     double offset;
     Double[] labels;
     int correct;
@@ -86,11 +86,10 @@ public class TEASERClassifier extends Classifier {
 
     @Override
     public String toString() {
-      return new StringBuffer(
+      return
           "Avg. Offset\t" + this.offset
               + "\tacc: " + String.format("%.02f", ((double) getCorrect()) / this.N)
-              + "\tearliness: " + String.format("%.02f", this.offset / this.N)
-      ).toString();
+              + "\tearliness: " + String.format("%.02f", this.offset / this.N);
     }
 
   }

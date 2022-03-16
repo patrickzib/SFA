@@ -8,7 +8,6 @@ import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.MUSE;
 import sfa.transformation.SFA;
-import sfa.transformation.WEASEL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,7 +125,7 @@ public class MUSEClassifier extends Classifier {
     if (DEBUG) {
       System.out.println("WEASEL+MUSE Testing:\t");
       outputResult(correctTesting, startTime, testSamples.length);
-      System.out.println("");
+      System.out.println(" ");
     }
 
     return new Score(
