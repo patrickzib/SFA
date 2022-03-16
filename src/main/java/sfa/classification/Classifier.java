@@ -623,6 +623,14 @@ public abstract class Classifier {
     return windows.toArray(new Integer[]{});
   }
 
+  protected int getMax(MultiVariateTimeSeries[] samples, int maxWindowSize) {
+    int max = 0;
+    for (MultiVariateTimeSeries ts : samples) {
+      max = Math.max(ts.getLength(), max);
+    }
+    return Math.min(maxWindowSize,max);
+  }
+
   protected int getMax(TimeSeries[] samples, int maxWindowSize) {
     int max = 0;
     for (TimeSeries ts : samples) {

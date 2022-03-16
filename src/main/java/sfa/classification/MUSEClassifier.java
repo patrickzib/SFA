@@ -8,10 +8,12 @@ import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 import sfa.transformation.MUSE;
 import sfa.transformation.SFA;
+import sfa.transformation.WEASEL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The WEASEL+MUSE classifier as published in
@@ -174,17 +176,25 @@ public class MUSEClassifier extends Classifier {
 
           for (int f = minF; f <= maxF; f += 2) {
             final MUSE model = new MUSE(f, maxS, histType, windowLengths, mean, lowerBounding);
-            MUSE.BagOfBigrams[] bag = null;
+            MUSE.BagOfBigrams[] bag = new MUSE.BagOfBigrams[samples.length];
 
-            for (int w = 0; w < model.windowLengths.length; w++) {
-              int[][] words = model.createWords(samples, w);
-              MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
-                  samples,
-                  windowLengths, mean, histType,
-                  model,
-                  words, f, dimensionality, w);
-              bag = mergeBobs(bag, bobForOneWindow);
-            }
+            final int ff = f;
+            ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+              @Override
+              public void run(int id, AtomicInteger processed) {
+                for (int w = 0; w < model.windowLengths.length; w++) {
+                  if (w % BLOCKS == id) {
+                    int[][] words = model.createWords(samples, w);
+                    MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+                        samples,
+                        windowLengths, mean, histType,
+                        model,
+                        words, ff, dimensionality, w);
+                    mergeBobs(bag, bobForOneWindow);
+                  }
+                }
+              }
+            });
 
             // train liblinear
             final Problem problem = initLibLinearProblem(bag, model.dict, bias);
@@ -211,19 +221,29 @@ public class MUSEClassifier extends Classifier {
 
       // obtain the final matrix
       MUSE model = new MUSE(bestF, maxS, bestHistType, windowLengths, bestNorm, lowerBounding);
-      MUSE.BagOfBigrams[] bob = null;
+      MUSE.BagOfBigrams[] bob = new MUSE.BagOfBigrams[samples.length];
 
-      for (int w = 0; w < model.windowLengths.length; w++) {
-        int[][] words = model.createWords(samples, w);
+      final boolean mean = bestNorm;
+      final SFA.HistogramType hist = bestHistType;
+      final int ff = bestF;
+      ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+        @Override
+        public void run(int id, AtomicInteger processed) {
 
-        MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
-            samples,
-            windowLengths, bestNorm, bestHistType,
-            model,
-            words,
-            bestF, dimensionality, w);
-        bob = mergeBobs(bob, bobForOneWindow);
-      }
+          for (int w = 0; w < model.windowLengths.length; w++) {
+            if (w % BLOCKS == id) {
+              int[][] words = model.createWords(samples, w);
+              MUSE.BagOfBigrams[] bobForOneWindow = fitOneWindow(
+                  samples,
+                  windowLengths, mean, hist,
+                  model,
+                  words,
+                  ff, dimensionality, w);
+              mergeBobs(bob, bobForOneWindow);
+            }
+          }
+        }
+      });
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
@@ -265,17 +285,17 @@ public class MUSEClassifier extends Classifier {
     return bopForWindow;
   }
 
-  private MUSE.BagOfBigrams[] mergeBobs(
+  private synchronized void mergeBobs(
       MUSE.BagOfBigrams[] bop,
       MUSE.BagOfBigrams[] bopForWindow) {
-    if (bop == null) {
-      bop = bopForWindow;
-    } else {
-      for (int i = 0; i < bop.length; i++) {
+    for (int i = 0; i < bop.length; i++) {
+      if (bop[i]==null) {
+        bop[i] = bopForWindow[i];
+      }
+      else {
         bop[i].bob.putAll(bopForWindow[i].bob);
       }
     }
-    return bop;
   }
 
   public int[] getWindowLengths(final MultiVariateTimeSeries[] samples, boolean norm) {
@@ -292,13 +312,21 @@ public class MUSEClassifier extends Classifier {
     // iterate each sample to classify
     int dimensionality = samples[0].getDimensions();
 
-    MUSE.BagOfBigrams[] bagTest = null;
-    for (int w = 0; w < model.muse.windowLengths.length; w++) {
-      int[][] wordsTest = model.muse.createWords(samples, w);
-      MUSE.BagOfBigrams[] bopForWindow = model.muse.createBagOfPatterns(wordsTest, samples, w, dimensionality, model.features);
-      model.muse.dict.filterChiSquared(bopForWindow);
-      bagTest = mergeBobs(bagTest, bopForWindow);
-    }
+    MUSE.BagOfBigrams[] bagTest = new MUSE.BagOfBigrams[samples.length];
+
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int w = 0; w < model.muse.windowLengths.length; w++) {
+          if (w % BLOCKS == id) {
+            int[][] wordsTest = model.muse.createWords(samples, w);
+            MUSE.BagOfBigrams[] bopForWindow = model.muse.createBagOfPatterns(wordsTest, samples, w, dimensionality, model.features);
+            model.muse.dict.filterChiSquared(bopForWindow);
+            mergeBobs(bagTest, bopForWindow);
+          }
+        }
+      }
+    });
 
     FeatureNode[][] features = initLibLinear(bagTest, model.muse.dict);
 
@@ -309,6 +337,44 @@ public class MUSEClassifier extends Classifier {
     }
 
     return labels;
+  }
+
+  public Predictions predictProbabilities(MultiVariateTimeSeries[] samples) {
+    final Double[] labels = new Double[samples.length];
+    final double[][] probabilities = new double[samples.length][];
+    int dimensionality = samples[0].getDimensions();
+
+    // iterate each sample to classify
+    final MUSE.BagOfBigrams[] bagTest = new MUSE.BagOfBigrams[samples.length];
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int w = 0; w < model.muse.windowLengths.length; w++) {
+          if (w % BLOCKS == id) {
+            int[][] wordsTest = model.muse.createWords(samples, w);
+            MUSE.BagOfBigrams[] bopForWindow = model.muse.createBagOfPatterns(wordsTest, samples, w, dimensionality, model.features);
+            model.muse.dict.filterChiSquared(bopForWindow);
+            mergeBobs(bagTest, bopForWindow);
+          }
+        }
+      }
+    });
+
+    FeatureNode[][] features = initLibLinear(bagTest, model.muse.dict);
+
+    ParallelFor.withIndex(BLOCKS, new ParallelFor.Each() {
+      @Override
+      public void run(int id, AtomicInteger processed) {
+        for (int ind = 0; ind < features.length; ind++) {
+          if (ind % BLOCKS == id) {
+            probabilities[ind] = new double[model.linearModel.getNrClass()];
+            labels[ind] = Linear.predictProbability(model.linearModel, features[ind], probabilities[ind]);
+          }
+        }
+      }
+    });
+
+    return new Predictions(labels, probabilities, model.linearModel.getLabels());
   }
 
   public static Problem initLibLinearProblem(
@@ -360,5 +426,14 @@ public class MUSEClassifier extends Classifier {
     }
     return featuresTrain;
   }
+
+  public MUSEClassifier.MUSEModel getModel() {
+    return model;
+  }
+
+  public void setModel(MUSEClassifier.MUSEModel model) {
+    this.model = model;
+  }
+
 
 }

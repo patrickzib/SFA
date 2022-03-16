@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.DoubleDoubleCursor;
 import de.bwaldvogel.liblinear.SolverType;
 import libsvm.*;
+import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
 
 import java.util.*;
@@ -11,10 +12,10 @@ import java.util.*;
 /**
  * TEASER: A framework for early and accurate times series classification
  * <p>
- *   Univariate classifier with WEASEL as slave
+ *   Multivariate Classifier with MUSE as slave
  * </p>
  */
-public class TEASERClassifier extends Classifier {
+public class MTEASERClassifier extends Classifier {
 
   /**
    * The parameters for the one-class SVM
@@ -38,10 +39,10 @@ public class TEASERClassifier extends Classifier {
   // the trained TEASER model
   EarlyClassificationModel model;
 
-  WEASELClassifier slaveClassifier;
+  MUSEClassifier slaveClassifier;
 
-  public TEASERClassifier() {
-    slaveClassifier = new WEASELClassifier();
+  public MTEASERClassifier() {
+    slaveClassifier = new MUSEClassifier();
     WEASELClassifier.lowerBounding = true;
     WEASELClassifier.solverType = SolverType.L2R_LR;
     WEASELClassifier.MAX_WINDOW_LENGTH = 250;
@@ -54,13 +55,13 @@ public class TEASERClassifier extends Classifier {
 
       this.offsets = new int[(int) S + 1];
       this.masterModels = new svm_model[(int) S + 1];
-      this.slaveModels = new WEASELClassifier.WEASELModel[(int) S + 1];
+      this.slaveModels = new MUSEClassifier.MUSEModel[(int) S + 1];
 
       Arrays.fill(this.offsets, -1);
     }
 
     public svm_model[] masterModels;
-    public WEASELClassifier.WEASELModel[] slaveModels;
+    public MUSEClassifier.MUSEModel[] slaveModels;
 
     public int[] offsets;
     public int threshold;
@@ -95,9 +96,31 @@ public class TEASERClassifier extends Classifier {
 
   }
 
+
   @Override
   public Score eval(
       final TimeSeries[] trainSamples, final TimeSeries[] testSamples) {
+    throw new RuntimeException("Please use: eval(" +
+        "final MultiVariateTimeSeries[] trainSamples, final MultiVariateTimeSeries[] testSamples)");
+  }
+
+  @Override
+  public Double[] predict(TimeSeries[] samples) {
+    throw new RuntimeException("Please use: predict(final MultiVariateTimeSeries[] samples)");
+  }
+
+  @Override
+  public Score fit(final TimeSeries[] trainSamples) {
+    throw new RuntimeException("Please use: fit(final MultiVariateTimeSeries[] trainSamples)");
+  }
+
+  @Override
+  public Predictions score(final TimeSeries[] testSamples) {
+    throw new RuntimeException("Please use: score(final MultiVariateTimeSeries[] testSamples)");
+  }
+
+  public Score eval(
+      final MultiVariateTimeSeries[] trainSamples, final MultiVariateTimeSeries[] testSamples) {
     long startTime = System.currentTimeMillis();
 
     Score score = fit(trainSamples);
@@ -126,8 +149,7 @@ public class TEASERClassifier extends Classifier {
     return score;
   }
 
-  @Override
-  public Score fit(final TimeSeries[] trainSamples) {
+  public Score fit(final MultiVariateTimeSeries[] trainSamples) {
 
     // train the shotgun models for different offsets
     this.model = fitTeaser(trainSamples);
@@ -136,10 +158,10 @@ public class TEASERClassifier extends Classifier {
     return model.score;
   }
 
-  public EarlyClassificationModel fitTeaser(final TimeSeries[] samples) {
+  public EarlyClassificationModel fitTeaser(final MultiVariateTimeSeries[] samples) {
     try {
 
-      int min = Math.max(3, MIN_WINDOW_LENGTH);
+      int min = Math.max(4, MIN_WINDOW_LENGTH);
       int max = getMax(samples, MAX_WINDOW_LENGTH); // Integer.MAX_VALUE
       double step = max / S; // steps of 5%
 
@@ -148,7 +170,7 @@ public class TEASERClassifier extends Classifier {
       for (int s = 2; s <= S; s++) {
         // train TEASER
         model.offsets[s] = (int) Math.round(step * s);
-        TimeSeries[] data = extractUntilOffset(samples, model.offsets[s], true);
+        MultiVariateTimeSeries[] data = extractUntilOffset(samples, model.offsets[s], true);
 
         if (model.offsets[s] >= min) {
           // train the time series classifier
@@ -196,7 +218,7 @@ public class TEASERClassifier extends Classifier {
   }
 
   public svm_model fitSVM(
-      final TimeSeries[] samples,
+      final MultiVariateTimeSeries[] samples,
       Double[] predictedLabels,
       double[][] probs,
       int[] probsLabels
@@ -239,16 +261,16 @@ public class TEASERClassifier extends Classifier {
     return svm.svm_train(problem_one_class, best_parameter);
   }
 
-  public TimeSeries[] extractUntilOffset(TimeSeries[] samples, int offset, boolean testing) {
-    List<TimeSeries> offsetSamples = new ArrayList<TimeSeries>();
-    for (TimeSeries sample : samples) {
+  public MultiVariateTimeSeries[] extractUntilOffset(MultiVariateTimeSeries[] samples, int offset, boolean testing) {
+    List<MultiVariateTimeSeries> offsetSamples = new ArrayList<>();
+    for (MultiVariateTimeSeries sample : samples) {
       if (testing) {
         offsetSamples.add(sample.getSubsequence(0, offset));
       } else {
         offsetSamples.add(sample);
       }
     }
-    return offsetSamples.toArray(new TimeSeries[]{});
+    return offsetSamples.toArray(new MultiVariateTimeSeries[]{});
   }
 
   public int getCount(DoubleIntHashMap counts, double prediction) {
@@ -259,20 +281,17 @@ public class TEASERClassifier extends Classifier {
     return counts.addTo(prediction, 1);
   }
 
-  @Override
-  public Predictions score(final TimeSeries[] testSamples) {
+  public Predictions score(final MultiVariateTimeSeries[] testSamples) {
     Double[] labels = predict(testSamples);
     return evalLabels(testSamples, labels);
   }
-
   
-  @Override
-  public Double[] predict(final TimeSeries[] testSamples) {
+  public Double[] predict(final MultiVariateTimeSeries[] testSamples) {
     return predict(testSamples, true).labels;
   }
 
   private OffsetPrediction predict(
-      final TimeSeries[] testSamples,
+      final MultiVariateTimeSeries[] testSamples,
       final boolean testing) {
 
     double avgOffset = 0;
@@ -293,7 +312,7 @@ public class TEASERClassifier extends Classifier {
     for (int s = 0; s < model.slaveModels.length; s++) {
       if (model.masterModels[s] != null) {
         // extract samples of length offset
-        TimeSeries[] data = extractUntilOffset(testSamples, model.offsets[s], testing);
+        MultiVariateTimeSeries[] data = extractUntilOffset(testSamples, model.offsets[s], testing);
 
         this.slaveClassifier.setModel(model.slaveModels[s]); // TODO ugly
         Predictions result = this.slaveClassifier.predictProbabilities(data);
@@ -378,7 +397,7 @@ public class TEASERClassifier extends Classifier {
       final double[][] probabilities,
       final int[][] labels,
       double[] correctPrediction) {
-    svm.svm_set_print_string_function(new libsvm.svm_print_interface() {
+    svm.svm_set_print_string_function(new svm_print_interface() {
       @Override
       public void print(String s) {
       } // Disables svm output
