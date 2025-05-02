@@ -466,14 +466,16 @@ There are 7 implemented use cases:
 
 # Alternative Implementations
 
-1) Scikit-Learn Python-Package: Thanks Johann Faouzi (ICM, Brain & Spine Institute) there is a scikit-learn python-package for WEASEL, BOSS, BOSS VS, SFA (and others), based on the scikit-learn framework.
+1) Recommended: AEON Toolkit - The aeon toolkit provides a python implementation of BOSS, WEASEL, WEASEL v2, and SFA. It is fast and easy to use.
+[Python + Scikit-Learn](https://github.com/aeon-toolkit/aeon)
+
+2) Scikit-Learn Python-Package: Thanks Johann Faouzi (ICM, Brain & Spine Institute) there is a scikit-learn python-package for WEASEL, BOSS, BOSS VS, SFA (and others), based on the scikit-learn framework.
 [Python + Scikit-Learn](https://github.com/johannfaouzi/pyts)
 
-
-2) Python: Thanks to Samuel Harford, Houshang Darabi (University of Illinois at Chicago) there is a python port of this code available.
+3) Python: Thanks to Samuel Harford, Houshang Darabi (University of Illinois at Chicago) there is a python port of this code available.
 [Python port](https://github.com/sharford5/SFA_Python)
 
-3) JAVA:  The UEA & UCR Time Series Classification Repository provides an alternative implementation of BOSS as well as other state-of-the-art classifiers.
+4) JAVA:  The UEA & UCR Time Series Classification Repository provides an alternative implementation of BOSS as well as other state-of-the-art classifiers.
 [Time Series Classification Repository](http://timeseriesclassification.com/code.php)
 
 # References & Acknowledgements
